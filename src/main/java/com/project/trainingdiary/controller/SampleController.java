@@ -2,6 +2,7 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.ExampleResponseDto;
+import com.project.trainingdiary.exception.GlobalException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -54,5 +55,10 @@ public class SampleController {
   @GetMapping("/sample/server-fail")
   public CommonResponse<?> sampleServerFail() {
     return CommonResponse.serverFail("내부 서버 에러입니다.");
+  }
+
+  @GetMapping("/sample/exception")
+  public CommonResponse<?> sampleException() {
+    throw new GlobalException(HttpStatus.NOT_FOUND, "리소스가 없습니다.");
   }
 }
