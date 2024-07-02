@@ -14,6 +14,7 @@ public class CommonResponse<T> extends ResponseEntity<Map<String, Object>> {
   private static final String ERROR_CODE = "errorCode";
   private static final String MESSAGE = "message";
   private static final String DATA = "data";
+  private static final int MIN_ERROR_CODE = 400;
 
   public CommonResponse(T body, HttpStatus status, String message) {
     super(createResponseMap(body, status, message), status);
@@ -28,7 +29,7 @@ public class CommonResponse<T> extends ResponseEntity<Map<String, Object>> {
   ) {
     HashMap<String, Object> response = new HashMap<>();
 
-    if (status.value() < 400) {
+    if (status.value() < MIN_ERROR_CODE) {
       response.put(STATUS_CODE, status.value());
       response.put(DATA, body);
     } else {
