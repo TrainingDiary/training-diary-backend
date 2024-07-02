@@ -1,5 +1,7 @@
 package com.project.trainingdiary.model;
 
-public class UserRoleType {
+public enum UserRoleType {
 
+  TRAINEE,
+  TRAINER
 }
