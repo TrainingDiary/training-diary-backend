@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,9 +26,16 @@ public class WorkoutEntity {
 
   private String name;
 
-  private String value;
+  private Integer weight;
+  private Integer rep;
+  private Integer set;
+  private Integer time;
+  private Integer speed;
 
   @ManyToOne
   private WorkoutSessionEntity workoutSession;
+
+  @OneToOne
+  private WorkoutTypeEntity workoutType;
 
 }
