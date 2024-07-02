@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: training-diary
+  profiles:
+    active: "dev"
