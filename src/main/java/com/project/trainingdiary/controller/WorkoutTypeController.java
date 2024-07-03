@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // TODO
-//  로그인 후 운동 종류 등록하기 때문에 트레이너 id 넣는 부분 수정 필요
+//  로그인 후 운동 종류 다루기 때문에 트레이너 id 넣는 부분 수정 필요
 
 @RestController
 @RequiredArgsConstructor
@@ -34,8 +35,8 @@ public class WorkoutTypeController {
   public CommonResponse<?> createWorkoutType(
       @Validated @RequestBody WorkoutTypeCreateRequestDto dto
   ) {
-    workoutTypeService.createWorkoutType(dto);
-    return CommonResponse.created();
+    WorkoutTypeResponseDto responseDto = workoutTypeService.createWorkoutType(dto);
+    return CommonResponse.created(responseDto);
   }
 
   @PutMapping("/{id}")
@@ -43,17 +44,22 @@ public class WorkoutTypeController {
       @PathVariable Long id,
       @Validated @RequestBody WorkoutTypeUpdateRequestDto dto
   ) {
-    workoutTypeService.updateWorkoutType(1L, id, dto);
-    return CommonResponse.success();
+    WorkoutTypeResponseDto responseDto = workoutTypeService.updateWorkoutType(1L, id, dto);
+    return CommonResponse.success(responseDto);
+  }
+
+  @DeleteMapping("/{id}")
+  public CommonResponse<?> deleteWorkoutType(@PathVariable Long id) {
+    workoutTypeService.deleteWorkoutType(1L, id);
+    return CommonResponse.success("운동 종류 삭제가 완료되었습니다.");
   }
 
   @GetMapping
   public CommonResponse<?> getWorkoutTypes(
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size,
-      @RequestParam(defaultValue = "createdDate,desc") String sortBy
+      @RequestParam(defaultValue = "10") int size
   ) {
-    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdDate")));
+    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
     Page<WorkoutTypeResponseDto> responsePage = workoutTypeService.getWorkoutTypes(1L, pageable);
     return CommonResponse.success(responsePage);
   }
