@@ -1,5 +1,14 @@
 package com.project.trainingdiary.service;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.project.trainingdiary.dto.request.EmailDuplicateCheckRequestDto;
 import com.project.trainingdiary.dto.request.SendVerificationEmailRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
@@ -10,12 +19,13 @@ import com.project.trainingdiary.exception.impl.TraineeEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
-import com.project.trainingdiary.model.VerificationNumberGenerator;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.VerificationRepository;
 import com.project.trainingdiary.service.impl.UserServiceImpl;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,131 +36,131 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
 
-    @Mock
-    private TraineeRepository traineeRepository;
+  @Mock
+  private TraineeRepository traineeRepository;
 
-    @Mock
-    private TrainerRepository trainerRepository;
+  @Mock
+  private TrainerRepository trainerRepository;
 
-    @Mock
-    private VerificationRepository verificationRepository;
+  @Mock
+  private VerificationRepository verificationRepository;
 
-    @InjectMocks
-    private UserServiceImpl userService;
+  @InjectMocks
+  private UserServiceImpl userService;
 
-    @Mock
-    private EmailProvider emailProvider;
+  @Mock
+  private EmailProvider emailProvider;
 
-    private EmailDuplicateCheckRequestDto emailCheckDto;
-    private SendVerificationEmailRequestDto sendDto;
-    private VerifyCodeRequestDto verifyDto;
-    private VerificationEntity verificationEntity;
+  private EmailDuplicateCheckRequestDto emailCheckDto;
+  private SendVerificationEmailRequestDto sendDto;
+  private VerifyCodeRequestDto verifyDto;
+  private VerificationEntity verificationEntity;
 
-    @Captor
-    private ArgumentCaptor<String> verificationNumberCaptor;
+  @Captor
+  private ArgumentCaptor<String> verificationCodeCaptor;
 
-    @BeforeEach
-    void setUp() {
-        emailCheckDto = new EmailDuplicateCheckRequestDto();
-        emailCheckDto.setEmail("test@example.com");
+  @BeforeEach
+  void setUp() {
+    emailCheckDto = new EmailDuplicateCheckRequestDto();
+    emailCheckDto.setEmail("test@example.com");
 
-        sendDto = new SendVerificationEmailRequestDto();
-        sendDto.setEmail("test@example.com");
+    sendDto = new SendVerificationEmailRequestDto();
+    sendDto.setEmail("test@example.com");
 
-        verifyDto = new VerifyCodeRequestDto();
-        verifyDto.setEmail("test@example.com");
-        verifyDto.setVerificationCode("123456");
+    verifyDto = new VerifyCodeRequestDto();
+    verifyDto.setEmail("test@example.com");
+    verifyDto.setVerificationCode("123456");
 
-        verificationEntity = new VerificationEntity();
-        verificationEntity.setEmail("test@example.com");
-        verificationEntity.setVerificationCode("123456");
-        verificationEntity.setExpiredAt(LocalDateTime.now().plusMinutes(10));
-    }
+    verificationEntity = new VerificationEntity();
+    verificationEntity.setEmail("test@example.com");
+    verificationEntity.setVerificationCode("123456");
+    verificationEntity.setExpiredAt(LocalDateTime.now().plusMinutes(10));
+  }
 
-    @Test
-    @DisplayName("이메일이 Trainee에 존재할 때 예외 발생")
-    void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainee() {
-        when(traineeRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.of(new TraineeEntity()));
+  @Test
+  @DisplayName("이메일이 Trainee에 존재할 때 예외 발생")
+  void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainee() {
+    when(traineeRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(
+        Optional.of(new TraineeEntity()));
 
-        assertThrows(TraineeEmailDuplicateException.class, () -> userService.checkDuplicateEmail(emailCheckDto));
-    }
+    assertThrows(TraineeEmailDuplicateException.class,
+        () -> userService.checkDuplicateEmail(emailCheckDto));
+  }
 
-    @Test
-    @DisplayName("이메일이 Trainer에 존재할 때 예외 발생")
-    void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainer() {
-        when(trainerRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.of(new TrainerEntity()));
+  @Test
+  @DisplayName("이메일이 Trainer에 존재할 때 예외 발생")
+  void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainer() {
+    when(trainerRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(
+        Optional.of(new TrainerEntity()));
 
-        assertThrows(TrainerEmailDuplicateException.class, () -> userService.checkDuplicateEmail(emailCheckDto));
-    }
+    assertThrows(TrainerEmailDuplicateException.class,
+        () -> userService.checkDuplicateEmail(emailCheckDto));
+  }
 
-    @Test
-    @DisplayName("이메일이 존재하지 않을 때 성공")
-    void checkDuplicateEmailSuccessWhenEmailDoesNotExist() {
-        when(traineeRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.empty());
-        when(trainerRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.empty());
+  @Test
+  @DisplayName("이메일이 존재하지 않을 때 성공")
+  void checkDuplicateEmailSuccessWhenEmailDoesNotExist() {
+    when(traineeRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.empty());
+    when(trainerRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.empty());
 
-        userService.checkDuplicateEmail(emailCheckDto);
-    }
+    userService.checkDuplicateEmail(emailCheckDto);
+  }
 
-    @Test
-    @DisplayName("이메일이 존재할 때 예외 발생")
-    void sendVerificationEmailThrowsExceptionWhenEmailExists() {
-        when(verificationRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.of(new VerificationEntity()));
+  @Test
+  @DisplayName("이메일이 존재할 때 예외 발생")
+  void sendVerificationEmailThrowsExceptionWhenEmailExists() {
+    when(verificationRepository.findByEmail(sendDto.getEmail())).thenReturn(
+        Optional.of(new VerificationEntity()));
 
-        assertThrows(UserNotFoundException.class, () -> userService.sendVerificationEmail(sendDto));
-    }
+    assertThrows(UserNotFoundException.class, () -> userService.sendVerificationEmail(sendDto));
+  }
 
-    @Test
-    @DisplayName("인증 이메일 전송 성공")
-    void sendVerificationEmailSuccess() {
-        when(verificationRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.empty());
+  @Test
+  @DisplayName("인증 이메일 전송 성공")
+  void sendVerificationEmailSuccess() {
+    when(verificationRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.empty());
 
-        doNothing().when(emailProvider).sendVerificationEmail(eq(sendDto.getEmail()), verificationNumberCaptor.capture());
+    doNothing().when(emailProvider)
+        .sendVerificationEmail(eq(sendDto.getEmail()), verificationCodeCaptor.capture());
 
-        userService.sendVerificationEmail(sendDto);
+    userService.sendVerificationEmail(sendDto);
 
-        verify(verificationRepository, times(1)).save(any(VerificationEntity.class));
-        verify(emailProvider, times(1)).sendVerificationEmail(eq(sendDto.getEmail()), anyString());
+    verify(verificationRepository, times(1)).save(any(VerificationEntity.class));
+    verify(emailProvider, times(1)).sendVerificationEmail(eq(sendDto.getEmail()), anyString());
 
-        String capturedVerificationNumber = verificationNumberCaptor.getValue();
-        assert capturedVerificationNumber != null;
-    }
+    String capturedVerificationNumber = verificationCodeCaptor.getValue();
+    assert capturedVerificationNumber != null;
+  }
 
-    @Test
-    @DisplayName("인증 코드 만료 시 예외 발생")
-    void checkVerificationCodeThrowsExceptionWhenCodeExpired() {
-        verificationEntity.setExpiredAt(LocalDateTime.now().minusMinutes(1));
-        when(verificationRepository.findByEmail(verifyDto.getEmail()))
-            .thenReturn(Optional.of(verificationEntity));
+  @Test
+  @DisplayName("인증 코드 만료 시 예외 발생")
+  void checkVerificationCodeThrowsExceptionWhenCodeExpired() {
+    verificationEntity.setExpiredAt(LocalDateTime.now().minusMinutes(1));
+    when(verificationRepository.findByEmail(verifyDto.getEmail()))
+        .thenReturn(Optional.of(verificationEntity));
 
-        assertThrows(VerificationCodeExpiredException.class, () -> userService.checkVerificationCode(verifyDto));
-    }
+    assertThrows(VerificationCodeExpiredException.class,
+        () -> userService.checkVerificationCode(verifyDto));
+  }
 
-    @Test
-    @DisplayName("사용자를 찾을 수 없을 때 예외 발생")
-    void checkVerificationCodeThrowsExceptionWhenUserNotFound() {
-        when(verificationRepository.findByEmail(verifyDto.getEmail()))
-            .thenReturn(Optional.empty());
+  @Test
+  @DisplayName("사용자를 찾을 수 없을 때 예외 발생")
+  void checkVerificationCodeThrowsExceptionWhenUserNotFound() {
+    when(verificationRepository.findByEmail(verifyDto.getEmail()))
+        .thenReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () -> userService.checkVerificationCode(verifyDto));
-    }
+    assertThrows(UserNotFoundException.class, () -> userService.checkVerificationCode(verifyDto));
+  }
 
-    @Test
-    @DisplayName("인증 코드 검증 성공")
-    void checkVerificationCodeSuccess() {
-        when(verificationRepository.findByEmail(verifyDto.getEmail()))
-            .thenReturn(Optional.of(verificationEntity));
+  @Test
+  @DisplayName("인증 코드 검증 성공")
+  void checkVerificationCodeSuccess() {
+    when(verificationRepository.findByEmail(verifyDto.getEmail()))
+        .thenReturn(Optional.of(verificationEntity));
 
-        userService.checkVerificationCode(verifyDto);
-    }
+    userService.checkVerificationCode(verifyDto);
+  }
 }
