@@ -1,5 +1,6 @@
 package com.project.trainingdiary.entity;
 
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import com.project.trainingdiary.model.UserRoleType;
@@ -40,7 +41,7 @@ public class TraineeEntity extends BaseEntity {
   @Column(nullable = false)
   private String password;
 
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   @Column(nullable = false)
   private UserRoleType role;
 
