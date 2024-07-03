@@ -14,6 +14,7 @@ import lombok.Setter;
 @Builder
 public class WorkoutTypeResponseDto {
 
+  private Long id;
   private String name;
   private String targetMuscle;
   private String remarks;
@@ -24,9 +25,10 @@ public class WorkoutTypeResponseDto {
   private boolean timeInputRequired;
   private boolean speedInputRequired;
 
-  public static WorkoutTypeResponseDto fromEntity(WorkoutTypeEntity entity) {
+  public static WorkoutTypeResponseDto of(WorkoutTypeEntity entity) {
 
     return WorkoutTypeResponseDto.builder()
+        .id(entity.getId())
         .name(entity.getName())
         .targetMuscle(entity.getTargetMuscle())
         .remarks(entity.getRemarks())
