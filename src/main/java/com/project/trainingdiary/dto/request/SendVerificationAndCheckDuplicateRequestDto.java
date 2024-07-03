@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class SendVerificationEmailRequestDto {
+public class SendVerificationAndCheckDuplicateRequestDto {
 
   @NotBlank(message = "email은 필수 입력 값입니다.")
   @Email(message = "email 형식에 맞지 않습니다.")
