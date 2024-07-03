@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,6 +19,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class VerificationEntity extends BaseEntity {
 
   @Id
@@ -30,11 +32,11 @@ public class VerificationEntity extends BaseEntity {
   private LocalDateTime expiredAt;
 
   public static VerificationEntity of(String email, String verificationCode) {
-    VerificationEntity entity = new VerificationEntity();
-    entity.setEmail(email);
-    entity.setVerificationCode(verificationCode);
-    entity.setExpiredAt(LocalDateTime.now().plusMinutes(10));
-    return entity;
+    return VerificationEntity.builder()
+        .email(email)
+        .verificationCode(verificationCode)
+        .expiredAt(LocalDateTime.now().plusMinutes(10))
+        .build();
   }
 }
 
