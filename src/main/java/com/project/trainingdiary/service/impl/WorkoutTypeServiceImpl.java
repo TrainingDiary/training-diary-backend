@@ -32,12 +32,12 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
    */
   @Transactional
   @Override
-  public WorkoutTypeResponseDto createWorkoutType(WorkoutTypeCreateRequestDto dto) {
+  public void createWorkoutType(WorkoutTypeCreateRequestDto dto) {
     TrainerEntity trainerEntity = trainerRepository.findById(dto.getTrainerId())
         .orElseThrow(() -> new TrainerNotFoundException(dto.getTrainerId()));
 
-    WorkoutTypeEntity entity = workoutTypeRepository.save(WorkoutTypeCreateRequestDto.toEntity(dto, trainerEntity));
-    return WorkoutTypeResponseDto.of(entity);
+    workoutTypeRepository.save(WorkoutTypeCreateRequestDto.toEntity(dto, trainerEntity));
+
   }
 
   /**
@@ -45,17 +45,21 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
    */
   @Transactional
   @Override
-  public WorkoutTypeResponseDto updateWorkoutType(
+  public void updateWorkoutType(
       Long trainerId, Long workoutTypeId,
       WorkoutTypeUpdateRequestDto dto
   ) {
     WorkoutTypeEntity entity = workoutTypeRepository.findByTrainer_IdAndId(trainerId, workoutTypeId)
         .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutTypeId));
 
-    WorkoutTypeEntity updateEntity = workoutTypeRepository.save(WorkoutTypeUpdateRequestDto.updateEntity(dto, entity));
-    return WorkoutTypeResponseDto.of(updateEntity);
+    workoutTypeRepository.save(WorkoutTypeUpdateRequestDto.updateEntity(dto, entity));
+
   }
 
+  /**
+   * 트레이너의 운동 타입 삭제
+   */
+  @Transactional
   @Override
   public void deleteWorkoutType(Long trainerId, Long workoutTypeId) {
     WorkoutTypeEntity entity = workoutTypeRepository.findByTrainer_IdAndId(trainerId, workoutTypeId)
@@ -72,6 +76,17 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
     Page<WorkoutTypeEntity> page = workoutTypeRepository.findByTrainer_Id(id, pageable);
 
     return page.map(WorkoutTypeResponseDto::of);
+  }
+
+  /**
+   * 트레이너의 운동 타입 상세 조회
+   */
+  @Override
+  public WorkoutTypeResponseDto getWorkoutTypeDetails(Long trainerId, Long workoutTypeId) {
+    WorkoutTypeEntity entity = workoutTypeRepository.findByTrainer_IdAndId(trainerId, workoutTypeId)
+        .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutTypeId));
+
+    return WorkoutTypeResponseDto.of(entity);
   }
 
 }

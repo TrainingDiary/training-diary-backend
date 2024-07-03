@@ -35,8 +35,8 @@ public class WorkoutTypeController {
   public CommonResponse<?> createWorkoutType(
       @Validated @RequestBody WorkoutTypeCreateRequestDto dto
   ) {
-    WorkoutTypeResponseDto responseDto = workoutTypeService.createWorkoutType(dto);
-    return CommonResponse.created(responseDto);
+    workoutTypeService.createWorkoutType(dto);
+    return CommonResponse.created("운동 종류 등록이 완료되었습니다.");
   }
 
   @PutMapping("/{id}")
@@ -44,8 +44,8 @@ public class WorkoutTypeController {
       @PathVariable Long id,
       @Validated @RequestBody WorkoutTypeUpdateRequestDto dto
   ) {
-    WorkoutTypeResponseDto responseDto = workoutTypeService.updateWorkoutType(1L, id, dto);
-    return CommonResponse.success(responseDto);
+    workoutTypeService.updateWorkoutType(1L, id, dto);
+    return CommonResponse.success("운동 종류 수정이 완료되었습니다.");
   }
 
   @DeleteMapping("/{id}")
@@ -62,6 +62,12 @@ public class WorkoutTypeController {
     Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
     Page<WorkoutTypeResponseDto> responsePage = workoutTypeService.getWorkoutTypes(1L, pageable);
     return CommonResponse.success(responsePage);
+  }
+
+  @GetMapping("/{id}")
+  public CommonResponse<?> getWorkoutTypeDetails(@PathVariable Long id) {
+    WorkoutTypeResponseDto responseDto = workoutTypeService.getWorkoutTypeDetails(1L, id);
+    return CommonResponse.created(responseDto);
   }
 
 }

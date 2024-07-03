@@ -8,13 +8,14 @@ import org.springframework.data.domain.Pageable;
 
 public interface WorkoutTypeService {
 
-  WorkoutTypeResponseDto createWorkoutType(WorkoutTypeCreateRequestDto dto);
+  void createWorkoutType(WorkoutTypeCreateRequestDto dto);
 
-  WorkoutTypeResponseDto updateWorkoutType(Long trainerId, Long workoutTypeId,
-      WorkoutTypeUpdateRequestDto dto);
+  void updateWorkoutType(Long trainerId, Long workoutTypeId, WorkoutTypeUpdateRequestDto dto);
 
   void deleteWorkoutType(Long trainerId, Long workoutTypeId);
 
-  Page<WorkoutTypeResponseDto> getWorkoutTypes(Long id, Pageable pageable);
+  Page<WorkoutTypeResponseDto> getWorkoutTypes(Long trainerId, Pageable pageable);
+
+  WorkoutTypeResponseDto getWorkoutTypeDetails(Long trainerId, Long workoutTypeId);
 
 }
