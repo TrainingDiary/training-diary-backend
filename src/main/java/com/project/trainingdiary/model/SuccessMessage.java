@@ -8,9 +8,10 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum SuccessMessage {
 
-  NO_DUPLICATE_EMAIL(HttpStatus.OK, "No duplicate email."),
-  SENT_VERIFICATION_SUCCESS(HttpStatus.OK, "Sent verification email."),
-  VERIFICATION_SUCCESS(HttpStatus.OK, "Verification success.");
+  NO_DUPLICATE_EMAIL(HttpStatus.OK, "중복이 없습니다."),
+  SENT_VERIFICATION_SUCCESS(HttpStatus.OK, "인증 코드 보내기 성공."),
+  VERIFICATION_SUCCESS(HttpStatus.OK, "인증 성공."),
+  SIGN_UP_SUCCESS(HttpStatus.OK, "회원가입 성공");
 
   private final HttpStatus status;
   private final String message;

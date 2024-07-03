@@ -2,12 +2,15 @@ package com.project.trainingdiary.service.impl;
 
 import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
+import com.project.trainingdiary.entity.TraineeEntity;
+import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
 import com.project.trainingdiary.exception.impl.TraineeEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
 import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
+import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -16,13 +19,16 @@ import com.project.trainingdiary.service.UserService;
 import com.project.trainingdiary.util.VerificationCodeGeneratorUtil;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
@@ -63,5 +69,17 @@ public class UserServiceImpl implements UserService {
     if (verificationEntity.getExpiredAt().isBefore(LocalDateTime.now())) {
       throw new VerificationCodeExpiredException();
     }
+  }
+
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    TraineeEntity trainee = traineeRepository.findByEmail(username).orElse(null);
+    if (trainee != null) {
+      return UserPrincipal.create(trainee);
+    }
+
+    TrainerEntity trainer = trainerRepository.findByEmail(username).orElseThrow(
+        UserNotFoundException::new);
+    return UserPrincipal.create(trainer);
   }
 }
