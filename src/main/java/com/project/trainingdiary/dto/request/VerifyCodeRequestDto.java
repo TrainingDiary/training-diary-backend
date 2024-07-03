@@ -9,10 +9,10 @@ import lombok.Setter;
 @Setter
 public class VerifyCodeRequestDto {
 
-  @NotBlank(message = "Email is required.")
-  @Email(message = "Invalid email format.")
+  @NotBlank(message = "email은 필수 입력 값입니다.")
+  @Email(message = "email 형식에 맞지 않습니다.")
   private String email;
 
-  @NotBlank(message = "Verification code is required.")
+  @NotBlank(message = "인증 번호는 필수 입력 값입니다.")
   private String verificationCode;
 }
