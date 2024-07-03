@@ -2,7 +2,9 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,9 +20,9 @@ public class ScheduleController {
 
   @PostMapping("/trainers/open")
   public CommonResponse<?> openSchedule(
-      @RequestBody OpenScheduleRequestDto dto
+      @RequestBody @Valid OpenScheduleRequestDto dto
   ) {
     scheduleService.createSchedule(dto);
-    return CommonResponse.success();
+    return CommonResponse.success(SuccessMessage.SCHEDULE_OPEN_SUCCESS);
   }
 }
