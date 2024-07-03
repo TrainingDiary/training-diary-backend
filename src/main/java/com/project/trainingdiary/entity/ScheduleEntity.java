@@ -1,14 +1,16 @@
 package com.project.trainingdiary.entity;
 
+import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.GenerationType.IDENTITY;
+
 import com.project.trainingdiary.model.ScheduleStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,22 +23,18 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "Schedule")
+@Entity(name = "schedule")
 public class ScheduleEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
-  private LocalDate startDate;
+  private LocalDateTime startAt;
 
-  private LocalDate endDate;
+  private LocalDateTime endAt;
 
-  private LocalTime startTime;
-
-  private LocalTime endTime;
-
-  @Enumerated(value = EnumType.STRING)
+  @Enumerated(value = STRING)
   @Column(nullable = false)
   private ScheduleStatus scheduleStatus;
 }

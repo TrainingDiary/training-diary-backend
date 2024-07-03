@@ -2,6 +2,7 @@ package com.project.trainingdiary.dto.request;
 
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.model.ScheduleStatus;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,7 +21,8 @@ import lombok.Setter;
 @Builder
 public class OpenScheduleRequestDto {
 
-  private List<ScheduleDateTimes> dateTimes;
+  @NotNull(message = "dateTimes를 입력해주세요")
+  public List<ScheduleDateTimes> dateTimes;
 
   public List<ScheduleEntity> toEntities() {
 
@@ -31,14 +33,12 @@ public class OpenScheduleRequestDto {
       List<LocalTime> times = dateTime.getStartTimes();
 
       for (LocalTime startTime : times) {
-        LocalDateTime startDateTime = LocalDateTime.of(startDate, startTime);
-        LocalDateTime endDateTime = startDateTime.plusHours(1);
+        LocalDateTime startAt = LocalDateTime.of(startDate, startTime);
+        LocalDateTime endAt = startAt.plusHours(1);
 
         list.add(ScheduleEntity.builder()
-            .startDate(startDate)
-            .endDate(endDateTime.toLocalDate())
-            .startTime(startTime)
-            .endTime(endDateTime.toLocalTime())
+            .startAt(startAt)
+            .endAt(endAt)
             .scheduleStatus(ScheduleStatus.OPEN)
             .build()
         );
@@ -47,11 +47,4 @@ public class OpenScheduleRequestDto {
 
     return list;
   }
-}
-
-@Getter
-class ScheduleDateTimes {
-
-  private LocalDate startDate;
-  private List<LocalTime> startTimes;
 }
