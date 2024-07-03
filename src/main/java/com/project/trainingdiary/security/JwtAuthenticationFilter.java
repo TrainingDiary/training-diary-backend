@@ -1,7 +1,6 @@
 package com.project.trainingdiary.security;
 
 import com.project.trainingdiary.provider.TokenProvider;
-import com.project.trainingdiary.service.UserService;
 import com.project.trainingdiary.service.impl.UserServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
