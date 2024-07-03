@@ -8,8 +8,8 @@ import com.project.trainingdiary.exception.impl.TraineeEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
-import com.project.trainingdiary.exception.impl.VerificationNumberNotMatchedException;
-import com.project.trainingdiary.model.VerificationNumberGenerator;
+import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
+import com.project.trainingdiary.util.VerificationCodeGeneratorUtil;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -54,11 +54,11 @@ public class UserServiceImpl implements UserService {
           throw new UserNotFoundException();
         });
 
-    String verificationNumber = VerificationNumberGenerator.generateVerificationNumber();
-    emailProvider.sendVerificationEmail(dto.getEmail(), (verificationNumber));
+    String verificationCode = VerificationCodeGeneratorUtil.generateVerificationCode();
+    emailProvider.sendVerificationEmail(dto.getEmail(), (verificationCode));
 
     VerificationEntity verificationEntity = VerificationEntity.of(dto.getEmail(),
-        verificationNumber);
+        verificationCode);
     verificationRepository.save(verificationEntity);
   }
 
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService {
         .orElseThrow(UserNotFoundException::new);
 
     if (!verificationEntity.getVerificationCode().equals(dto.getVerificationCode())) {
-      throw new VerificationNumberNotMatchedException();
+      throw new VerificationCodeNotMatchedException();
     }
 
     if (verificationEntity.getExpiredAt().isBefore(LocalDateTime.now())) {
