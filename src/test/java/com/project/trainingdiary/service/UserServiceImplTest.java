@@ -9,8 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.trainingdiary.dto.request.EmailDuplicateCheckRequestDto;
-import com.project.trainingdiary.dto.request.SendVerificationEmailRequestDto;
+import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
@@ -54,8 +53,7 @@ public class UserServiceImplTest {
   @Mock
   private EmailProvider emailProvider;
 
-  private EmailDuplicateCheckRequestDto emailCheckDto;
-  private SendVerificationEmailRequestDto sendDto;
+  private SendVerificationAndCheckDuplicateRequestDto sendDto;
   private VerifyCodeRequestDto verifyDto;
   private VerificationEntity verificationEntity;
 
@@ -64,10 +62,8 @@ public class UserServiceImplTest {
 
   @BeforeEach
   void setUp() {
-    emailCheckDto = new EmailDuplicateCheckRequestDto();
-    emailCheckDto.setEmail("test@example.com");
 
-    sendDto = new SendVerificationEmailRequestDto();
+    sendDto = new SendVerificationAndCheckDuplicateRequestDto();
     sendDto.setEmail("test@example.com");
 
     verifyDto = new VerifyCodeRequestDto();
@@ -83,50 +79,33 @@ public class UserServiceImplTest {
   @Test
   @DisplayName("이메일이 Trainee에 존재할 때 예외 발생")
   void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainee() {
-    when(traineeRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(
+    when(traineeRepository.findByEmail(sendDto.getEmail())).thenReturn(
         Optional.of(new TraineeEntity()));
 
     assertThrows(TraineeEmailDuplicateException.class,
-        () -> userService.checkDuplicateEmail(emailCheckDto));
+        () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
   }
 
   @Test
   @DisplayName("이메일이 Trainer에 존재할 때 예외 발생")
   void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainer() {
-    when(trainerRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(
+    when(trainerRepository.findByEmail(sendDto.getEmail())).thenReturn(
         Optional.of(new TrainerEntity()));
 
     assertThrows(TrainerEmailDuplicateException.class,
-        () -> userService.checkDuplicateEmail(emailCheckDto));
+        () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
   }
 
   @Test
   @DisplayName("이메일이 존재하지 않을 때 성공")
   void checkDuplicateEmailSuccessWhenEmailDoesNotExist() {
-    when(traineeRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.empty());
-    when(trainerRepository.findByEmail(emailCheckDto.getEmail())).thenReturn(Optional.empty());
-
-    userService.checkDuplicateEmail(emailCheckDto);
-  }
-
-  @Test
-  @DisplayName("이메일이 존재할 때 예외 발생")
-  void sendVerificationEmailThrowsExceptionWhenEmailExists() {
-    when(verificationRepository.findByEmail(sendDto.getEmail())).thenReturn(
-        Optional.of(new VerificationEntity()));
-
-    assertThrows(UserNotFoundException.class, () -> userService.sendVerificationEmail(sendDto));
-  }
-
-  @Test
-  @DisplayName("인증 이메일 전송 성공")
-  void sendVerificationEmailSuccess() {
-    when(verificationRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.empty());
+    when(traineeRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.empty());
+    when(trainerRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.empty());
 
     doNothing().when(emailProvider)
         .sendVerificationEmail(eq(sendDto.getEmail()), verificationCodeCaptor.capture());
 
-    userService.sendVerificationEmail(sendDto);
+    userService.checkDuplicateEmailAndSendVerification(sendDto);
 
     verify(verificationRepository, times(1)).save(any(VerificationEntity.class));
     verify(emailProvider, times(1)).sendVerificationEmail(eq(sendDto.getEmail()), anyString());
