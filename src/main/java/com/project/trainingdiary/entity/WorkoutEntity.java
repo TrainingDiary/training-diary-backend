@@ -17,8 +17,8 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "Workout")
-public class WorkoutEntity {
+@Entity(name = "workout")
+public class WorkoutEntity extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,11 +26,11 @@ public class WorkoutEntity {
 
   private String name;
 
-  private Integer weight;
-  private Integer rep;
-  private Integer set;
-  private Integer time;
-  private Integer speed;
+  private int weight;
+  private int rep;
+  private int sets;
+  private int time;
+  private int speed;
 
   @ManyToOne
   private WorkoutSessionEntity workoutSession;

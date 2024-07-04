@@ -5,9 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -21,8 +19,8 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "WorkoutSession")
-public class WorkoutSessionEntity {
+@Entity(name = "workout_session")
+public class WorkoutSessionEntity extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,10 +39,8 @@ public class WorkoutSessionEntity {
   @OneToMany(mappedBy = "workoutSession")
   private List<WorkoutMediaEntity> workoutMedia;
 
-  @OneToOne
-  private ScheduleEntity schedule;
-
-  @ManyToOne
-  private PtContractEntity ptContract;
+//  @ManyToOne
+//  private PtContractEntity ptContract;
 
 }
+

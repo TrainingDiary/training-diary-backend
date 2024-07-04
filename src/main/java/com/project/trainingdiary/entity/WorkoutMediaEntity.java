@@ -16,8 +16,8 @@ import lombok.ToString;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity(name = "WorkoutMedia")
-public class WorkoutMediaEntity {
+@Entity(name = "workout_media")
+public class WorkoutMediaEntity extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
