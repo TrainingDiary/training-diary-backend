@@ -1,8 +1,9 @@
 package com.project.trainingdiary.entity;
 
+import static jakarta.persistence.GenerationType.IDENTITY;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -21,7 +22,7 @@ import lombok.ToString;
 public class WorkoutTypeEntity extends BaseEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
   private String name;
