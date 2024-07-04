@@ -5,7 +5,7 @@ import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
 import com.project.trainingdiary.dto.response.WorkoutTypeResponseDto;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.WorkoutTypeEntity;
-import com.project.trainingdiary.exception.impl.TrainerNotFoundException;
+import com.project.trainingdiary.exception.impl.TrainerIdNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
@@ -28,20 +28,20 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
   private final TrainerRepository trainerRepository;
 
   /*
-   * 트레이너의 운동 타입 등록
+   * 트레이너의 운동 종류 등록
    */
   @Transactional
   @Override
   public void createWorkoutType(WorkoutTypeCreateRequestDto dto) {
     TrainerEntity trainerEntity = trainerRepository.findById(dto.getTrainerId())
-        .orElseThrow(() -> new TrainerNotFoundException(dto.getTrainerId()));
+        .orElseThrow(() -> new TrainerIdNotFoundException(dto.getTrainerId()));
 
     workoutTypeRepository.save(WorkoutTypeCreateRequestDto.toEntity(dto, trainerEntity));
 
   }
 
   /**
-   * 트레이너의 운동 타입 수정
+   * 트레이너의 운동 종류 수정
    */
   @Transactional
   @Override
@@ -57,7 +57,7 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
   }
 
   /**
-   * 트레이너의 운동 타입 삭제
+   * 트레이너의 운동 종류 삭제
    */
   @Transactional
   @Override
@@ -69,7 +69,7 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
   }
 
   /**
-   * 트레이너의 운동 타입 목록 조회
+   * 트레이너의 운동 종류 목록 조회
    */
   @Override
   public Page<WorkoutTypeResponseDto> getWorkoutTypes(Long id, Pageable pageable) {
@@ -79,7 +79,7 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
   }
 
   /**
-   * 트레이너의 운동 타입 상세 조회
+   * 트레이너의 운동 종류 상세 조회
    */
   @Override
   public WorkoutTypeResponseDto getWorkoutTypeDetails(Long trainerId, Long workoutTypeId) {
