@@ -5,12 +5,12 @@ import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.WorkoutTypeResponseDto;
 import com.project.trainingdiary.service.WorkoutTypeService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +33,7 @@ public class WorkoutTypeController {
 
   @PostMapping
   public CommonResponse<?> createWorkoutType(
-      @Validated @RequestBody WorkoutTypeCreateRequestDto dto
+      @Valid @RequestBody WorkoutTypeCreateRequestDto dto
   ) {
     workoutTypeService.createWorkoutType(dto);
     return CommonResponse.created("운동 종류 등록이 완료되었습니다.");
@@ -42,7 +42,7 @@ public class WorkoutTypeController {
   @PutMapping("/{id}")
   public CommonResponse<?> updateWorkoutType(
       @PathVariable Long id,
-      @Validated @RequestBody WorkoutTypeUpdateRequestDto dto
+      @Valid @RequestBody WorkoutTypeUpdateRequestDto dto
   ) {
     workoutTypeService.updateWorkoutType(1L, id, dto);
     return CommonResponse.success("운동 종류 수정이 완료되었습니다.");
