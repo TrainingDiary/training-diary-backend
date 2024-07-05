@@ -1,0 +1,11 @@
+package com.project.trainingdiary.exception.impl;
+
+import com.project.trainingdiary.exception.GlobalException;
+import org.springframework.http.HttpStatus;
+
+public class WorkoutTypeNotFoundException extends GlobalException {
+
+  public WorkoutTypeNotFoundException(Long id) {
+    super(HttpStatus.NOT_FOUND, "해당 일련번호의 운동 종류를 찾을 수 없습니다. ID: " + id);
+  }
+}
