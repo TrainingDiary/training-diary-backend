@@ -1,9 +1,6 @@
 package com.project.trainingdiary.entity;
 
-import static jakarta.persistence.GenerationType.IDENTITY;
-
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -23,10 +20,8 @@ import lombok.Setter;
 public class VerificationEntity extends BaseEntity {
 
   @Id
-  @GeneratedValue(strategy = IDENTITY)
-  private Long id;
-
   private String email;
+
   private String verificationCode;
 
   private LocalDateTime expiredAt;
