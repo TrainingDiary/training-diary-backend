@@ -44,11 +44,9 @@ public class TraineeEntity extends BaseEntity {
   @Column(nullable = false)
   private UserRoleType role;
 
-  @Column(nullable = false)
   @Temporal(TemporalType.DATE)
   private Date birthDate;
 
-  @Column(nullable = false)
   private String gender;
 
   private int totalSessions;
