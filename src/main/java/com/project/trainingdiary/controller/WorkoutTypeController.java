@@ -36,7 +36,7 @@ public class WorkoutTypeController {
       @Valid @RequestBody WorkoutTypeCreateRequestDto dto
   ) {
     workoutTypeService.createWorkoutType(dto);
-    return CommonResponse.created("운동 종류 등록이 완료되었습니다.");
+    return CommonResponse.created();
   }
 
   @PutMapping("/{id}")
@@ -45,13 +45,13 @@ public class WorkoutTypeController {
       @Valid @RequestBody WorkoutTypeUpdateRequestDto dto
   ) {
     workoutTypeService.updateWorkoutType(1L, id, dto);
-    return CommonResponse.success("운동 종류 수정이 완료되었습니다.");
+    return CommonResponse.success();
   }
 
   @DeleteMapping("/{id}")
   public CommonResponse<?> deleteWorkoutType(@PathVariable Long id) {
     workoutTypeService.deleteWorkoutType(1L, id);
-    return CommonResponse.success("운동 종류 삭제가 완료되었습니다.");
+    return CommonResponse.success();
   }
 
   @GetMapping
