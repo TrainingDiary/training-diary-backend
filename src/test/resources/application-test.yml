@@ -1,13 +1,12 @@
 spring:
   datasource:
-    url:
-    driver-class-name: org.mariadb.jdbc.Driver
-    username:
-    password:
+    url: jdbc:h2:mem:test
+    driver-class-name: org.h2.Driver
+    username: sa
   jpa:
     generate-ddl: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: true
   mail:
     host: smtp.gmail.com
