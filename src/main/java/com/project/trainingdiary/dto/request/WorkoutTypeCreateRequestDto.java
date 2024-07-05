@@ -16,10 +16,10 @@ public class WorkoutTypeCreateRequestDto {
 
   private Long trainerId;
 
-  @NotBlank
+  @NotBlank(message = "운동 종류 이름은 필수 입력사항입니다.")
   private String name;
 
-  @NotBlank
+  @NotBlank(message = "운동 종류의 타겟 부위는 필수 입력사항입니다.")
   private String targetMuscle;
 
   private String remarks;
