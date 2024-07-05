@@ -1,8 +1,11 @@
 package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
+import com.project.trainingdiary.dto.request.SignInRequestDto;
+import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.dto.response.SignInResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.UserService;
 import jakarta.validation.Valid;
@@ -33,5 +36,21 @@ public class UserController {
   ) {
     userService.checkVerificationCode(dto);
     return CommonResponse.success(SuccessMessage.VERIFICATION_SUCCESS);
+  }
+
+  @PostMapping("/sign-up")
+  public CommonResponse<?> signUp(
+      @RequestBody @Valid SignUpRequestDto dto
+  ) {
+    userService.signUp(dto);
+    return CommonResponse.created(SuccessMessage.SIGN_UP_SUCCESS);
+  }
+
+  @PostMapping("/sign-in")
+  public CommonResponse<?> signIn(
+      @RequestBody @Valid SignInRequestDto dto
+  ) {
+    SignInResponseDto response = userService.signIn(dto);
+    return CommonResponse.success(response);
   }
 }
