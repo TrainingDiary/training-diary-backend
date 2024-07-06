@@ -1,7 +1,7 @@
 package com.project.trainingdiary.security;
 
 import com.project.trainingdiary.provider.TokenProvider;
-import com.project.trainingdiary.service.impl.UserServiceImpl;
+import com.project.trainingdiary.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final TokenProvider tokenProvider;
-  private final UserServiceImpl userService;
+  private final UserService userService;
 
   private static final String BEARER_PREFIX = "Bearer ";
   private static final String AUTHORIZATION_HEADER = "Authorization";
