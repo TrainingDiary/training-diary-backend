@@ -38,4 +38,14 @@ public class PtContractEntity extends BaseEntity {
   @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "trainee_id")
   private TraineeEntity trainee;
+
+  public static PtContractEntity of(TrainerEntity trainer, TraineeEntity trainee,
+      int sessionCount) {
+    return PtContractEntity.builder()
+        .totalSession(sessionCount)
+        .sessionUpdatedAt(LocalDateTime.now())
+        .trainer(trainer)
+        .trainee(trainee)
+        .build();
+  }
 }
