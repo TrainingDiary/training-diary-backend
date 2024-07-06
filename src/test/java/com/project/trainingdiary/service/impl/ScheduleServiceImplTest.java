@@ -2,30 +2,44 @@ package com.project.trainingdiary.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
-import com.project.trainingdiary.dto.request.ScheduleDateTimes;
-import com.project.trainingdiary.entity.ScheduleEntity;
+import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
+import com.project.trainingdiary.model.ScheduleDateTimes;
+import com.project.trainingdiary.model.ScheduleResponseDetail;
+import com.project.trainingdiary.model.ScheduleStatus;
+import com.project.trainingdiary.repository.ScheduleRepository;
 import com.project.trainingdiary.service.ScheduleService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@SpringBootTest
 @DisplayName("일정 서비스")
-@Transactional
+@ExtendWith(MockitoExtension.class)
 class ScheduleServiceImplTest {
 
-  @Autowired
+  @Mock
+  private ScheduleRepository scheduleRepository;
+
+  @InjectMocks
   private ScheduleService scheduleService;
+
+  @BeforeEach
+  void init() {
+
+  }
 
   @Test
   @DisplayName("일정 열기 - 성공(6개의 일정 열기)")
@@ -53,19 +67,67 @@ class ScheduleServiceImplTest {
         .dateTimes(dateTimes)
         .build();
 
+    List<ScheduleResponseDto> responseDto = List.of(
+        ScheduleResponseDto.builder()
+            .startDate(LocalDate.of(2024, 1, 1))
+            .existReserved(true)
+            .details(List.of(
+                ScheduleResponseDetail.builder()
+                    .startTime(LocalTime.of(10, 0))
+                    .status(ScheduleStatus.RESERVED)
+                    .build(),
+                ScheduleResponseDetail.builder()
+                    .startTime(LocalTime.of(11, 0))
+                    .status(ScheduleStatus.OPEN)
+                    .build(),
+                ScheduleResponseDetail.builder()
+                    .startTime(LocalTime.of(12, 0))
+                    .status(ScheduleStatus.OPEN)
+                    .build()
+            ))
+            .build(),
+        ScheduleResponseDto.builder()
+            .startDate(LocalDate.of(2024, 2, 28))
+            .existReserved(false)
+            .details(List.of(
+                ScheduleResponseDetail.builder()
+                    .startTime(LocalTime.of(20, 0))
+                    .status(ScheduleStatus.OPEN)
+                    .build(),
+                ScheduleResponseDetail.builder()
+                    .startTime(LocalTime.of(21, 0))
+                    .status(ScheduleStatus.OPEN)
+                    .build(),
+                ScheduleResponseDetail.builder()
+                    .startTime(LocalTime.of(22, 0))
+                    .status(ScheduleStatus.OPEN)
+                    .build()
+            ))
+            .build()
+    );
+
+    when(scheduleService.getScheduleList(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 3, 1)
+    ))
+        .thenReturn(responseDto);
+
     //when
     scheduleService.createSchedule(dto);
-    List<ScheduleEntity> schedules = scheduleService.getScheduleList();
+    List<ScheduleResponseDto> schedules = scheduleService.getScheduleList(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 3, 1)
+    );
 
     //then
-    assertEquals(6, schedules.size());
-    assertEquals(
-        LocalDateTime.of(2024, 1, 1, 10, 0),
-        schedules.stream().min(Comparator.comparing(ScheduleEntity::getStartAt)).get().getStartAt()
-    );
-    assertEquals(
-        LocalDateTime.of(2024, 2, 28, 22, 0),
-        schedules.stream().max(Comparator.comparing(ScheduleEntity::getStartAt)).get().getStartAt()
+    assertEquals(2, schedules.size());
+    assertEquals(3,
+        schedules.stream()
+            .filter(s -> s.getStartDate().equals(LocalDate.of(2024, 2, 28)))
+            .map(ScheduleResponseDto::getDetails)
+            .flatMap(List::stream)
+            .toList()
+            .size()
     );
   }
 
@@ -73,14 +135,7 @@ class ScheduleServiceImplTest {
   @DisplayName("일정 열기 - 실패(이미 일정이 있는 경우)")
   void openScheduleFail_AlreadyExistSchedule() {
     //given
-    List<ScheduleDateTimes> dateTimes1 = List.of(
-        ScheduleDateTimes.builder()
-            .startDate(LocalDate.of(2024, 2, 28))
-            .startTimes(List.of(LocalTime.of(20, 0)))
-            .build()
-    );
-
-    List<ScheduleDateTimes> dateTimes2 = List.of(
+    List<ScheduleDateTimes> dateTimes = List.of(
         ScheduleDateTimes.builder()
             .startDate(LocalDate.of(2024, 1, 1))
             .startTimes(List.of(
@@ -99,19 +154,23 @@ class ScheduleServiceImplTest {
             .build()
     );
 
-    OpenScheduleRequestDto dto1 = OpenScheduleRequestDto.builder()
-        .dateTimes(dateTimes1)
+    OpenScheduleRequestDto dto = OpenScheduleRequestDto.builder()
+        .dateTimes(dateTimes)
         .build();
 
-    OpenScheduleRequestDto dto2 = OpenScheduleRequestDto.builder()
-        .dateTimes(dateTimes2)
-        .build();
+    when(scheduleRepository.findScheduleDatesByDates(
+        eq(LocalDateTime.of(2024, 1, 1, 10, 0)),
+        eq(LocalDateTime.of(2024, 2, 28, 22, 0))
+    ))
+        .thenReturn(Set.of(
+            LocalDateTime.of(2024, 2, 28, 20, 0)
+        ));
 
     //when
-    scheduleService.createSchedule(dto1);
-
     //then
-    assertThrows(ScheduleAlreadyExistException.class,
-        () -> scheduleService.createSchedule(dto2));
+    assertThrows(
+        ScheduleAlreadyExistException.class,
+        () -> scheduleService.createSchedule(dto)
+    );
   }
 }
