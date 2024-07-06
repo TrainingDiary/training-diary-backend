@@ -57,10 +57,7 @@ public class ScheduleService {
       throw new ScheduleRangeTooLong();
     }
 
-    return scheduleRepository
-        .findByDates(startDateTime, endDateTime).stream()
-        .map(ScheduleResponseDto::of)
-        .toList();
+    return scheduleRepository.getScheduleList(startDateTime, endDateTime);
   }
 
   private static LocalDateTime getLatest(List<ScheduleEntity> scheduleEntities) {

@@ -2,12 +2,10 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,7 +29,7 @@ public class ScheduleController {
     return CommonResponse.success(SuccessMessage.SCHEDULE_OPEN_SUCCESS);
   }
 
-  @GetMapping("/")
+  @GetMapping
   public CommonResponse<?> getScheduleList(
       @RequestParam LocalDate startDate,
       @RequestParam LocalDate endDate

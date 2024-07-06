@@ -1,6 +1,7 @@
 package com.project.trainingdiary.dto.request;
 
 import com.project.trainingdiary.entity.ScheduleEntity;
+import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleStatus;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
