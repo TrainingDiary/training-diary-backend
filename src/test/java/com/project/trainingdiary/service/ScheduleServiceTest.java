@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
+import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.ScheduleStatus;
@@ -40,6 +41,45 @@ class ScheduleServiceTest {
 
   }
 
+  List<ScheduleResponseDto> responseData = List.of(
+      ScheduleResponseDto.builder()
+          .startDate(LocalDate.of(2024, 1, 1))
+          .existReserved(true)
+          .details(List.of(
+              ScheduleResponseDetail.builder()
+                  .startTime(LocalTime.of(10, 0))
+                  .status(ScheduleStatus.RESERVED)
+                  .build(),
+              ScheduleResponseDetail.builder()
+                  .startTime(LocalTime.of(11, 0))
+                  .status(ScheduleStatus.OPEN)
+                  .build(),
+              ScheduleResponseDetail.builder()
+                  .startTime(LocalTime.of(12, 0))
+                  .status(ScheduleStatus.OPEN)
+                  .build()
+          ))
+          .build(),
+      ScheduleResponseDto.builder()
+          .startDate(LocalDate.of(2024, 2, 28))
+          .existReserved(false)
+          .details(List.of(
+              ScheduleResponseDetail.builder()
+                  .startTime(LocalTime.of(20, 0))
+                  .status(ScheduleStatus.OPEN)
+                  .build(),
+              ScheduleResponseDetail.builder()
+                  .startTime(LocalTime.of(21, 0))
+                  .status(ScheduleStatus.OPEN)
+                  .build(),
+              ScheduleResponseDetail.builder()
+                  .startTime(LocalTime.of(22, 0))
+                  .status(ScheduleStatus.OPEN)
+                  .build()
+          ))
+          .build()
+  );
+
   @Test
   @DisplayName("일정 열기 - 성공(6개의 일정 열기)")
   void openSchedule() {
@@ -66,50 +106,11 @@ class ScheduleServiceTest {
         .dateTimes(dateTimes)
         .build();
 
-    List<ScheduleResponseDto> responseDto = List.of(
-        ScheduleResponseDto.builder()
-            .startDate(LocalDate.of(2024, 1, 1))
-            .existReserved(true)
-            .details(List.of(
-                ScheduleResponseDetail.builder()
-                    .startTime(LocalTime.of(10, 0))
-                    .status(ScheduleStatus.RESERVED)
-                    .build(),
-                ScheduleResponseDetail.builder()
-                    .startTime(LocalTime.of(11, 0))
-                    .status(ScheduleStatus.OPEN)
-                    .build(),
-                ScheduleResponseDetail.builder()
-                    .startTime(LocalTime.of(12, 0))
-                    .status(ScheduleStatus.OPEN)
-                    .build()
-            ))
-            .build(),
-        ScheduleResponseDto.builder()
-            .startDate(LocalDate.of(2024, 2, 28))
-            .existReserved(false)
-            .details(List.of(
-                ScheduleResponseDetail.builder()
-                    .startTime(LocalTime.of(20, 0))
-                    .status(ScheduleStatus.OPEN)
-                    .build(),
-                ScheduleResponseDetail.builder()
-                    .startTime(LocalTime.of(21, 0))
-                    .status(ScheduleStatus.OPEN)
-                    .build(),
-                ScheduleResponseDetail.builder()
-                    .startTime(LocalTime.of(22, 0))
-                    .status(ScheduleStatus.OPEN)
-                    .build()
-            ))
-            .build()
-    );
-
     when(scheduleService.getScheduleList(
         LocalDate.of(2024, 1, 1),
         LocalDate.of(2024, 3, 1)
     ))
-        .thenReturn(responseDto);
+        .thenReturn(responseData);
 
     //when
     scheduleService.createSchedule(dto);
@@ -170,6 +171,33 @@ class ScheduleServiceTest {
     assertThrows(
         ScheduleAlreadyExistException.class,
         () -> scheduleService.createSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 목록 조회 - 성공")
+  void getScheduleList() {
+    when(scheduleRepository.getScheduleList(
+        eq(LocalDateTime.of(2024, 1, 1, 0, 0)),
+        eq(LocalDateTime.of(2024, 3, 1, 23, 59))
+    ))
+        .thenReturn(responseData);
+
+    scheduleService.getScheduleList(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 3, 1)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 목록 조회 - 실패(조회 범위가 너무 큰 경우)")
+  void getScheduleListFail_RangeTooLong() {
+    assertThrows(
+        ScheduleRangeTooLong.class,
+        () -> scheduleService.getScheduleList(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 9, 1)
+        )
     );
   }
 }
