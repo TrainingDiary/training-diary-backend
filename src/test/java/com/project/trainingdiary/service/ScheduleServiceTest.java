@@ -1,4 +1,4 @@
-package com.project.trainingdiary.service.impl;
+package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -12,7 +12,6 @@ import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.repository.ScheduleRepository;
-import com.project.trainingdiary.service.ScheduleService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,7 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @DisplayName("일정 서비스")
 @ExtendWith(MockitoExtension.class)
-class ScheduleServiceImplTest {
+class ScheduleServiceTest {
 
   @Mock
   private ScheduleRepository scheduleRepository;
