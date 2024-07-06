@@ -1,5 +1,6 @@
 package com.project.trainingdiary.controller;
 
+import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.model.SuccessMessage;
@@ -35,5 +36,13 @@ public class ScheduleController {
       @RequestParam LocalDate endDate
   ) {
     return CommonResponse.success(scheduleService.getScheduleList(startDate, endDate));
+  }
+
+  @PostMapping("/trainers/close")
+  public CommonResponse<?> closeSchedules(
+      @RequestBody @Valid CloseScheduleRequestDto dto
+  ) {
+    scheduleService.closeSchedules(dto.scheduleIds);
+    return CommonResponse.success();
   }
 }
