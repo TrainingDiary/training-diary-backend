@@ -22,7 +22,7 @@ import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.VerificationRepository;
-import com.project.trainingdiary.service.impl.UserServiceImpl;
+import com.project.trainingdiary.service.UserService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +48,7 @@ public class UserServiceImplTest {
   private VerificationRepository verificationRepository;
 
   @InjectMocks
-  private UserServiceImpl userService;
+  private UserService userService;
 
   @Mock
   private EmailProvider emailProvider;
