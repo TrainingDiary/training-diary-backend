@@ -2,9 +2,12 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.service.PtContractService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,5 +26,13 @@ public class PtContractController {
   ) {
     ptContractService.createPtContract(dto);
     return CommonResponse.created();
+  }
+
+  @GetMapping("/{id}")
+  public CommonResponse<?> getPtContract(
+      @PathVariable long id
+  ) {
+    PtContractResponseDto ptContract = ptContractService.getPtContract(id);
+    return CommonResponse.success(ptContract);
   }
 }
