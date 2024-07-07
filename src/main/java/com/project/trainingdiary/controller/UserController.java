@@ -2,6 +2,7 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.SignInRequestDto;
+import com.project.trainingdiary.dto.request.SignOutRequestDto;
 import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
@@ -52,5 +53,13 @@ public class UserController {
   ) {
     SignInResponseDto response = userService.signIn(dto);
     return CommonResponse.success(response);
+  }
+
+  @PostMapping("/sign-out")
+  public CommonResponse<?> signOut(
+      @RequestBody @Valid SignOutRequestDto dto
+  ) {
+    userService.signOut(dto);
+    return CommonResponse.success("Signed out successfully");
   }
 }
