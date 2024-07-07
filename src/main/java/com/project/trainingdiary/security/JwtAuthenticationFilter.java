@@ -1,12 +1,15 @@
 package com.project.trainingdiary.security;
 
+import com.project.trainingdiary.entity.BlacklistedTokenEntity;
 import com.project.trainingdiary.provider.TokenProvider;
+import com.project.trainingdiary.repository.BlacklistRepository;
 import com.project.trainingdiary.service.impl.UserServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,20 +25,29 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final TokenProvider tokenProvider;
+
   private final UserServiceImpl userService;
+
+  private final BlacklistRepository blacklistRepository;
 
   private static final String BEARER_PREFIX = "Bearer ";
   private static final String AUTHORIZATION_HEADER = "Authorization";
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain chain)
-      throws ServletException, IOException {
+      FilterChain chain) throws ServletException, IOException {
+
     String token = parseBearerToken(request);
 
     if (token != null && tokenProvider.validateToken(token)) {
-      String username = tokenProvider.getUsernameFromToken(token);
+      Optional<BlacklistedTokenEntity> blacklistedToken = blacklistRepository.findByToken(token);
 
+      if(blacklistedToken.isPresent()) {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
+        return;
+      }
+
+      String username = tokenProvider.getUsernameFromToken(token);
       UserDetails userDetails = userService.loadUserByUsername(username);
       UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
           userDetails, null, userDetails.getAuthorities());
