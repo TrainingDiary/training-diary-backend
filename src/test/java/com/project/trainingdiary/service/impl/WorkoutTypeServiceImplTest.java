@@ -17,6 +17,7 @@ import com.project.trainingdiary.exception.impl.TrainerIdNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
+import com.project.trainingdiary.service.WorkoutTypeService;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +42,7 @@ class WorkoutTypeServiceImplTest {
   private TrainerRepository trainerRepository;
 
   @InjectMocks
-  private WorkoutTypeServiceImpl workoutTypeService;
+  private WorkoutTypeService workoutTypeService;
 
   private TrainerEntity trainerEntity;
   private WorkoutTypeEntity workoutTypeEntity;
