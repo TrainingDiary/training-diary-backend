@@ -29,8 +29,9 @@ public class SecurityConfig {
         .httpBasic(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(authz -> authz
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                "/swagger-resources/**", "/webjars/**").permitAll() // Swagger UI
-            .anyRequest().permitAll())
+                "/swagger-resources/**", "/webjars/**", "/h2-console/**", "api/users/**")
+            .permitAll() // Swagger UI
+            .anyRequest().authenticated())
         .exceptionHandling(exception -> exception
             .authenticationEntryPoint(new FailedAuthenticationEntryPoint()))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -49,6 +50,6 @@ class FailedAuthenticationEntryPoint implements AuthenticationEntryPoint {
     response.setContentType("application/json;charset=UTF-8");
     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
-    response.getWriter().write("{\"code\": \"NP\", \"message\": \"No Permission.\"}");
+    response.getWriter().write("{\"message\": \"No Permission\", \"statusCode\": \"403\"}");
   }
 }
