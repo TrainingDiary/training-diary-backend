@@ -12,8 +12,9 @@ import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -41,15 +42,13 @@ public class PtContractService {
     ptContractRepository.save(ptContract);
   }
 
-  public List<PtContractResponseDto> getPtContractList() {
+  public Page<PtContractResponseDto> getPtContractList(Pageable pageable) {
     if (getMyRole().equals(UserRoleType.TRAINEE)) {
-      return ptContractRepository.findByTrainee_Email(getEmail()).stream()
-          .map(PtContractEntity::toResponseDto)
-          .toList();
+      return ptContractRepository.findByTrainee_Email(getEmail(), pageable)
+          .map(PtContractEntity::toResponseDto);
     } else {
-      return ptContractRepository.findByTrainer_Email(getEmail()).stream()
-          .map(PtContractEntity::toResponseDto)
-          .toList();
+      return ptContractRepository.findByTrainer_Email(getEmail(), pageable)
+          .map(PtContractEntity::toResponseDto);
     }
   }
 

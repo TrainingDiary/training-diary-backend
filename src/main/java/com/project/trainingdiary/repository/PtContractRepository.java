@@ -1,14 +1,15 @@
 package com.project.trainingdiary.repository;
 
 import com.project.trainingdiary.entity.PtContractEntity;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PtContractRepository extends JpaRepository<PtContractEntity, Long> {
 
   boolean existsByTrainerIdAndTraineeId(long trainerId, long traineeId);
 
-  List<PtContractEntity> findByTrainee_Email(String email);
+  Page<PtContractEntity> findByTrainee_Email(String email, Pageable pageable);
 
-  List<PtContractEntity> findByTrainer_Email(String email);
+  Page<PtContractEntity> findByTrainer_Email(String email, Pageable pageable);
 }

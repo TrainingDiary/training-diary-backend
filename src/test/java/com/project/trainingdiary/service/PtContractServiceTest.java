@@ -30,6 +30,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -199,20 +202,23 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 목록 조회 - 성공(트레이너)")
   void getPtContractListSuccess_Trainer() {
     //given
+    List<PtContractEntity> list = List.of(
+        PtContractEntity.builder()
+            .id(1L)
+            .trainee(trainee)
+            .trainer(trainer)
+            .totalSession(0)
+            .sessionUpdatedAt(LocalDateTime.now())
+            .build()
+    );
+    Pageable pageRequest = PageRequest.of(0, 20);
+
     //when
-    when(ptContractRepository.findByTrainer_Email("trainer@example.com"))
-        .thenReturn(List.of(
-            PtContractEntity.builder()
-                .id(1L)
-                .trainee(trainee)
-                .trainer(trainer)
-                .totalSession(0)
-                .sessionUpdatedAt(LocalDateTime.now())
-                .build()
-        ));
+    when(ptContractRepository.findByTrainer_Email("trainer@example.com", pageRequest))
+        .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
-    ptContractService.getPtContractList();
+    ptContractService.getPtContractList(pageRequest);
   }
 
   @Test
@@ -233,19 +239,22 @@ class PtContractServiceTest {
     lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
     SecurityContextHolder.setContext(securityContext);
 
+    List<PtContractEntity> list = List.of(
+        PtContractEntity.builder()
+            .id(1L)
+            .trainee(trainee)
+            .trainer(trainer)
+            .totalSession(0)
+            .sessionUpdatedAt(LocalDateTime.now())
+            .build()
+    );
+    Pageable pageRequest = PageRequest.of(0, 20);
+
     //when
-    when(ptContractRepository.findByTrainee_Email("trainee@example.com"))
-        .thenReturn(List.of(
-            PtContractEntity.builder()
-                .id(1L)
-                .trainee(trainee)
-                .trainer(trainer)
-                .totalSession(0)
-                .sessionUpdatedAt(LocalDateTime.now())
-                .build()
-        ));
+    when(ptContractRepository.findByTrainee_Email("trainee@example.com", pageRequest))
+        .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
-    ptContractService.getPtContractList();
+    ptContractService.getPtContractList(pageRequest);
   }
 }

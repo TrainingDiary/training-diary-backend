@@ -5,8 +5,9 @@ import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.service.PtContractService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,8 +31,10 @@ public class PtContractController {
   }
 
   @GetMapping
-  public CommonResponse<?> getPtContractList() {
-    List<PtContractResponseDto> ptContracts = ptContractService.getPtContractList();
+  public CommonResponse<?> getPtContractList(
+      Pageable pageable
+  ) {
+    Page<PtContractResponseDto> ptContracts = ptContractService.getPtContractList(pageable);
     return CommonResponse.success(ptContracts);
   }
 
