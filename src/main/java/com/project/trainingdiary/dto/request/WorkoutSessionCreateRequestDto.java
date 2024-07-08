@@ -15,7 +15,7 @@ public class WorkoutSessionCreateRequestDto {
 
   private LocalDate sessionDate;
   private int sessionNumber;
-  private String  specialNote;
+  private String specialNote;
 
   private List<WorkoutCreateRequestDto> workouts;
 
