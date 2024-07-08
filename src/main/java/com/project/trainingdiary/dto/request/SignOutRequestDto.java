@@ -7,6 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SignOutRequestDto {
-    @NotBlank(message = "토큰은 비어 있으면 안됩니다.")
-    private String token;
+
+  @NotBlank(message = "토큰은 비어 있으면 안됩니다.")
+  private String token;
 }
