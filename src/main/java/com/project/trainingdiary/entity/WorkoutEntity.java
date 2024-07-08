@@ -5,7 +5,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,10 +33,8 @@ public class WorkoutEntity extends BaseEntity {
   private int time;
   private int speed;
 
-  @ManyToOne
-  private WorkoutSessionEntity workoutSession;
-
   @OneToOne
+  @JoinColumn(name = "workout_type_id")
   private WorkoutTypeEntity workoutType;
 
 }

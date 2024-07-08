@@ -5,6 +5,7 @@ import static jakarta.persistence.GenerationType.IDENTITY;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
@@ -34,14 +35,13 @@ public class WorkoutSessionEntity extends BaseEntity {
   @Lob
   private String specialNote;
 
-  @OneToMany(mappedBy = "workoutSession")
+  @OneToMany
+  @JoinColumn(name = "workout_session_id")
   private List<WorkoutEntity> workouts;
 
-  @OneToMany(mappedBy = "workoutSession")
+  @OneToMany
+  @JoinColumn(name = "workout_session_id")
   private List<WorkoutMediaEntity> workoutMedia;
-
-//  @ManyToOne
-//  private PtContractEntity ptContract;
 
 }
 
