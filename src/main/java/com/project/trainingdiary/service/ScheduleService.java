@@ -5,7 +5,10 @@ import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
 import com.project.trainingdiary.exception.impl.ScheduleInvalidException;
+import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
+import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
+import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.repository.ScheduleRepository;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -58,6 +61,26 @@ public class ScheduleService {
     }
 
     return scheduleRepository.getScheduleList(startDateTime, endDateTime);
+  }
+
+  @Transactional
+  public void closeSchedules(List<Long> scheduleIds) {
+    // TODO: trainee는 일정을 닫을 수 없음
+
+    List<ScheduleEntity> schedules = scheduleRepository.findAllById(scheduleIds);
+
+    if (scheduleIds.size() != schedules.size()) {
+      throw new ScheduleNotFoundException();
+    }
+
+    long notOpenSchedule = schedules.stream()
+        .filter(s -> !s.getScheduleStatus().equals(ScheduleStatus.OPEN))
+        .count();
+    if (notOpenSchedule > 0) {
+      throw new ScheduleStatusNotOpenException();
+    }
+
+    scheduleRepository.deleteAll(schedules);
   }
 
   private static LocalDateTime getLatest(List<ScheduleEntity> scheduleEntities) {
