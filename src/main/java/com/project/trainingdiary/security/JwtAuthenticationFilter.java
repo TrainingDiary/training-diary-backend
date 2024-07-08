@@ -3,7 +3,7 @@ package com.project.trainingdiary.security;
 import com.project.trainingdiary.entity.BlacklistedTokenEntity;
 import com.project.trainingdiary.provider.TokenProvider;
 import com.project.trainingdiary.repository.BlacklistRepository;
-import com.project.trainingdiary.service.impl.UserServiceImpl;
+import com.project.trainingdiary.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final TokenProvider tokenProvider;
 
-  private final UserServiceImpl userService;
+  private final UserService userService;
 
   private final BlacklistRepository blacklistRepository;
 
@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (token != null && tokenProvider.validateToken(token)) {
       Optional<BlacklistedTokenEntity> blacklistedToken = blacklistRepository.findByToken(token);
 
-      if(blacklistedToken.isPresent()) {
+      if (blacklistedToken.isPresent()) {
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is blacklisted");
         return;
       }
