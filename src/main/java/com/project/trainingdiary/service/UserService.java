@@ -2,9 +2,11 @@ package com.project.trainingdiary.service;
 
 import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.SignInRequestDto;
+import com.project.trainingdiary.dto.request.SignOutRequestDto;
 import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
+import com.project.trainingdiary.entity.BlacklistedTokenEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
@@ -19,6 +21,7 @@ import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.provider.TokenProvider;
+import com.project.trainingdiary.repository.BlacklistRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.VerificationRepository;
@@ -40,6 +43,7 @@ public class UserService implements UserDetailsService {
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
   private final VerificationRepository verificationRepository;
+  private final BlacklistRepository blacklistRepository;
 
   private final EmailProvider emailProvider;
   private final TokenProvider tokenProvider;
@@ -102,7 +106,17 @@ public class UserService implements UserDetailsService {
 
     String token = tokenProvider.createToken(userDetails.getUsername());
 
-    return new SignInResponseDto(token, userDetails.getUsername());
+    return new SignInResponseDto("accessToken", token, dto.getEmail());
+  }
+
+  @Transactional
+  public void signOut(SignOutRequestDto dto) {
+    String token = dto.getToken();
+    LocalDateTime expiryDate = tokenProvider.getExpiryDateFromToken(token);
+    BlacklistedTokenEntity blacklistedTokenEntity = new BlacklistedTokenEntity();
+    blacklistedTokenEntity.setToken(token);
+    blacklistedTokenEntity.setExpiryDate(expiryDate);
+    blacklistRepository.save(blacklistedTokenEntity);
   }
 
   private void validateEmailNotExists(String email) {
@@ -140,9 +154,9 @@ public class UserService implements UserDetailsService {
     trainerRepository.save(trainer);
   }
 
+  @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    TraineeEntity trainee = traineeRepository.findByEmail(username).orElseThrow(
-        UserNotFoundException::new);
+    TraineeEntity trainee = traineeRepository.findByEmail(username).orElse(null);
 
     if (trainee != null) {
       return UserPrincipal.create(trainee);
@@ -150,6 +164,7 @@ public class UserService implements UserDetailsService {
 
     TrainerEntity trainer = trainerRepository.findByEmail(username).orElseThrow(
         UserNotFoundException::new);
+
     return UserPrincipal.create(trainer);
   }
 }
