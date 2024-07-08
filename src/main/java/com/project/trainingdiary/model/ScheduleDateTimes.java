@@ -1,4 +1,4 @@
-package com.project.trainingdiary.dto.request;
+package com.project.trainingdiary.model;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
