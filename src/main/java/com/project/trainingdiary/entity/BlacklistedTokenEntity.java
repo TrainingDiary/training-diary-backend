@@ -13,11 +13,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class BlacklistedTokenEntity {
-    @Id
-    @GeneratedValue(strategy = IDENTITY)
-    private Long id;
 
-    private String token;
+  @Id
+  private String token;
 
-    private LocalDateTime expiryDate;
+  private LocalDateTime expiryDate;
 }
