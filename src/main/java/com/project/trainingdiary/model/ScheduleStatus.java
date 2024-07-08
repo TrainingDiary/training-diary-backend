@@ -4,5 +4,5 @@ public enum ScheduleStatus {
 
   OPEN,
   RESERVE_APPLIED,
-  RESERVE_APPROVED
+  RESERVED
 }

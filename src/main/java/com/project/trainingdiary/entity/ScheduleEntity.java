@@ -28,8 +28,10 @@ public class ScheduleEntity {
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
+  @Column(nullable = false)
   private LocalDateTime startAt;
 
+  @Column(nullable = false)
   private LocalDateTime endAt;
 
   @Enumerated(value = STRING)
