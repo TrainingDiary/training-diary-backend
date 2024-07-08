@@ -20,6 +20,7 @@ import com.project.trainingdiary.repository.TrainerRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -192,5 +193,59 @@ class PtContractServiceTest {
         PtContractNotExistException.class,
         () -> ptContractService.getPtContract(1L)
     );
+  }
+
+  @Test
+  @DisplayName("PT 계약 목록 조회 - 성공(트레이너)")
+  void getPtContractListSuccess_Trainer() {
+    //given
+    //when
+    when(ptContractRepository.findByTrainer_Email("trainer@example.com"))
+        .thenReturn(List.of(
+            PtContractEntity.builder()
+                .id(1L)
+                .trainee(trainee)
+                .trainer(trainer)
+                .totalSession(0)
+                .sessionUpdatedAt(LocalDateTime.now())
+                .build()
+        ));
+
+    //then
+    ptContractService.getPtContractList();
+  }
+
+  @Test
+  @DisplayName("PT 계약 목록 조회 - 성공(트레이니)")
+  void getPtContractListSuccess_Trainee() {
+    //given
+    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_TRAINEE");
+    Collection authorities = Collections.singleton(authority);
+
+    Authentication authentication = mock(Authentication.class);
+    lenient().when(authentication.getAuthorities()).thenReturn(authorities);
+
+    UserDetails userDetails = UserPrincipal.create(trainee);
+    lenient().when(authentication.getPrincipal()).thenReturn(userDetails);
+    lenient().when(authentication.getName()).thenReturn(trainee.getEmail());
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
+    //when
+    when(ptContractRepository.findByTrainee_Email("trainee@example.com"))
+        .thenReturn(List.of(
+            PtContractEntity.builder()
+                .id(1L)
+                .trainee(trainee)
+                .trainer(trainer)
+                .totalSession(0)
+                .sessionUpdatedAt(LocalDateTime.now())
+                .build()
+        ));
+
+    //then
+    ptContractService.getPtContractList();
   }
 }
