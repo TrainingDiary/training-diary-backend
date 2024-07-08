@@ -60,6 +60,6 @@ public class UserController {
       @RequestBody @Valid SignOutRequestDto dto
   ) {
     userService.signOut(dto);
-    return CommonResponse.success("Signed out successfully");
+    return CommonResponse.success(SuccessMessage.SIGN_OUT_SUCCESS);
   }
 }
