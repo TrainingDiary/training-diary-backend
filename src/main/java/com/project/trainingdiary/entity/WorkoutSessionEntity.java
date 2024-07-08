@@ -2,11 +2,13 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.time.LocalDate;
 import java.util.List;
@@ -43,5 +45,26 @@ public class WorkoutSessionEntity extends BaseEntity {
   @JoinColumn(name = "workout_session_id")
   private List<WorkoutMediaEntity> workoutMedia;
 
+  @ManyToOne
+  @JoinColumn(name = "pt_contract_id")
+  private PtContractEntity ptContract;
+
+  public static WorkoutSessionEntity toEntity(
+      WorkoutSessionCreateRequestDto dto,
+      List<WorkoutEntity> workouts,
+      PtContractEntity ptContract
+  ) {
+
+    return WorkoutSessionEntity.builder()
+        .sessionDate(dto.getSessionDate())
+        .sessionNumber(dto.getSessionNumber())
+        .specialNote(dto.getSpecialNote())
+        .workouts(workouts)
+        .ptContract(ptContract)
+        .build();
+
+  }
+
 }
+
 
