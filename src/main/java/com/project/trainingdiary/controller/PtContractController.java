@@ -5,6 +5,7 @@ import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.service.PtContractService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,12 @@ public class PtContractController {
   ) {
     ptContractService.createPtContract(dto);
     return CommonResponse.created();
+  }
+
+  @GetMapping
+  public CommonResponse<?> getPtContractList() {
+    List<PtContractResponseDto> ptContracts = ptContractService.getPtContractList();
+    return CommonResponse.success(ptContracts);
   }
 
   @GetMapping("/{id}")

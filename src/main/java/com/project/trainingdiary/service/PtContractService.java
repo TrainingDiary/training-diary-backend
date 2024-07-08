@@ -12,6 +12,7 @@ import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -38,6 +39,18 @@ public class PtContractService {
 
     PtContractEntity ptContract = PtContractEntity.of(trainer, trainee, dto.getSessionCount());
     ptContractRepository.save(ptContract);
+  }
+
+  public List<PtContractResponseDto> getPtContractList() {
+    if (getMyRole().equals(UserRoleType.TRAINEE)) {
+      return ptContractRepository.findByTrainee_Email(getEmail()).stream()
+          .map(PtContractEntity::toResponseDto)
+          .toList();
+    } else {
+      return ptContractRepository.findByTrainer_Email(getEmail()).stream()
+          .map(PtContractEntity::toResponseDto)
+          .toList();
+    }
   }
 
   public PtContractResponseDto getPtContract(long id) {
