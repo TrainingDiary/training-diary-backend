@@ -2,6 +2,7 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.dto.request.WorkoutCreateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -25,8 +26,6 @@ public class WorkoutEntity extends BaseEntity {
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
-  private String name;
-
   private int weight;
   private int rep;
   private int sets;
@@ -36,5 +35,18 @@ public class WorkoutEntity extends BaseEntity {
   @OneToOne
   @JoinColumn(name = "workout_type_id")
   private WorkoutTypeEntity workoutType;
+
+  public static WorkoutEntity toEntity(WorkoutCreateRequestDto dto, WorkoutTypeEntity entity) {
+
+    return WorkoutEntity.builder()
+        .weight(dto.getWeight())
+        .rep(dto.getRep())
+        .sets(dto.getSets())
+        .time(dto.getTime())
+        .speed(dto.getSpeed())
+        .workoutType(entity)
+        .build();
+
+  }
 
 }
