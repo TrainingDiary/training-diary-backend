@@ -43,6 +43,7 @@ public class PtContractService {
   }
 
   public Page<PtContractResponseDto> getPtContractList(Pageable pageable) {
+    //TODO: 연관된 트레이너, 트레이니 이름 추가. 이름순 정렬
     if (getMyRole().equals(UserRoleType.TRAINEE)) {
       return ptContractRepository.findByTrainee_Email(getEmail(), pageable)
           .map(PtContractEntity::toResponseDto);
