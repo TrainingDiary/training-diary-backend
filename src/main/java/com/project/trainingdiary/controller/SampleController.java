@@ -61,4 +61,9 @@ public class SampleController {
   public CommonResponse<?> sampleException() {
     throw new GlobalException(HttpStatus.NOT_FOUND, "리소스가 없습니다.");
   }
+
+  @GetMapping("api/test/protected")
+  public CommonResponse<?> protectedEndpoint() {
+    return CommonResponse.success("인증 권한 있습니다");
+  }
 }
