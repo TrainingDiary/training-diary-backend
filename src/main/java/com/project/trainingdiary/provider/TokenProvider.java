@@ -7,6 +7,8 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,5 +46,12 @@ public class TokenProvider {
     Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
     return claims.getSubject();
+  }
+
+  public LocalDateTime getExpiryDateFromToken(String token) {
+    Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+    Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+    Date expiration = claims.getExpiration();
+    return LocalDateTime.ofInstant(expiration.toInstant(), ZoneId.systemDefault());
   }
 }
