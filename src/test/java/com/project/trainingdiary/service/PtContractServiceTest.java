@@ -6,15 +6,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
+import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.PtContractAlreadyExistException;
+import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -153,6 +156,41 @@ class PtContractServiceTest {
     assertThrows(
         PtContractAlreadyExistException.class,
         () -> ptContractService.createPtContract(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("PT 계약 단건 조회 - 성공")
+  void getPtContract() {
+    //given
+    //when
+    when(ptContractRepository.findById(1L))
+        .thenReturn(Optional.of(
+            PtContractEntity.builder()
+                .id(1L)
+                .trainee(trainee)
+                .trainer(trainer)
+                .totalSession(0)
+                .sessionUpdatedAt(LocalDateTime.now())
+                .build()
+        ));
+
+    //then
+    ptContractService.getPtContract(1L);
+  }
+
+  @Test
+  @DisplayName("PT 계약 단건 조회 - 실패(없는 계약 id로 조회)")
+  void getPtContractFail_NotFound() {
+    //given
+    //when
+    when(ptContractRepository.findById(1L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        PtContractNotExistException.class,
+        () -> ptContractService.getPtContract(1L)
     );
   }
 }
