@@ -3,12 +3,16 @@ package com.project.trainingdiary.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
+import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
+import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.ScheduleStatus;
@@ -22,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -198,6 +203,74 @@ class ScheduleServiceTest {
             LocalDate.of(2024, 1, 1),
             LocalDate.of(2024, 9, 1)
         )
+    );
+  }
+
+  @Test
+  @DisplayName("일정 닫기 - 성공")
+  void closeSchedule() {
+    //given
+    List<Long> scheduleIds = List.of(1L, 2L, 3L);
+    when(scheduleRepository.findAllById(scheduleIds))
+        .thenReturn(
+            List.of(
+                ScheduleEntity.builder().id(1L).scheduleStatus(ScheduleStatus.OPEN).build(),
+                ScheduleEntity.builder().id(2L).scheduleStatus(ScheduleStatus.OPEN).build(),
+                ScheduleEntity.builder().id(3L).scheduleStatus(ScheduleStatus.OPEN).build()
+            )
+        );
+
+    //when
+    scheduleService.closeSchedules(scheduleIds);
+    ArgumentCaptor<List<ScheduleEntity>> captor = ArgumentCaptor.forClass(List.class);
+
+    //then
+    verify(scheduleRepository).deleteAll(captor.capture());
+    assertEquals(3, captor.getValue().size());
+  }
+
+  @Test
+  @DisplayName("일정 닫기 - 실패(스케쥴 아이디 목록 중에 없는 스케쥴이 있음)")
+  void closeScheduleFail_ScheduleNotFound() {
+    //given
+    List<Long> scheduleIds = List.of(1L, 2L, 3L);
+
+    //when
+    when(scheduleRepository.findAllById(scheduleIds))
+        .thenReturn(
+            List.of(
+                ScheduleEntity.builder().id(1L).scheduleStatus(ScheduleStatus.OPEN).build(),
+                ScheduleEntity.builder().id(3L).scheduleStatus(ScheduleStatus.OPEN).build()
+            )
+        );
+
+    //then
+    assertThrows(
+        ScheduleNotFoundException.class,
+        () -> scheduleService.closeSchedules(scheduleIds)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 닫기 - 실패(스케쥴이 OPEN 상태가 아님)")
+  void closeScheduleFail_ScheduleNotOpen() {
+    //given
+    List<Long> scheduleIds = List.of(1L, 2L, 3L);
+
+    //when
+    when(scheduleRepository.findAllById(scheduleIds))
+        .thenReturn(
+            List.of(
+                ScheduleEntity.builder().id(1L).scheduleStatus(ScheduleStatus.OPEN).build(),
+                ScheduleEntity.builder().id(2L).scheduleStatus(ScheduleStatus.RESERVED).build(),
+                ScheduleEntity.builder().id(3L).scheduleStatus(ScheduleStatus.OPEN).build()
+            )
+        );
+
+    //then
+    assertThrows(
+        ScheduleStatusNotOpenException.class,
+        () -> scheduleService.closeSchedules(scheduleIds)
     );
   }
 }

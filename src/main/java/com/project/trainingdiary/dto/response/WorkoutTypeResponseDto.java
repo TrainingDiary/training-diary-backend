@@ -25,7 +25,7 @@ public class WorkoutTypeResponseDto {
   private boolean timeInputRequired;
   private boolean speedInputRequired;
 
-  public static WorkoutTypeResponseDto of(WorkoutTypeEntity entity) {
+  public static WorkoutTypeResponseDto fromEntity(WorkoutTypeEntity entity) {
 
     return WorkoutTypeResponseDto.builder()
         .id(entity.getId())

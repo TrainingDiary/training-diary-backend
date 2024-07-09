@@ -2,11 +2,10 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.dto.request.WorkoutCreateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,7 +24,9 @@ public class WorkoutEntity extends BaseEntity {
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
-  private String name;
+  private String workoutTypeName;
+  private String targetMuscle;
+  private String remarks;
 
   private int weight;
   private int rep;
@@ -33,10 +34,19 @@ public class WorkoutEntity extends BaseEntity {
   private int time;
   private int speed;
 
-  @ManyToOne
-  private WorkoutSessionEntity workoutSession;
+  public static WorkoutEntity toEntity(WorkoutCreateRequestDto dto, WorkoutTypeEntity entity) {
 
-  @OneToOne
-  private WorkoutTypeEntity workoutType;
+    return WorkoutEntity.builder()
+        .workoutTypeName(entity.getName())
+        .targetMuscle(entity.getTargetMuscle())
+        .remarks(entity.getRemarks())
+        .weight(dto.getWeight())
+        .rep(dto.getRep())
+        .sets(dto.getSets())
+        .time(dto.getTime())
+        .speed(dto.getSpeed())
+        .build();
+
+  }
 
 }
