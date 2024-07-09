@@ -1,4 +1,4 @@
-package com.project.trainingdiary.service.impl;
+package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,7 +17,6 @@ import com.project.trainingdiary.exception.impl.TrainerIdNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
-import com.project.trainingdiary.service.WorkoutTypeService;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
-class WorkoutTypeServiceImplTest {
+class WorkoutTypeServiceTest {
 
   @Mock
   private WorkoutTypeRepository workoutTypeRepository;
