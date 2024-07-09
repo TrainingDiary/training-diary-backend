@@ -10,6 +10,8 @@ import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
@@ -43,7 +45,8 @@ public class TokenProvider {
   /**
    * 주어진 사용자 ID와 만료 날짜로 JWT 토큰을 생성합니다.
    */
-  public String createToken(String userId, Date expiryDate) {
+  public String createToken(String userId, LocalDateTime expiryDateTime) {
+    Date expiryDate = Date.from(expiryDateTime.atZone(ZoneId.systemDefault()).toInstant());
     return Jwts.builder()
         .setSubject(userId)
         .setIssuedAt(new Date())
@@ -56,16 +59,16 @@ public class TokenProvider {
    * 사용자 ID로 하루 동안 유효한 접근 토큰을 생성합니다.
    */
   public String createAccessToken(String userId) {
-    Date expiryDate = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
-    return createToken(userId, expiryDate);
+    LocalDateTime expiryDateTime = LocalDateTime.now().plusDays(1);
+    return createToken(userId, expiryDateTime);
   }
 
   /**
    * 사용자 ID로 7일 동안 유효한 리프레시 토큰을 생성합니다.
    */
   public String createRefreshToken(String userId) {
-    Date expiryDate = Date.from(Instant.now().plus(7, ChronoUnit.DAYS));
-    return createToken(userId, expiryDate);
+    LocalDateTime expiryDateTime = LocalDateTime.now().plusDays(7);
+    return createToken(userId, expiryDateTime);
   }
 
   /**
@@ -91,17 +94,18 @@ public class TokenProvider {
   /**
    * JWT 토큰에서 만료 날짜를 추출합니다.
    */
-  public Date getExpiryDateFromToken(String token) {
+  public LocalDateTime getExpiryDateFromToken(String token) {
     Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-    return claims.getExpiration();
+    Date expiration = claims.getExpiration();
+    return expiration.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
   }
 
   /**
    * 주어진 JWT 토큰이 만료되었는지 확인합니다.
    */
   public boolean isTokenExpired(String token) {
-    Date expiryDate = getExpiryDateFromToken(token);
-    return expiryDate.before(new Date());
+    LocalDateTime expiryDate = getExpiryDateFromToken(token);
+    return expiryDate.isBefore(LocalDateTime.now());
   }
 
   /**
@@ -116,7 +120,7 @@ public class TokenProvider {
    * 주어진 JWT 토큰을 블랙리스트에 추가합니다.
    */
   public void blacklistToken(String token) {
-    Date expiryDate = getExpiryDateFromToken(token);
+    LocalDateTime expiryDate = getExpiryDateFromToken(token);
     BlacklistedTokenEntity blacklistedTokenEntity = new BlacklistedTokenEntity();
     blacklistedTokenEntity.setToken(token);
     blacklistedTokenEntity.setExpiryDate(expiryDate);
