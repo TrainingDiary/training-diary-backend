@@ -175,7 +175,7 @@ class PtContractServiceTest {
                 .trainee(trainee)
                 .trainer(trainer)
                 .totalSession(0)
-                .sessionUpdatedAt(LocalDateTime.now())
+                .totalSessionUpdatedAt(LocalDateTime.now())
                 .build()
         ));
 
@@ -208,7 +208,7 @@ class PtContractServiceTest {
             .trainee(trainee)
             .trainer(trainer)
             .totalSession(0)
-            .sessionUpdatedAt(LocalDateTime.now())
+            .totalSessionUpdatedAt(LocalDateTime.now())
             .build()
     );
     Pageable pageRequest = PageRequest.of(0, 20);
@@ -245,7 +245,7 @@ class PtContractServiceTest {
             .trainee(trainee)
             .trainer(trainer)
             .totalSession(0)
-            .sessionUpdatedAt(LocalDateTime.now())
+            .totalSessionUpdatedAt(LocalDateTime.now())
             .build()
     );
     Pageable pageRequest = PageRequest.of(0, 20);

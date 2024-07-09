@@ -30,7 +30,11 @@ public class PtContractEntity extends BaseEntity {
 
   private int totalSession;
 
-  private LocalDateTime sessionUpdatedAt;
+  private int usedSession;
+
+  private LocalDateTime totalSessionUpdatedAt;
+
+  private boolean isTerminated;
 
   @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "trainer_id")
@@ -40,11 +44,16 @@ public class PtContractEntity extends BaseEntity {
   @JoinColumn(name = "trainee_id")
   private TraineeEntity trainee;
 
+  public void addSession(int addition) {
+    this.totalSession += addition;
+    this.totalSessionUpdatedAt = LocalDateTime.now();
+  }
+
   public static PtContractEntity of(TrainerEntity trainer, TraineeEntity trainee,
       int sessionCount) {
     return PtContractEntity.builder()
         .totalSession(sessionCount)
-        .sessionUpdatedAt(LocalDateTime.now())
+        .totalSessionUpdatedAt(LocalDateTime.now())
         .trainer(trainer)
         .trainee(trainee)
         .build();
@@ -55,9 +64,10 @@ public class PtContractEntity extends BaseEntity {
         .id(id)
         .trainerId(trainer.getId())
         .traineeId(trainee.getId())
+        .usedSession(usedSession)
         .totalSession(totalSession)
         .createdAt(getCreatedAt())
-        .sessionUpdatedAt(sessionUpdatedAt)
+        .totalSessionUpdatedAt(totalSessionUpdatedAt)
         .build();
   }
 }
