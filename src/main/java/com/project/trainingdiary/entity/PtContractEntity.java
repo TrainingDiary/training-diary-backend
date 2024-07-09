@@ -49,6 +49,10 @@ public class PtContractEntity extends BaseEntity {
     this.totalSessionUpdatedAt = LocalDateTime.now();
   }
 
+  public void terminate() {
+    isTerminated = true;
+  }
+
   public static PtContractEntity of(TrainerEntity trainer, TraineeEntity trainee,
       int sessionCount) {
     return PtContractEntity.builder()

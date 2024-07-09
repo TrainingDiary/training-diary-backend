@@ -2,6 +2,7 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
+import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.service.PtContractService;
@@ -52,6 +53,14 @@ public class PtContractController {
       @RequestBody @Valid AddPtContractSessionRequestDto dto
   ) {
     ptContractService.addPtContractSession(dto);
+    return CommonResponse.success();
+  }
+
+  @PostMapping("/terminate")
+  public CommonResponse<?> terminatePtContract(
+      @RequestBody @Valid TerminatePtContractRequestDto dto
+  ) {
+    ptContractService.terminatePtContract(dto);
     return CommonResponse.success();
   }
 }
