@@ -36,7 +36,9 @@ import com.project.trainingdiary.repository.VerificationRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -206,8 +208,13 @@ public class UserServiceTest {
     signInDto.setEmail("trainee@example.com");
     signInDto.setPassword("password");
 
-    Date accessTokenExpiryDate = new Date(System.currentTimeMillis() + 3600000); // 1 hour later
-    Date refreshTokenExpiryDate = new Date(System.currentTimeMillis() + 604800000); // 7 days later
+    LocalDateTime accessTokenExpiryDate = Instant.ofEpochMilli(System.currentTimeMillis() + 3600000)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDateTime(); // 1 hour later
+
+    LocalDateTime refreshTokenExpiryDate = Instant.ofEpochMilli(System.currentTimeMillis() + 604800000)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDateTime(); // 7 days later
 
     when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(
         Optional.of(traineeEntity));
