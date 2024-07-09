@@ -1,15 +1,20 @@
 package com.project.trainingdiary.service;
 
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
+import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.PtContractAlreadyExistException;
+import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,6 +42,34 @@ public class PtContractService {
     ptContractRepository.save(ptContract);
   }
 
+  public Page<PtContractResponseDto> getPtContractList(Pageable pageable) {
+    //TODO: 연관된 트레이너, 트레이니 이름 추가. 이름순 정렬
+    if (getMyRole().equals(UserRoleType.TRAINEE)) {
+      return ptContractRepository.findByTrainee_Email(getEmail(), pageable)
+          .map(PtContractEntity::toResponseDto);
+    } else {
+      return ptContractRepository.findByTrainer_Email(getEmail(), pageable)
+          .map(PtContractEntity::toResponseDto);
+    }
+  }
+
+  public PtContractResponseDto getPtContract(long id) {
+    PtContractEntity ptContract = ptContractRepository.findById(id)
+        .orElseThrow(PtContractNotExistException::new);
+
+    if (getMyRole().equals(UserRoleType.TRAINEE)) {
+      if (!ptContract.getTrainee().getEmail().equals(getEmail())) {
+        throw new PtContractNotExistException();
+      }
+    } else {
+      if (!ptContract.getTrainer().getEmail().equals(getEmail())) {
+        throw new PtContractNotExistException();
+      }
+    }
+
+    return ptContract.toResponseDto();
+  }
+
   private TrainerEntity getTrainer() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     if (auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_TRAINER"))) {
@@ -49,5 +82,18 @@ public class PtContractService {
   private TraineeEntity getTrainee(String email) {
     return traineeRepository.findByEmail(email)
         .orElseThrow(UserNotFoundException::new);
+  }
+
+  private UserRoleType getMyRole() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRAINER"))) {
+      return UserRoleType.TRAINER;
+    } else {
+      return UserRoleType.TRAINEE;
+    }
+  }
+
+  private String getEmail() {
+    return SecurityContextHolder.getContext().getAuthentication().getName();
   }
 }

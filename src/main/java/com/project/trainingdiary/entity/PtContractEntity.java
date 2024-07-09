@@ -3,6 +3,7 @@ package com.project.trainingdiary.entity;
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -46,6 +47,17 @@ public class PtContractEntity extends BaseEntity {
         .sessionUpdatedAt(LocalDateTime.now())
         .trainer(trainer)
         .trainee(trainee)
+        .build();
+  }
+
+  public PtContractResponseDto toResponseDto() {
+    return PtContractResponseDto.builder()
+        .id(id)
+        .trainerId(trainer.getId())
+        .traineeId(trainee.getId())
+        .totalSession(totalSession)
+        .createdAt(getCreatedAt())
+        .sessionUpdatedAt(sessionUpdatedAt)
         .build();
   }
 }
