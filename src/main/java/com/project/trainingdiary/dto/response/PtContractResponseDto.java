@@ -11,8 +11,9 @@ import lombok.Setter;
 public class PtContractResponseDto {
 
   private Long id;
-  private LocalDateTime sessionUpdatedAt;
+  private LocalDateTime totalSessionUpdatedAt;
   private int totalSession;
+  private int usedSession;
   private Long trainerId;
   private Long traineeId;
   private LocalDateTime createdAt;

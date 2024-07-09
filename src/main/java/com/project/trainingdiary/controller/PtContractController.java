@@ -1,5 +1,6 @@
 package com.project.trainingdiary.controller;
 
+import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
@@ -44,5 +45,13 @@ public class PtContractController {
   ) {
     PtContractResponseDto ptContract = ptContractService.getPtContract(id);
     return CommonResponse.success(ptContract);
+  }
+
+  @PostMapping("/add-session")
+  public CommonResponse<?> addPtContractSession(
+      @RequestBody @Valid AddPtContractSessionRequestDto dto
+  ) {
+    ptContractService.addPtContractSession(dto);
+    return CommonResponse.success();
   }
 }

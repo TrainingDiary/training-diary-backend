@@ -1,5 +1,6 @@
 package com.project.trainingdiary.service;
 
+import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
@@ -29,6 +30,9 @@ public class PtContractService {
   private final TrainerRepository trainerRepository;
   private final TraineeRepository traineeRepository;
 
+  /**
+   * PT 계약 생성
+   */
   @Transactional
   public void createPtContract(CreatePtContractRequestDto dto) {
     TrainerEntity trainer = getTrainer(); // 이 메서드를 호출한 사람은 트레이너임
@@ -42,17 +46,23 @@ public class PtContractService {
     ptContractRepository.save(ptContract);
   }
 
+  /**
+   * PT 계약을 목록으로 조회
+   */
   public Page<PtContractResponseDto> getPtContractList(Pageable pageable) {
     //TODO: 연관된 트레이너, 트레이니 이름 추가. 이름순 정렬
     if (getMyRole().equals(UserRoleType.TRAINEE)) {
-      return ptContractRepository.findByTrainee_Email(getEmail(), pageable)
+      return ptContractRepository.findByTraineeEmail(getEmail(), pageable)
           .map(PtContractEntity::toResponseDto);
     } else {
-      return ptContractRepository.findByTrainer_Email(getEmail(), pageable)
+      return ptContractRepository.findByTrainerEmail(getEmail(), pageable)
           .map(PtContractEntity::toResponseDto);
     }
   }
 
+  /**
+   * PT 계약을 id로 조회
+   */
   public PtContractResponseDto getPtContract(long id) {
     PtContractEntity ptContract = ptContractRepository.findById(id)
         .orElseThrow(PtContractNotExistException::new);
@@ -69,6 +79,24 @@ public class PtContractService {
 
     return ptContract.toResponseDto();
   }
+
+  /**
+   * PT 계약 횟수를 업데이트 함
+   */
+  @Transactional
+  public void addPtContractSession(AddPtContractSessionRequestDto dto) {
+    TrainerEntity trainer = getTrainer();
+
+    // 1개의 계약만 있다는 것을 가정함
+    PtContractEntity ptContract = ptContractRepository
+        .findByTrainerIdAndTraineeId(trainer.getId(), dto.getTraineeId())
+        .orElseThrow(PtContractNotExistException::new);
+
+    ptContract.addSession(dto.getAddition());
+    ptContractRepository.save(ptContract);
+  }
+
+  //TODO: usedSession 업데이트를 해야함 - 예약 시간이 지나는 순간에 하면 좋을 듯
 
   private TrainerEntity getTrainer() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();

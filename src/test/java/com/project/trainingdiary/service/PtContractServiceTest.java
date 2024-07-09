@@ -1,10 +1,13 @@
 package com.project.trainingdiary.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -175,7 +179,7 @@ class PtContractServiceTest {
                 .trainee(trainee)
                 .trainer(trainer)
                 .totalSession(0)
-                .sessionUpdatedAt(LocalDateTime.now())
+                .totalSessionUpdatedAt(LocalDateTime.now())
                 .build()
         ));
 
@@ -208,13 +212,13 @@ class PtContractServiceTest {
             .trainee(trainee)
             .trainer(trainer)
             .totalSession(0)
-            .sessionUpdatedAt(LocalDateTime.now())
+            .totalSessionUpdatedAt(LocalDateTime.now())
             .build()
     );
     Pageable pageRequest = PageRequest.of(0, 20);
 
     //when
-    when(ptContractRepository.findByTrainer_Email("trainer@example.com", pageRequest))
+    when(ptContractRepository.findByTrainerEmail("trainer@example.com", pageRequest))
         .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
@@ -245,16 +249,63 @@ class PtContractServiceTest {
             .trainee(trainee)
             .trainer(trainer)
             .totalSession(0)
-            .sessionUpdatedAt(LocalDateTime.now())
+            .totalSessionUpdatedAt(LocalDateTime.now())
             .build()
     );
     Pageable pageRequest = PageRequest.of(0, 20);
 
     //when
-    when(ptContractRepository.findByTrainee_Email("trainee@example.com", pageRequest))
+    when(ptContractRepository.findByTraineeEmail("trainee@example.com", pageRequest))
         .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
     ptContractService.getPtContractList(pageRequest);
+  }
+
+  @Test
+  @DisplayName("PT 계약 횟수 증가 - 성공")
+  void increasePtContractSession() {
+    //given
+    AddPtContractSessionRequestDto dto = new AddPtContractSessionRequestDto();
+    dto.setTraineeId(10L);
+    dto.setAddition(20);
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L))
+        .thenReturn(Optional.of(
+            PtContractEntity.builder()
+                .id(1L)
+                .trainee(trainee)
+                .trainer(trainer)
+                .totalSession(0)
+                .totalSessionUpdatedAt(LocalDateTime.now())
+                .build()
+        ));
+
+    ArgumentCaptor<PtContractEntity> captor = ArgumentCaptor.forClass(PtContractEntity.class);
+    ptContractService.addPtContractSession(dto);
+
+    //then
+    verify(ptContractRepository).save(captor.capture());
+    assertEquals(20, captor.getValue().getTotalSession());
+  }
+
+  @Test
+  @DisplayName("PT 계약 횟수 증가 - 실패(둘 사이 계약이 없는 경우)")
+  void increasePtContractSessionFail_NoContract() {
+    //given
+    AddPtContractSessionRequestDto dto = new AddPtContractSessionRequestDto();
+    dto.setTraineeId(10L);
+    dto.setAddition(20);
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        PtContractNotExistException.class,
+        () -> ptContractService.addPtContractSession(dto)
+    );
   }
 }
