@@ -13,6 +13,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WorkoutSessionCreateRequestDto {
 
+  private Long traineeId;
+
   private LocalDate sessionDate;
   private int sessionNumber;
   private String specialNote;

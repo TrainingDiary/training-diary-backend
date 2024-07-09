@@ -62,6 +62,7 @@ class WorkoutSessionServiceTest {
   private WorkoutSessionService workoutSessionService;
 
   private TrainerEntity trainer;
+  private TraineeEntity trainee;
   private PtContractEntity ptContract;
   private WorkoutTypeEntity workoutType;
 
@@ -72,8 +73,9 @@ class WorkoutSessionServiceTest {
     SecurityContextHolder.getContext().setAuthentication(authentication);
 
     trainer = TrainerEntity.builder().id(1L).email("trainer@gmail.com").role(TRAINEE).build();
+    trainee = TraineeEntity.builder().id(10L).role(TRAINEE).build();
     ptContract = PtContractEntity.builder().id(100L).trainer(trainer)
-        .trainee(TraineeEntity.builder().id(10L).role(TRAINEE).build()).build();
+        .trainee(trainee).build();
     workoutType = WorkoutTypeEntity.builder().id(1000L).name("WorkoutType").build();
   }
 
@@ -81,28 +83,29 @@ class WorkoutSessionServiceTest {
   @DisplayName("운동 일지 생성 성공")
   public void testCreateWorkoutSessionSuccess() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L)).thenReturn(
-        Optional.of(ptContract));
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
+        .thenReturn(Optional.of(ptContract));
     when(workoutTypeRepository.findById(1000L)).thenReturn(Optional.of(workoutType));
 
     WorkoutCreateRequestDto workoutCreateRequestDto = new WorkoutCreateRequestDto();
     workoutCreateRequestDto.setWorkoutTypeId(1000L);
 
     WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
+    workoutSessionCreateRequestDto.setTraineeId(10L);
     workoutSessionCreateRequestDto.setWorkouts(List.of(workoutCreateRequestDto));
 
-    workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto, 10L);
+    workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto);
 
     ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
     verify(workoutRepository, times(1)).save(workoutCaptor.capture());
-    assertEquals(workoutType, workoutCaptor.getValue().getWorkoutType());
+    assertEquals("WorkoutType", workoutCaptor.getValue().getWorkoutTypeName());
 
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor =
+        ArgumentCaptor.forClass(WorkoutSessionEntity.class);
     verify(workoutSessionRepository, times(1)).save(sessionCaptor.capture());
     assertEquals(ptContract, sessionCaptor.getValue().getPtContract());
     assertEquals(1, sessionCaptor.getValue().getWorkouts().size());
-    assertEquals(workoutType, sessionCaptor.getValue().getWorkouts().get(0).getWorkoutType());
+    assertEquals("WorkoutType", sessionCaptor.getValue().getWorkouts().get(0).getWorkoutTypeName());
   }
 
   @Test
@@ -114,10 +117,11 @@ class WorkoutSessionServiceTest {
     workoutCreateRequestDto.setWorkoutTypeId(1000L);
 
     WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
+    workoutSessionCreateRequestDto.setTraineeId(10L);
     workoutSessionCreateRequestDto.setWorkouts(List.of(workoutCreateRequestDto));
 
     assertThrows(UserNotFoundException.class,
-        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto, 10L));
+        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto));
 
     verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
     verifyNoInteractions(ptContractRepository, workoutTypeRepository, workoutRepository,
@@ -128,17 +132,18 @@ class WorkoutSessionServiceTest {
   @DisplayName("운동 일지 생성 실패 - PT 계약이 존재 하지 않을 때 예외 발생")
   public void testCreateWorkoutSessionFailPtContractNotFound() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L)).thenReturn(
-        Optional.empty());
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L))
+        .thenReturn(Optional.empty());
 
     WorkoutCreateRequestDto workoutCreateRequestDto = new WorkoutCreateRequestDto();
     workoutCreateRequestDto.setWorkoutTypeId(1000L);
 
     WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
+    workoutSessionCreateRequestDto.setTraineeId(10L);
     workoutSessionCreateRequestDto.setWorkouts(List.of(workoutCreateRequestDto));
 
     assertThrows(PtContractNotFoundException.class,
-        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto, 10L));
+        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto));
 
     verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
     verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(), 10L);
@@ -149,18 +154,19 @@ class WorkoutSessionServiceTest {
   @DisplayName("운동 일지 생성 실패 - 운동 종류가 존재 하지 않을 때 예외 발생")
   public void testCreateWorkoutSessionFailWorkoutTypeNotFound() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L)).thenReturn(
-        Optional.of(ptContract));
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L))
+        .thenReturn(Optional.of(ptContract));
     when(workoutTypeRepository.findById(1000L)).thenReturn(Optional.empty());
 
     WorkoutCreateRequestDto workoutCreateRequestDto = new WorkoutCreateRequestDto();
     workoutCreateRequestDto.setWorkoutTypeId(1000L);
 
     WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
+    workoutSessionCreateRequestDto.setTraineeId(10L);
     workoutSessionCreateRequestDto.setWorkouts(List.of(workoutCreateRequestDto));
 
     assertThrows(WorkoutTypeNotFoundException.class,
-        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto, 10L));
+        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto));
 
     verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
     verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(), 10L);

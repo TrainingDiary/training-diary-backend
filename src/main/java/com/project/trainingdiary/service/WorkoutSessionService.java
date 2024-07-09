@@ -32,12 +32,12 @@ public class WorkoutSessionService {
   private final PtContractRepository ptContractRepository;
 
   @Transactional
-  public void createWorkoutSession(WorkoutSessionCreateRequestDto dto, Long traineeId) {
+  public void createWorkoutSession(WorkoutSessionCreateRequestDto dto) {
     TrainerEntity trainer = trainerRepository
         .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
         .orElseThrow(UserNotFoundException::new);
     PtContractEntity ptContract = ptContractRepository
-        .findByTrainerIdAndTraineeId(trainer.getId(), traineeId)
+        .findByTrainerIdAndTraineeId(trainer.getId(), dto.getTraineeId())
         .orElseThrow(PtContractNotFoundException::new);
 
     List<WorkoutEntity> workouts = dto.getWorkouts().stream().map(details -> {
