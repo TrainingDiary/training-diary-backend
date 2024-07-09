@@ -214,7 +214,7 @@ class PtContractServiceTest {
     Pageable pageRequest = PageRequest.of(0, 20);
 
     //when
-    when(ptContractRepository.findByTrainer_Email("trainer@example.com", pageRequest))
+    when(ptContractRepository.findByTrainerEmail("trainer@example.com", pageRequest))
         .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
@@ -251,7 +251,7 @@ class PtContractServiceTest {
     Pageable pageRequest = PageRequest.of(0, 20);
 
     //when
-    when(ptContractRepository.findByTrainee_Email("trainee@example.com", pageRequest))
+    when(ptContractRepository.findByTraineeEmail("trainee@example.com", pageRequest))
         .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
