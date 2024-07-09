@@ -2,13 +2,14 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.SignInRequestDto;
-import com.project.trainingdiary.dto.request.SignOutRequestDto;
 import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,25 +42,25 @@ public class UserController {
 
   @PostMapping("/sign-up")
   public CommonResponse<?> signUp(
-      @RequestBody @Valid SignUpRequestDto dto
+      @RequestBody @Valid SignUpRequestDto dto, HttpServletResponse response
   ) {
-    userService.signUp(dto);
+    userService.signUp(dto, response);
     return CommonResponse.created(SuccessMessage.SIGN_UP_SUCCESS);
   }
 
   @PostMapping("/sign-in")
   public CommonResponse<?> signIn(
-      @RequestBody @Valid SignInRequestDto dto
+      @RequestBody @Valid SignInRequestDto dto, HttpServletResponse response
   ) {
-    SignInResponseDto response = userService.signIn(dto);
-    return CommonResponse.success(response);
+    SignInResponseDto signInResponse = userService.signIn(dto, response);
+    return CommonResponse.success(signInResponse);
   }
 
   @PostMapping("/sign-out")
   public CommonResponse<?> signOut(
-      @RequestBody @Valid SignOutRequestDto dto
+      HttpServletRequest request, HttpServletResponse response
   ) {
-    userService.signOut(dto);
+    userService.signOut(request, response);
     return CommonResponse.success(SuccessMessage.SIGN_OUT_SUCCESS);
   }
 }
