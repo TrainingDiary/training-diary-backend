@@ -208,8 +208,8 @@ public class UserService implements UserDetailsService {
     String accessToken = tokenProvider.createAccessToken(username);
     String refreshToken = tokenProvider.createRefreshToken(username);
 
-    Date accessTokenExpiryDate = tokenProvider.getExpiryDateFromToken(accessToken);
-    Date refreshTokenExpiryDate = tokenProvider.getExpiryDateFromToken(refreshToken);
+    LocalDateTime accessTokenExpiryDate = tokenProvider.getExpiryDateFromToken(accessToken);
+    LocalDateTime refreshTokenExpiryDate = tokenProvider.getExpiryDateFromToken(refreshToken);
 
     cookieProvider.setCookie(response, ACCESS_TOKEN_COOKIE_NAME, accessToken,
         accessTokenExpiryDate);
