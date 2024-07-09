@@ -67,7 +67,7 @@ public class WorkoutTypeService {
   public Page<WorkoutTypeResponseDto> getWorkoutTypes(Long id, Pageable pageable) {
     Page<WorkoutTypeEntity> page = workoutTypeRepository.findByTrainer_Id(id, pageable);
 
-    return page.map(WorkoutTypeResponseDto::of);
+    return page.map(WorkoutTypeResponseDto::fromEntity);
   }
 
   /**
@@ -77,7 +77,7 @@ public class WorkoutTypeService {
     WorkoutTypeEntity entity = workoutTypeRepository.findByTrainer_IdAndId(trainerId, workoutTypeId)
         .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutTypeId));
 
-    return WorkoutTypeResponseDto.of(entity);
+    return WorkoutTypeResponseDto.fromEntity(entity);
   }
 
 }
