@@ -30,6 +30,9 @@ public class PtContractService {
   private final TrainerRepository trainerRepository;
   private final TraineeRepository traineeRepository;
 
+  /**
+   * PT 계약 생성
+   */
   @Transactional
   public void createPtContract(CreatePtContractRequestDto dto) {
     TrainerEntity trainer = getTrainer(); // 이 메서드를 호출한 사람은 트레이너임
@@ -43,6 +46,9 @@ public class PtContractService {
     ptContractRepository.save(ptContract);
   }
 
+  /**
+   * PT 계약을 목록으로 조회
+   */
   public Page<PtContractResponseDto> getPtContractList(Pageable pageable) {
     //TODO: 연관된 트레이너, 트레이니 이름 추가. 이름순 정렬
     if (getMyRole().equals(UserRoleType.TRAINEE)) {
@@ -54,6 +60,9 @@ public class PtContractService {
     }
   }
 
+  /**
+   * PT 계약을 id로 조회
+   */
   public PtContractResponseDto getPtContract(long id) {
     PtContractEntity ptContract = ptContractRepository.findById(id)
         .orElseThrow(PtContractNotExistException::new);
