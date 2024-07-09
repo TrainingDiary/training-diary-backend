@@ -3,35 +3,41 @@ package com.project.trainingdiary.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.SignInRequestDto;
-import com.project.trainingdiary.dto.request.SignOutRequestDto;
+import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
-import com.project.trainingdiary.entity.BlacklistedTokenEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
+import com.project.trainingdiary.exception.impl.PasswordMismatchedException;
 import com.project.trainingdiary.exception.impl.TraineeEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
+import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
 import com.project.trainingdiary.exception.impl.WrongPasswordException;
 import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.provider.CookieProvider;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.provider.TokenProvider;
-import com.project.trainingdiary.repository.BlacklistRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.VerificationRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +53,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
+
   @Mock
   private TraineeRepository traineeRepository;
 
@@ -57,13 +64,13 @@ public class UserServiceTest {
   private VerificationRepository verificationRepository;
 
   @Mock
-  private BlacklistRepository blacklistRepository;
-
-  @Mock
   private EmailProvider emailProvider;
 
   @Mock
   private TokenProvider tokenProvider;
+
+  @Mock
+  private CookieProvider cookieProvider;
 
   @Mock
   private PasswordEncoder passwordEncoder;
@@ -79,9 +86,6 @@ public class UserServiceTest {
 
   @Captor
   private ArgumentCaptor<VerificationEntity> verificationEntityCaptor;
-
-  @Captor
-  private ArgumentCaptor<BlacklistedTokenEntity> blacklistedTokenEntityCaptor;
 
   @BeforeEach
   void setUp() {
@@ -113,7 +117,8 @@ public class UserServiceTest {
   void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainee() {
     when(traineeRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.of(traineeEntity));
 
-    assertThrows(TraineeEmailDuplicateException.class, () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
+    assertThrows(TraineeEmailDuplicateException.class,
+        () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
   }
 
   @Test
@@ -121,7 +126,8 @@ public class UserServiceTest {
   void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainer() {
     when(trainerRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.of(trainerEntity));
 
-    assertThrows(TrainerEmailDuplicateException.class, () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
+    assertThrows(TrainerEmailDuplicateException.class,
+        () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
   }
 
   @Test
@@ -145,9 +151,23 @@ public class UserServiceTest {
   @DisplayName("인증 코드 만료 시 예외 발생")
   void checkVerificationCodeThrowsExceptionWhenCodeExpired() {
     verificationEntity.setExpiredAt(LocalDateTime.now().minusMinutes(1));
-    when(verificationRepository.findByEmail(verifyDto.getEmail())).thenReturn(Optional.of(verificationEntity));
+    when(verificationRepository.findByEmail(verifyDto.getEmail())).thenReturn(
+        Optional.of(verificationEntity));
 
-    assertThrows(VerificationCodeExpiredException.class, () -> userService.checkVerificationCode(verifyDto));
+    assertThrows(VerificationCodeExpiredException.class,
+        () -> userService.checkVerificationCode(verifyDto));
+  }
+
+  @Test
+  @DisplayName("인증 코드 검증 실패 - 코드 불일치")
+  void checkVerificationCodeFailIncorrectCode() {
+    verifyDto.setVerificationCode("wrongCode");
+
+    when(verificationRepository.findByEmail(verifyDto.getEmail())).thenReturn(
+        Optional.of(verificationEntity));
+
+    assertThrows(VerificationCodeNotMatchedException.class,
+        () -> userService.checkVerificationCode(verifyDto));
   }
 
   @Test
@@ -161,9 +181,22 @@ public class UserServiceTest {
   @Test
   @DisplayName("인증 코드 검증 성공")
   void checkVerificationCodeSuccess() {
-    when(verificationRepository.findByEmail(verifyDto.getEmail())).thenReturn(Optional.of(verificationEntity));
+    when(verificationRepository.findByEmail(verifyDto.getEmail())).thenReturn(
+        Optional.of(verificationEntity));
 
     userService.checkVerificationCode(verifyDto);
+  }
+
+  @Test
+  @DisplayName("회원가입 실패 - 비밀번호 불일치")
+  void signUpFailPasswordMismatch() {
+    SignUpRequestDto signUpDto = new SignUpRequestDto();
+    signUpDto.setEmail("new@example.com");
+    signUpDto.setPassword("password");
+    signUpDto.setConfirmPassword("differentPassword");
+    signUpDto.setRole(UserRoleType.TRAINEE);
+
+    assertThrows(PasswordMismatchedException.class, () -> userService.signUp(signUpDto, null));
   }
 
   @Test
@@ -173,15 +206,27 @@ public class UserServiceTest {
     signInDto.setEmail("trainee@example.com");
     signInDto.setPassword("password");
 
-    when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(Optional.of(traineeEntity));
-    when(passwordEncoder.matches(signInDto.getPassword(), traineeEntity.getPassword())).thenReturn(true);
-    when(tokenProvider.createToken(traineeEntity.getEmail())).thenReturn("testToken");
+    Date accessTokenExpiryDate = new Date(System.currentTimeMillis() + 3600000); // 1 hour later
+    Date refreshTokenExpiryDate = new Date(System.currentTimeMillis() + 604800000); // 7 days later
 
-    SignInResponseDto response = userService.signIn(signInDto);
+    when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(
+        Optional.of(traineeEntity));
+    when(passwordEncoder.matches(signInDto.getPassword(), traineeEntity.getPassword())).thenReturn(
+        true);
+    when(tokenProvider.createAccessToken(traineeEntity.getEmail())).thenReturn("accessToken");
+    when(tokenProvider.createRefreshToken(traineeEntity.getEmail())).thenReturn("refreshToken");
+    when(tokenProvider.getExpiryDateFromToken("accessToken")).thenReturn(accessTokenExpiryDate);
+    when(tokenProvider.getExpiryDateFromToken("refreshToken")).thenReturn(refreshTokenExpiryDate);
 
-    assertEquals("accessToken", response.getAccessToken());
-    assertEquals("testToken", response.getRefreshToken());
-    assertEquals(traineeEntity.getEmail(), response.getEmail());
+    HttpServletResponse response = mock(HttpServletResponse.class);
+
+    SignInResponseDto responseDto = userService.signIn(signInDto, response);
+
+    assertEquals("accessToken", responseDto.getAccessToken());
+    assertEquals("refreshToken", responseDto.getRefreshToken());
+    assertEquals(accessTokenExpiryDate, tokenProvider.getExpiryDateFromToken("accessToken"));
+    assertEquals(refreshTokenExpiryDate, tokenProvider.getExpiryDateFromToken("refreshToken"));
+
   }
 
   @Test
@@ -191,10 +236,13 @@ public class UserServiceTest {
     signInDto.setEmail("trainee@example.com");
     signInDto.setPassword("wrongPassword");
 
-    when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(Optional.of(traineeEntity));
-    when(passwordEncoder.matches(signInDto.getPassword(), traineeEntity.getPassword())).thenReturn(false);
+    when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(
+        Optional.of(traineeEntity));
+    when(passwordEncoder.matches(signInDto.getPassword(), traineeEntity.getPassword())).thenReturn(
+        false);
 
-    assertThrows(WrongPasswordException.class, () -> userService.signIn(signInDto));
+    assertThrows(WrongPasswordException.class,
+        () -> userService.signIn(signInDto, mock(HttpServletResponse.class)));
   }
 
   @Test
@@ -207,26 +255,66 @@ public class UserServiceTest {
     when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(Optional.empty());
     when(trainerRepository.findByEmail(signInDto.getEmail())).thenReturn(Optional.empty());
 
-    assertThrows(UserNotFoundException.class, () -> userService.signIn(signInDto));
+    assertThrows(UserNotFoundException.class,
+        () -> userService.signIn(signInDto, mock(HttpServletResponse.class)));
   }
 
+  @Test
+  @DisplayName("로그아웃 할떄 블랙리스트 토큰에 저장 및 쿠키 삭제 성공")
+  void signOutSuccess() {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
+
+    Cookie accessTokenCookie = new Cookie("Access-Token", "accessToken");
+    Cookie refreshTokenCookie = new Cookie("Refresh-Token", "refreshToken");
+
+    when(cookieProvider.getCookie(request, "Access-Token")).thenReturn(accessTokenCookie);
+    when(cookieProvider.getCookie(request, "Refresh-Token")).thenReturn(refreshTokenCookie);
+
+    when(tokenProvider.validateToken("accessToken")).thenReturn(true);
+    when(tokenProvider.validateToken("refreshToken")).thenReturn(true);
+
+    userService.signOut(request, response);
+
+    verify(tokenProvider, times(1)).blacklistToken("accessToken");
+    verify(tokenProvider, times(1)).blacklistToken("refreshToken");
+    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token");
+    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token");
+  }
 
   @Test
-  @DisplayName("로그아웃 시 토큰 블랙리스트 등록 성공")
-  void signOutSuccess() {
-    String token = "testToken";
-    SignOutRequestDto signOutDto = new SignOutRequestDto();
-    signOutDto.setToken(token);
+  @DisplayName("로그아웃 실패 - 쿠키가 없음")
+  void signOutFailNoCookies() {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
 
-    LocalDateTime expiryDate = LocalDateTime.now().plusHours(1);
-    when(tokenProvider.getExpiryDateFromToken(token)).thenReturn(expiryDate);
+    userService.signOut(request, response);
 
-    userService.signOut(signOutDto);
+    verify(tokenProvider, times(0)).blacklistToken(anyString());
+    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token");
+    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token");
+  }
 
-    verify(blacklistRepository, times(1)).save(blacklistedTokenEntityCaptor.capture());
+  @Test
+  @DisplayName("로그아웃 실패 - 유효하지 않은 토큰")
+  void signOutFailInvalidTokens() {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
 
-    BlacklistedTokenEntity capturedBlacklistedTokenEntity = blacklistedTokenEntityCaptor.getValue();
-    assertEquals(token, capturedBlacklistedTokenEntity.getToken());
-    assertEquals(expiryDate, capturedBlacklistedTokenEntity.getExpiryDate());
+    Cookie accessTokenCookie = new Cookie("Access-Token", "invalidAccessToken");
+    Cookie refreshTokenCookie = new Cookie("Refresh-Token", "invalidRefreshToken");
+
+    when(request.getCookies()).thenReturn(new Cookie[]{accessTokenCookie, refreshTokenCookie});
+    when(cookieProvider.getCookie(request, "Access-Token")).thenCallRealMethod();
+    when(cookieProvider.getCookie(request, "Refresh-Token")).thenCallRealMethod();
+    when(tokenProvider.validateToken("invalidAccessToken")).thenReturn(false);
+    when(tokenProvider.validateToken("invalidRefreshToken")).thenReturn(false);
+
+    userService.signOut(request, response);
+
+    verify(tokenProvider, times(0)).blacklistToken("invalidAccessToken");
+    verify(tokenProvider, times(0)).blacklistToken("invalidRefreshToken");
+    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token");
+    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token");
   }
 }
