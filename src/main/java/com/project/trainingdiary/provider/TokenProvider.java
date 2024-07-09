@@ -59,7 +59,7 @@ public class TokenProvider {
    * 사용자 ID로 하루 동안 유효한 접근 토큰을 생성합니다.
    */
   public String createAccessToken(String userId) {
-    LocalDateTime expiryDateTime = LocalDateTime.now().plusDays(1);
+    LocalDateTime expiryDateTime = LocalDateTime.now().plusHours(1);
     return createToken(userId, expiryDateTime);
   }
 
