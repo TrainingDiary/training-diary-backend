@@ -1,4 +1,4 @@
-package com.project.trainingdiary.repository;
+package com.project.trainingdiary.repository.schedule;
 
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import java.time.LocalDateTime;
