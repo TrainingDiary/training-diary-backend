@@ -2,6 +2,7 @@ package com.project.trainingdiary.provider;
 
 import com.project.trainingdiary.entity.BlacklistedTokenEntity;
 import com.project.trainingdiary.repository.BlacklistRepository;
+import com.project.trainingdiary.repository.RedisTokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,6 +28,8 @@ public class TokenProvider {
   private String secretKey;
 
   private Key key;
+
+  private final RedisTokenRepository redisTokenRepository;
   private final BlacklistRepository blacklistRepository;
 
   /**
@@ -58,7 +61,9 @@ public class TokenProvider {
    */
   public String createAccessToken(String userId) {
     LocalDateTime expiryDateTime = LocalDateTime.now().plusHours(1);
-    return createToken(userId, expiryDateTime);
+    String accessToken = createToken(userId, expiryDateTime);
+    redisTokenRepository.saveToken("accessToken:" + userId, accessToken, expiryDateTime);
+    return accessToken;
   }
 
   /**
@@ -66,7 +71,9 @@ public class TokenProvider {
    */
   public String createRefreshToken(String userId) {
     LocalDateTime expiryDateTime = LocalDateTime.now().plusDays(7);
-    return createToken(userId, expiryDateTime);
+    String refreshToken = createToken(userId, expiryDateTime);
+    redisTokenRepository.saveToken("refreshToken:" + userId, refreshToken, expiryDateTime);
+    return refreshToken;
   }
 
   /**
