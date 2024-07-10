@@ -19,6 +19,8 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       + "and not(p.isTerminated)")
   boolean existsByTrainerIdAndTraineeId(long trainerId, long traineeId);
 
+  Optional<PtContractEntity> findByIdAndIsTerminatedFalse(long ptContractId);
+
   @Query("select p "
       + "from pt_contract p "
       + "where p.trainer.id = ?1 "

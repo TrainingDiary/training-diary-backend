@@ -2,7 +2,7 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.dto.request.WorkoutCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -34,7 +34,7 @@ public class WorkoutEntity extends BaseEntity {
   private int time;
   private int speed;
 
-  public static WorkoutEntity toEntity(WorkoutCreateRequestDto dto, WorkoutTypeEntity entity) {
+  public static WorkoutEntity toEntity(WorkoutDto dto, WorkoutTypeEntity entity) {
 
     return WorkoutEntity.builder()
         .workoutTypeName(entity.getName())
