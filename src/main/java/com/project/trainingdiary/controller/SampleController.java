@@ -3,7 +3,12 @@ package com.project.trainingdiary.controller;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.ExampleResponseDto;
 import com.project.trainingdiary.exception.GlobalException;
+import com.project.trainingdiary.model.UserPrincipal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class SampleController {
+
+  private static final Logger log = LoggerFactory.getLogger(SampleController.class);
 
   @GetMapping("/sample/success")
   public CommonResponse<?> sampleSuccess() {
@@ -63,7 +70,24 @@ public class SampleController {
   }
 
   @GetMapping("api/test/protected")
-  public CommonResponse<?> protectedEndpoint() {
+  public CommonResponse<?> protectedEndpoint(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+    log.info("User: {}", userPrincipal.getUsername());
+    return CommonResponse.success("인증 권한 있습니다");
+  }
+
+  @PreAuthorize("hasRole('TRAINER')")
+  @GetMapping("api/test/trainer")
+  public CommonResponse<?> preAuthorizeTrainer(
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    log.info("User: {}", userPrincipal.getAuthorities());
+    return CommonResponse.success("인증 권한 있습니다");
+  }
+
+  @PreAuthorize("hasRole('TRAINEE')")
+  @GetMapping("api/test/trainee")
+  public CommonResponse<?> preAuthorizeTrainee(
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
+    log.info("User: {}", userPrincipal.getAuthorities());
     return CommonResponse.success("인증 권한 있습니다");
   }
 }

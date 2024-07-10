@@ -3,6 +3,7 @@ package com.project.trainingdiary.handler;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.exception.GlobalException;
 import jakarta.servlet.http.HttpServletRequest;
+import java.nio.file.AccessDeniedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,14 +24,14 @@ public class GlobalExceptionHandler {
     return new CommonResponse<>(e.getHttpStatus(), e.getMessage());
   }
 
-  @ExceptionHandler(Exception.class)
-  public CommonResponse<?> handler(Exception e, HttpServletRequest request) {
-
+  @ExceptionHandler(AccessDeniedException.class)
+  public CommonResponse<?> handleAccessDeniedException(AccessDeniedException e,
+      HttpServletRequest request) {
     log.error(
-        "Exception, {}, {}, {}",
-        HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), request.getRequestURI()
+        "AccessDeniedException, {}, {}, {}",
+        HttpStatus.FORBIDDEN, e.getMessage(), request.getRequestURI()
     );
 
-    return new CommonResponse<>(HttpStatus.INTERNAL_SERVER_ERROR, "내부 서버 에러");
+    return new CommonResponse<>(HttpStatus.FORBIDDEN, "접근이 없습니다.");
   }
 }
