@@ -136,20 +136,21 @@ public class ScheduleService {
 
     ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
         .orElseThrow(ScheduleNotFoundException::new);
+    // OPEN 일정이 아닌 경우 신청 불가
     if (!schedule.getScheduleStatus().equals(ScheduleStatus.OPEN)) {
       throw new ScheduleStatusNotOpenException();
     }
-    // 과거의 일정은 신청 불가.
+    // 과거의 일정은 신청 불가
     if (schedule.getStartAt().isBefore(currentTime)) {
       throw new ScheduleStartIsPast();
     }
-    // 1시간 내로 시작하는 일정은 신청 불가.
+    // 1시간 내로 시작하는 일정은 신청 불가
     if (schedule.getStartAt().isBefore(currentTime.plusHours(1))) {
       throw new ScheduleStartTooSoon();
     }
 
     PtContractEntity ptContract = ptContractRepository.findByTrainerIdAndTraineeId(
-            trainee.getId(), schedule.getTrainer().getId()
+            schedule.getTrainer().getId(), trainee.getId()
         )
         .orElseThrow(PtContractNotExistException::new);
 

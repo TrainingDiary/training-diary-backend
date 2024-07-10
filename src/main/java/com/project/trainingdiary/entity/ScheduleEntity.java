@@ -49,7 +49,7 @@ public class ScheduleEntity {
   private TrainerEntity trainer;
 
   public void apply(PtContractEntity ptContract) {
-    scheduleStatus = ScheduleStatus.RESERVE_APPLIED;
+    this.scheduleStatus = ScheduleStatus.RESERVE_APPLIED;
     this.ptContract = ptContract;
   }
 }
