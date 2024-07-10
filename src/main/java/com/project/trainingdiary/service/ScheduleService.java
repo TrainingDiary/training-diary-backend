@@ -16,7 +16,6 @@ import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
 import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
-import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.ScheduleRepository;
@@ -26,10 +25,10 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -54,25 +53,15 @@ public class ScheduleService {
   public void createSchedule(OpenScheduleRequestDto dto) {
     TrainerEntity trainer = getTrainer();
 
-    List<ScheduleEntity> scheduleEntities = new ArrayList<>();
-
-    for (ScheduleDateTimes dateTime : dto.getDateTimes()) {
-      LocalDate startDate = dateTime.getStartDate();
-      List<LocalTime> times = dateTime.getStartTimes();
-
-      for (LocalTime startTime : times) {
-        LocalDateTime startAt = LocalDateTime.of(startDate, startTime);
-        LocalDateTime endAt = startAt.plusHours(1);
-
-        scheduleEntities.add(ScheduleEntity.builder()
-            .startAt(startAt)
-            .endAt(endAt)
-            .trainer(trainer)
-            .scheduleStatus(ScheduleStatus.OPEN)
-            .build()
-        );
-      }
-    }
+    List<ScheduleEntity> scheduleEntities = dto.getDateTimes().stream()
+        .flatMap(dateTime -> dateTime.getStartTimes().stream()
+            .map(startTime -> {
+              LocalDate startDate = dateTime.getStartDate();
+              LocalDateTime startAt = LocalDateTime.of(startDate, startTime);
+              LocalDateTime endAt = startAt.plusHours(1);
+              return ScheduleEntity.of(startAt, endAt, trainer);
+            }))
+        .collect(Collectors.toList());
 
     Set<LocalDateTime> existings = scheduleRepository.findScheduleDatesByDates(
         getEarliest(scheduleEntities),

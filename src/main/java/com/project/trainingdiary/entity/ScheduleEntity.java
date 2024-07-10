@@ -52,4 +52,17 @@ public class ScheduleEntity {
     this.scheduleStatus = ScheduleStatus.RESERVE_APPLIED;
     this.ptContract = ptContract;
   }
+
+  public static ScheduleEntity of(
+      LocalDateTime startAt,
+      LocalDateTime endAt,
+      TrainerEntity trainer
+  ) {
+    return ScheduleEntity.builder()
+        .startAt(startAt)
+        .endAt(endAt)
+        .trainer(trainer)
+        .scheduleStatus(ScheduleStatus.OPEN)
+        .build();
+  }
 }
