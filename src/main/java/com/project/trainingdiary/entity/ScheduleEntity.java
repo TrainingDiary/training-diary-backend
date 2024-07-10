@@ -53,6 +53,10 @@ public class ScheduleEntity {
     this.ptContract = ptContract;
   }
 
+  public void acceptReserveApplied() {
+    this.scheduleStatus = ScheduleStatus.RESERVED;
+  }
+
   public static ScheduleEntity of(
       LocalDateTime startAt,
       LocalDateTime endAt,
