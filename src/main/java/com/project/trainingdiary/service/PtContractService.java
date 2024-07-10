@@ -2,6 +2,7 @@ package com.project.trainingdiary.service;
 
 import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
+import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
@@ -93,6 +94,19 @@ public class PtContractService {
         .orElseThrow(PtContractNotExistException::new);
 
     ptContract.addSession(dto.getAddition());
+    ptContractRepository.save(ptContract);
+  }
+
+  /**
+   * PT 계약을 종료함
+   */
+  @Transactional
+  public void terminatePtContract(TerminatePtContractRequestDto dto) {
+    PtContractEntity ptContract = ptContractRepository.findByIdAndIsTerminatedFalse(
+            dto.getPtContractId())
+        .orElseThrow(PtContractNotExistException::new);
+
+    ptContract.terminate();
     ptContractRepository.save(ptContract);
   }
 

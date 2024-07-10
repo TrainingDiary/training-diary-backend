@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
+import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
@@ -306,6 +307,47 @@ class PtContractServiceTest {
     assertThrows(
         PtContractNotExistException.class,
         () -> ptContractService.addPtContractSession(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("PT 계약 종료 - 성공")
+  void terminatePtContract() {
+    //given
+    TerminatePtContractRequestDto dto = new TerminatePtContractRequestDto();
+    dto.setPtContractId(100L);
+
+    //when
+    when(ptContractRepository.findByIdAndIsTerminatedFalse(100L))
+        .thenReturn(Optional.of(
+            PtContractEntity.builder()
+                .id(100L)
+                .trainee(trainee)
+                .trainer(trainer)
+                .totalSession(0)
+                .totalSessionUpdatedAt(LocalDateTime.now())
+                .build()
+        ));
+
+    //then
+    ptContractService.terminatePtContract(dto);
+  }
+
+  @Test
+  @DisplayName("PT 계약 종료 - 실패(계약이 존재하지 않거나, 이미 종료된 계약이어서 조회되지 않음)")
+  void terminatePtContractFail_NoContract() {
+    //given
+    TerminatePtContractRequestDto dto = new TerminatePtContractRequestDto();
+    dto.setPtContractId(100L);
+
+    //when
+    when(ptContractRepository.findByIdAndIsTerminatedFalse(100L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        PtContractNotExistException.class,
+        () -> ptContractService.terminatePtContract(dto)
     );
   }
 }
