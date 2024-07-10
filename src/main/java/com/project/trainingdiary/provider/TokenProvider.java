@@ -9,10 +9,8 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +43,7 @@ public class TokenProvider {
   /**
    * 주어진 사용자 ID와 만료 날짜로 JWT 토큰을 생성합니다.
    */
-  public String createToken(String userId, LocalDateTime expiryDateTime) {
+  private String createToken(String userId, LocalDateTime expiryDateTime) {
     Date expiryDate = Date.from(expiryDateTime.atZone(ZoneId.systemDefault()).toInstant());
     return Jwts.builder()
         .setSubject(userId)
@@ -56,7 +54,7 @@ public class TokenProvider {
   }
 
   /**
-   * 사용자 ID로 하루 동안 유효한 접근 토큰을 생성합니다.
+   * 사용자 ID로 1시간 동안 유효한 접근 토큰을 생성합니다.
    */
   public String createAccessToken(String userId) {
     LocalDateTime expiryDateTime = LocalDateTime.now().plusHours(1);
