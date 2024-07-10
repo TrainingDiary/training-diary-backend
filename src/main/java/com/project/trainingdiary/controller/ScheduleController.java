@@ -1,5 +1,6 @@
 package com.project.trainingdiary.controller;
 
+import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
@@ -7,6 +8,7 @@ import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +45,14 @@ public class ScheduleController {
       @RequestBody @Valid CloseScheduleRequestDto dto
   ) {
     scheduleService.closeSchedules(dto.scheduleIds);
+    return CommonResponse.success();
+  }
+
+  @PostMapping("/trainees/apply")
+  public CommonResponse<?> applySchedule(
+      @RequestBody @Valid ApplyScheduleRequestDto dto
+  ) {
+    scheduleService.applySchedule(dto, LocalDateTime.now());
     return CommonResponse.success();
   }
 }
