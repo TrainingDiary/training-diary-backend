@@ -23,11 +23,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class WorkoutSessionService {
 
   private final WorkoutTypeRepository workoutTypeRepository;
@@ -39,7 +37,6 @@ public class WorkoutSessionService {
   /**
    * 트레이너의 운동 일지 생성
    */
-  @Transactional
   public void createWorkoutSession(WorkoutSessionCreateRequestDto dto) {
     TrainerEntity trainer = trainerRepository
         .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
