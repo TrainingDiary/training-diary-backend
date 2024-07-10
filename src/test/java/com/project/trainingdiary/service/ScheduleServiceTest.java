@@ -84,7 +84,6 @@ class ScheduleServiceTest {
   public void setup() {
     setupTrainee();
     setupTrainer();
-    setupTrainerAuth();
     setupScheduleResponseDto();
   }
 
@@ -194,6 +193,7 @@ class ScheduleServiceTest {
   @DisplayName("일정 열기 - 성공(6개의 일정 열기)")
   void openSchedule() {
     //given
+    setupTrainerAuth();
     List<ScheduleDateTimes> dateTimes = List.of(
         ScheduleDateTimes.builder()
             .startDate(LocalDate.of(2024, 1, 1))
@@ -245,6 +245,7 @@ class ScheduleServiceTest {
   @DisplayName("일정 열기 - 실패(이미 일정이 있는 경우)")
   void openScheduleFail_AlreadyExistSchedule() {
     //given
+    setupTrainerAuth();
     List<ScheduleDateTimes> dateTimes = List.of(
         ScheduleDateTimes.builder()
             .startDate(LocalDate.of(2024, 1, 1))
