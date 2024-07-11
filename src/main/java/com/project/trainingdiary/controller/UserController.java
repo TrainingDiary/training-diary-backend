@@ -4,7 +4,7 @@ import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRe
 import com.project.trainingdiary.dto.request.SignInRequestDto;
 import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
-import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.dto.response.CustomResponse;
 import com.project.trainingdiary.dto.response.MemberInfoResponseDto;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
@@ -28,50 +28,50 @@ public class UserController {
   private final UserService userService;
 
   @PostMapping("/check-duplicate-and-send-verification")
-  public CommonResponse<?> checkDuplicateAndSendVerification(
+  public CustomResponse<?> checkDuplicateAndSendVerification(
       @RequestBody @Valid SendVerificationAndCheckDuplicateRequestDto dto
   ) {
     userService.checkDuplicateEmailAndSendVerification(dto);
-    return CommonResponse.success(SuccessMessage.SENT_VERIFICATION_SUCCESS);
+    return CustomResponse.success(SuccessMessage.SENT_VERIFICATION_SUCCESS);
   }
 
   @PostMapping("/check-verification-code")
-  public CommonResponse<?> verifyCode(
+  public CustomResponse<?> verifyCode(
       @RequestBody @Valid VerifyCodeRequestDto dto
   ) {
     userService.checkVerificationCode(dto);
-    return CommonResponse.success(SuccessMessage.VERIFICATION_SUCCESS);
+    return CustomResponse.success(SuccessMessage.VERIFICATION_SUCCESS);
   }
 
   @PostMapping("/sign-up")
-  public CommonResponse<?> signUp(
+  public CustomResponse<?> signUp(
       @RequestBody @Valid SignUpRequestDto dto, HttpServletResponse response
   ) {
     userService.signUp(dto, response);
-    return CommonResponse.created(SuccessMessage.SIGN_UP_SUCCESS);
+    return CustomResponse.success(SuccessMessage.SIGN_UP_SUCCESS);
   }
 
   @PostMapping("/sign-in")
-  public CommonResponse<?> signIn(
+  public CustomResponse<SignInResponseDto> signIn(
       @RequestBody @Valid SignInRequestDto dto, HttpServletResponse response
   ) {
     SignInResponseDto signInResponse = userService.signIn(dto, response);
-    return CommonResponse.success(signInResponse);
+    return CustomResponse.success(signInResponse, SuccessMessage.SIGN_IN_SUCCESS);
   }
 
   @PostMapping("/sign-out")
-  public CommonResponse<?> signOut(
+  public CustomResponse<?> signOut(
       HttpServletRequest request, HttpServletResponse response
   ) {
     userService.signOut(request, response);
-    return CommonResponse.success(SuccessMessage.SIGN_OUT_SUCCESS);
+    return CustomResponse.success(SuccessMessage.SIGN_OUT_SUCCESS);
   }
 
-  @GetMapping("{id}")
-  public CommonResponse<?> findById(
+  @GetMapping("/{id}")
+  public CustomResponse<MemberInfoResponseDto> viewUserInfo(
       @PathVariable Long id
   ) {
     MemberInfoResponseDto user = userService.memberInfo(id);
-    return CommonResponse.success(user);
+    return CustomResponse.success(user, SuccessMessage.VIEW_USER_INFO_SUCCESS);
   }
 }
