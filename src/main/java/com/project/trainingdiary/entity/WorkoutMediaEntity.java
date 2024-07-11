@@ -2,6 +2,7 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.model.WorkoutMediaType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -25,6 +26,6 @@ public class WorkoutMediaEntity extends BaseEntity {
 
   private String mediaUrl;
 
-  private String mediaType;
+  private WorkoutMediaType mediaType;
 
 }
