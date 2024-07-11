@@ -151,6 +151,8 @@ public class ScheduleService {
    */
   @Transactional
   public void acceptSchedule(AcceptScheduleRequestDto dto) {
+    getTrainer();
+
     ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
         .orElseThrow(ScheduleNotFoundException::new);
 
@@ -159,8 +161,12 @@ public class ScheduleService {
       throw new ScheduleStatusNotReserveApplied();
     }
 
-    // 전체 세션의 갯수와 사용한 세션의 갯수를 비교해 더 사용할 수 있는지 확인
     PtContractEntity ptContract = schedule.getPtContract();
+    // PT 계약이 존재하지 않음
+    if (ptContract == null) {
+      throw new PtContractNotExistException();
+    }
+    // 전체 세션의 갯수와 사용한 세션의 갯수를 비교해 더 사용할 수 있는지 확인
     if (ptContract.getTotalSession() <= ptContract.getUsedSession()) {
       throw new UsedSessionExceededTotalSession();
     }

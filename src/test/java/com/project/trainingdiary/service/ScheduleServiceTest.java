@@ -631,6 +631,31 @@ class ScheduleServiceTest {
   }
 
   @Test
+  @DisplayName("일정 수락 - 실패(연결된 PT 계약이 없음)")
+  void acceptScheduleFail_NoPtContract() {
+    //given
+    setupTrainerAuth();
+    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .ptContract(null)
+                .build()
+        ));
+
+    //then
+    assertThrows(
+        PtContractNotExistException.class,
+        () -> scheduleService.acceptSchedule(dto)
+    );
+  }
+
+  @Test
   @DisplayName("일정 수락 - 실패(모든 세션 횟수를 사용함)")
   void acceptScheduleFail_UsedAllSession() {
     //given
