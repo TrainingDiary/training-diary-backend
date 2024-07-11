@@ -1,4 +1,4 @@
-package com.project.trainingdiary.repository;
+package com.project.trainingdiary.repository.schedule;
 
 import static com.project.trainingdiary.entity.QScheduleEntity.scheduleEntity;
 import static com.querydsl.core.types.dsl.Expressions.dateTemplate;

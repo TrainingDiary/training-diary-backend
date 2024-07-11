@@ -1,4 +1,4 @@
-package com.project.trainingdiary.repository;
+package com.project.trainingdiary.repository.schedule;
 
 import com.project.trainingdiary.entity.ScheduleEntity;
 import java.time.LocalDateTime;

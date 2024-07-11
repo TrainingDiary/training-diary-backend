@@ -9,6 +9,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,4 +39,30 @@ public class ScheduleEntity {
   @Enumerated(value = STRING)
   @Column(nullable = false)
   private ScheduleStatus scheduleStatus;
+
+  @ManyToOne
+  @JoinColumn(name = "pt_contract_id")
+  private PtContractEntity ptContract;
+
+  @ManyToOne
+  @JoinColumn(name = "trainer_id")
+  private TrainerEntity trainer;
+
+  public void apply(PtContractEntity ptContract) {
+    this.scheduleStatus = ScheduleStatus.RESERVE_APPLIED;
+    this.ptContract = ptContract;
+  }
+
+  public static ScheduleEntity of(
+      LocalDateTime startAt,
+      LocalDateTime endAt,
+      TrainerEntity trainer
+  ) {
+    return ScheduleEntity.builder()
+        .startAt(startAt)
+        .endAt(endAt)
+        .trainer(trainer)
+        .scheduleStatus(ScheduleStatus.OPEN)
+        .build();
+  }
 }
