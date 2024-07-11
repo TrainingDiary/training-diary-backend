@@ -8,6 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
@@ -22,6 +23,8 @@ import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
 import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
+import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
+import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.ScheduleStatus;
@@ -546,6 +549,115 @@ class ScheduleServiceTest {
     assertThrows(
         ScheduleStartTooSoon.class,
         () -> scheduleService.applySchedule(dto, currentTime)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 수락 - 성공")
+  void acceptSchedule() {
+    //given
+    setupTrainerAuth();
+    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(5)
+                        .build()
+                )
+                .build()
+        ));
+
+    //then
+    scheduleService.acceptSchedule(dto);
+  }
+
+  @Test
+  @DisplayName("일정 수락 - 실패(없는 일정)")
+  void acceptScheduleFail_NoSchedule() {
+    //given
+    setupTrainerAuth();
+    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        ScheduleNotFoundException.class,
+        () -> scheduleService.acceptSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 수락 - 실패(아무도 신청하지 않은 예약을 수락하려 함)")
+  void acceptScheduleFail_NoReserveApplied() {
+    //given
+    setupTrainerAuth();
+    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.OPEN)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(10) // 모두 사용
+                        .build()
+                )
+                .build()
+        ));
+
+    //then
+    assertThrows(
+        ScheduleStatusNotReserveApplied.class,
+        () -> scheduleService.acceptSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 수락 - 실패(모든 세션 횟수를 사용함)")
+  void acceptScheduleFail_UsedAllSession() {
+    //given
+    setupTrainerAuth();
+    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(10) // 모두 사용
+                        .build()
+                )
+                .build()
+        ));
+
+    //then
+    assertThrows(
+        UsedSessionExceededTotalSession.class,
+        () -> scheduleService.acceptSchedule(dto)
     );
   }
 }
