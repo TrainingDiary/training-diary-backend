@@ -5,6 +5,7 @@ import com.project.trainingdiary.dto.request.SignInRequestDto;
 import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.dto.response.MemberInfoResponseDto;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.UserService;
@@ -12,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,5 +65,13 @@ public class UserController {
   ) {
     userService.signOut(request, response);
     return CommonResponse.success(SuccessMessage.SIGN_OUT_SUCCESS);
+  }
+
+  @GetMapping("{id}")
+  public CommonResponse<?> findById(
+      @PathVariable Long id
+  ) {
+    MemberInfoResponseDto user = userService.memberInfo(id);
+    return CommonResponse.success(user);
   }
 }
