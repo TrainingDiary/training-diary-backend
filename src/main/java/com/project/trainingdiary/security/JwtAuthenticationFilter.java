@@ -2,6 +2,7 @@ package com.project.trainingdiary.security;
 
 import com.project.trainingdiary.provider.CookieProvider;
 import com.project.trainingdiary.provider.TokenProvider;
+import com.project.trainingdiary.repository.RedisTokenRepository;
 import com.project.trainingdiary.service.UserService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -27,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final TokenProvider tokenProvider;
   private final CookieProvider cookieProvider;
   private final UserService userService;
+  private final RedisTokenRepository redisTokenRepository;
 
   private static final String REFRESH_TOKEN_COOKIE_NAME = "Refresh-Token";
   private static final String ACCESS_TOKEN_COOKIE_NAME = "Access-Token";
@@ -36,8 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
    */
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain chain)
-      throws ServletException, IOException {
+      FilterChain chain) throws ServletException, IOException {
 
     String accessToken = parseTokenFromRequest(request, ACCESS_TOKEN_COOKIE_NAME);
     String refreshToken = parseTokenFromRequest(request, REFRESH_TOKEN_COOKIE_NAME);
@@ -55,10 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
    * 접근 토큰을 처리합니다. 유효한 접근 토큰이 있으면 사용자 인증을 수행하고, 만료된 경우 리프레시 토큰을 사용하여 재발급을 시도합니다.
    */
   private void handleAccessToken(HttpServletRequest request, HttpServletResponse response,
-      String accessToken, String refreshToken)
-      throws IOException {
+      String accessToken, String refreshToken) throws IOException {
     try {
-      if (tokenProvider.validateToken(accessToken) && !tokenProvider.isTokenBlacklisted(
+      if (tokenProvider.validateToken(accessToken) && !redisTokenRepository.isAccessTokenValid(
           accessToken)) {
         authenticateUser(accessToken, request);
       } else if (tokenProvider.isTokenExpired(accessToken)) {
@@ -100,6 +100,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String newAccessToken = tokenProvider.createAccessToken(username);
       log.info("새로운 접근 토큰을 쿠키에 설정: {}", newAccessToken);
       cookieProvider.setCookie(response, ACCESS_TOKEN_COOKIE_NAME, newAccessToken,
+          tokenProvider.getExpiryDateFromToken(newAccessToken));
+      redisTokenRepository.saveAccessToken(username, newAccessToken,
           tokenProvider.getExpiryDateFromToken(newAccessToken));
       authenticateUser(newAccessToken, request);
     } else {
