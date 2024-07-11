@@ -20,6 +20,7 @@ import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.provider.CookieProvider;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.provider.TokenProvider;
+import com.project.trainingdiary.repository.RedisTokenRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.VerificationRepository;
@@ -28,7 +29,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -41,15 +41,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional(readOnly = true)
 public class UserService implements UserDetailsService {
 
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
   private final VerificationRepository verificationRepository;
+  private final RedisTokenRepository redisTokenRepository;
+
   private final EmailProvider emailProvider;
   private final TokenProvider tokenProvider;
   private final CookieProvider cookieProvider;
+
   private final PasswordEncoder passwordEncoder;
 
   private static final String REFRESH_TOKEN_COOKIE_NAME = "Refresh-Token";
@@ -58,10 +60,8 @@ public class UserService implements UserDetailsService {
   /**
    * 이메일 중복을 확인하고 인증 코드를 발송합니다.
    */
-  @Transactional
   public void checkDuplicateEmailAndSendVerification(
-      SendVerificationAndCheckDuplicateRequestDto dto
-  ) {
+      SendVerificationAndCheckDuplicateRequestDto dto) {
     validateEmailNotExists(dto.getEmail());
     sendVerificationCode(dto.getEmail());
   }
@@ -99,7 +99,6 @@ public class UserService implements UserDetailsService {
   /**
    * 로그아웃 처리를 합니다.
    */
-  @Transactional
   public void signOut(HttpServletRequest request, HttpServletResponse response) {
     blacklistAndClearCookies(request, response);
   }
@@ -216,6 +215,9 @@ public class UserService implements UserDetailsService {
     cookieProvider.setCookie(response, REFRESH_TOKEN_COOKIE_NAME, refreshToken,
         refreshTokenExpiryDate);
 
+    redisTokenRepository.saveAccessToken(username, accessToken, accessTokenExpiryDate);
+    redisTokenRepository.saveRefreshToken(username, refreshToken, refreshTokenExpiryDate);
+
     return new SignInResponseDto(accessToken, refreshToken);
   }
 
@@ -227,13 +229,17 @@ public class UserService implements UserDetailsService {
     Cookie refreshTokenCookie = cookieProvider.getCookie(request, REFRESH_TOKEN_COOKIE_NAME);
 
     if (accessTokenCookie != null && tokenProvider.validateToken(accessTokenCookie.getValue())) {
-      log.info("블랙리스트에 추가된 접근 토큰: {}", accessTokenCookie.getValue());
+      log.info("블랙리스트에 추가된 access 토큰: {}", accessTokenCookie.getValue());
       tokenProvider.blacklistToken(accessTokenCookie.getValue());
+      redisTokenRepository.deleteToken(
+          "accessToken:" + tokenProvider.getUsernameFromToken(accessTokenCookie.getValue()));
     }
 
     if (refreshTokenCookie != null && tokenProvider.validateToken(refreshTokenCookie.getValue())) {
-      log.info("블랙리스트에 추가된 리프레시 토큰: {}", refreshTokenCookie.getValue());
+      log.info("블랙리스트에 추가된 refresh 토큰: {}", refreshTokenCookie.getValue());
       tokenProvider.blacklistToken(refreshTokenCookie.getValue());
+      redisTokenRepository.deleteToken(
+          "refreshToken:" + tokenProvider.getUsernameFromToken(refreshTokenCookie.getValue()));
     }
 
     cookieProvider.clearCookie(response, ACCESS_TOKEN_COOKIE_NAME);
