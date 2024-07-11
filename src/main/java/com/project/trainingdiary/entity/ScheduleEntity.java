@@ -57,6 +57,11 @@ public class ScheduleEntity {
     this.scheduleStatus = ScheduleStatus.RESERVED;
   }
 
+  public void rejectReserveApplied() {
+    this.scheduleStatus = ScheduleStatus.OPEN;
+    this.ptContract = null;
+  }
+
   public static ScheduleEntity of(
       LocalDateTime startAt,
       LocalDateTime endAt,

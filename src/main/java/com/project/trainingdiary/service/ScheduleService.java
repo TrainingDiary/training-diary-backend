@@ -3,6 +3,7 @@ package com.project.trainingdiary.service;
 import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
@@ -175,6 +176,34 @@ public class ScheduleService {
     scheduleRepository.save(schedule);
 
     ptContract.useSession();
+    ptContractRepository.save(ptContract);
+  }
+
+  /**
+   * 일정 예약 거절
+   */
+  @Transactional
+  public void rejectSchedule(RejectScheduleRequestDto dto) {
+    getTrainer();
+
+    ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
+        .orElseThrow(ScheduleNotFoundException::new);
+
+    // 예약 상태가 RESERVE_APPLIED인지 확인
+    if (!schedule.getScheduleStatus().equals(ScheduleStatus.RESERVE_APPLIED)) {
+      throw new ScheduleStatusNotReserveApplied();
+    }
+
+    PtContractEntity ptContract = schedule.getPtContract();
+    // PT 계약이 존재하지 않음
+    if (ptContract == null) {
+      throw new PtContractNotExistException();
+    }
+
+    schedule.rejectReserveApplied();
+    scheduleRepository.save(schedule);
+
+    ptContract.unuseSession();
     ptContractRepository.save(ptContract);
   }
 
