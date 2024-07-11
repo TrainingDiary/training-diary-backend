@@ -22,3 +22,8 @@ spring:
           auth: true
   jwt:
     secret:
+
+  data:
+    redis:
+      host:
+      port:
