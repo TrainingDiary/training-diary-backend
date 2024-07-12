@@ -30,6 +30,7 @@ import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.provider.CookieProvider;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.provider.TokenProvider;
+import com.project.trainingdiary.repository.RedisTokenRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.VerificationRepository;
@@ -58,6 +59,9 @@ public class UserServiceTest {
 
   @Mock
   private TraineeRepository traineeRepository;
+
+  @Mock
+  private RedisTokenRepository redisTokenRepository;
 
   @Mock
   private TrainerRepository trainerRepository;

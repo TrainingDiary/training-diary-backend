@@ -7,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 
 /**
  * Response 공통화
+ * @deprecated 이 클래스 대신 CustomResponse를 사용하세요.
  */
+@Deprecated
 public class CommonResponse<T> extends ResponseEntity<Map<String, Object>> {
 
   private static final String STATUS_CODE = "statusCode";
