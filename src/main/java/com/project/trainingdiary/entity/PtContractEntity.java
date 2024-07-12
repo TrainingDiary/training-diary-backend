@@ -49,6 +49,14 @@ public class PtContractEntity extends BaseEntity {
     this.totalSessionUpdatedAt = LocalDateTime.now();
   }
 
+  public void useSession() {
+    this.usedSession += 1;
+  }
+
+  public void unuseSession() {
+    this.usedSession -= 1;
+  }
+
   public void terminate() {
     isTerminated = true;
   }

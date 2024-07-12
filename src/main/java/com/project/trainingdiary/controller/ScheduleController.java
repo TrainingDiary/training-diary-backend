@@ -1,5 +1,6 @@
 package com.project.trainingdiary.controller;
 
+import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
@@ -53,6 +54,14 @@ public class ScheduleController {
       @RequestBody @Valid ApplyScheduleRequestDto dto
   ) {
     scheduleService.applySchedule(dto, LocalDateTime.now());
+    return CommonResponse.success();
+  }
+
+  @PostMapping("/trainers/accept")
+  public CommonResponse<?> acceptSchedule(
+      @RequestBody @Valid AcceptScheduleRequestDto dto
+  ) {
+    scheduleService.acceptSchedule(dto);
     return CommonResponse.success();
   }
 }
