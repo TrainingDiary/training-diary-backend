@@ -2,7 +2,7 @@ package com.project.trainingdiary.service;
 
 import static com.project.trainingdiary.model.WorkoutMediaType.IMAGE;
 
-import com.project.trainingdiary.dto.request.WorkoutMediaRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
@@ -119,7 +119,7 @@ public class WorkoutSessionService {
   /**
    * 운동 일지 - 이미지 업로드
    */
-  public void uploadWorkoutMedia(WorkoutMediaRequestDto dto) throws IOException {
+  public void uploadWorkoutMedia(WorkoutImageRequestDto dto) throws IOException {
     TrainerEntity trainer = getTrainer();
 
     // 이미지를 업로드할 운동 일지가 존재하는지 확인
@@ -181,7 +181,6 @@ public class WorkoutSessionService {
     return MediaType.IMAGE_JPEG.toString().equals(file.getContentType()) ||
         MediaType.IMAGE_PNG.toString().equals(file.getContentType());
   }
-
 
 
 }

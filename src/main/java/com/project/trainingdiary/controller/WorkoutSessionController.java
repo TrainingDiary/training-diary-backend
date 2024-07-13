@@ -1,8 +1,7 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.WorkoutMediaRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
-import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.CustomResponse;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
@@ -69,7 +68,7 @@ public class WorkoutSessionController {
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("mediaFiles") List<MultipartFile> mediaFiles
   ) throws IOException {
-    WorkoutMediaRequestDto dto = WorkoutMediaRequestDto.builder()
+    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(sessionId).mediaFiles(mediaFiles).build();
     workoutSessionService.uploadWorkoutMedia(dto);
     return CustomResponse.success();

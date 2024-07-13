@@ -12,7 +12,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.WorkoutDto;
-import com.project.trainingdiary.dto.request.WorkoutMediaRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
@@ -302,7 +302,7 @@ class WorkoutSessionServiceTest {
         "file", "test.jpg", "image/jpeg", imageBytes
     );
 
-    WorkoutMediaRequestDto dto = WorkoutMediaRequestDto.builder()
+    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
         .mediaFiles(List.of(mockFile))
         .build();
@@ -355,7 +355,7 @@ class WorkoutSessionServiceTest {
     MockMultipartFile mockFile = new MockMultipartFile(
         "file", "test.jpg", "image/jpeg", imageBytes);
 
-    WorkoutMediaRequestDto dto = WorkoutMediaRequestDto.builder()
+    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
         .mediaFiles(List.of(mockFile))
         .build();
@@ -397,7 +397,7 @@ class WorkoutSessionServiceTest {
         "file", "test.txt", "text/plain", "test text content" .getBytes()
     );
 
-    WorkoutMediaRequestDto dto = WorkoutMediaRequestDto.builder()
+    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
         .mediaFiles(List.of(mockFile))
         .build();

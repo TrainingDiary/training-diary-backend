@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class WorkoutMediaRequestDto {
+public class WorkoutImageRequestDto {
 
   private Long sessionId;
   private List<MultipartFile> mediaFiles;
