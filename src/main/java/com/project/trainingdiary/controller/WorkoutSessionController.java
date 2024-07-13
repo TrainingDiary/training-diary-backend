@@ -66,10 +66,10 @@ public class WorkoutSessionController {
   @PutMapping("/workout-sessions/photos")
   public CustomResponse<?> uploadWorkoutMedia (
       @RequestPart("sessionId") Long sessionId,
-      @RequestPart("mediaFiles") List<MultipartFile> mediaFiles
+      @RequestPart("images") List<MultipartFile> images
   ) throws IOException {
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
-        .sessionId(sessionId).mediaFiles(mediaFiles).build();
+        .sessionId(sessionId).images(images).build();
     workoutSessionService.uploadWorkoutMedia(dto);
     return CustomResponse.success();
   }

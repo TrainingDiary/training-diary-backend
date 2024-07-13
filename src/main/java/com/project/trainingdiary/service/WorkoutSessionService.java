@@ -89,12 +89,6 @@ public class WorkoutSessionService {
     workoutSessionRepository.save(WorkoutSessionEntity.toEntity(dto, workouts, ptContract));
   }
 
-  private TrainerEntity getTrainer() {
-    return trainerRepository
-        .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-        .orElseThrow(UserNotFoundException::new);
-  }
-
   /**
    * 운동 일지 목록 조회
    */
@@ -128,7 +122,7 @@ public class WorkoutSessionService {
 
     int existingImageCount = (int) workoutSession.getWorkoutMedia().stream()
         .filter(media -> media.getMediaType() == IMAGE).count();
-    int newImageCount = dto.getMediaFiles().size();
+    int newImageCount = dto.getImages().size();
 
     // 현재 운동 일지에 존재하는 이미지와 새로 받은 이미지의 합이 10을 넘으면 예외 발생 - 이미지는 최대 10개까지 업로드 가능
     if (existingImageCount + newImageCount > MAX_MEDIA_COUNT) {
@@ -136,7 +130,7 @@ public class WorkoutSessionService {
     }
 
     // 이미지 확인
-    for (MultipartFile file : dto.getMediaFiles()) {
+    for (MultipartFile file : dto.getImages()) {
       if (!isValidImageType(file)) {
         throw new InvalidFileTypeException();
       }
@@ -182,5 +176,10 @@ public class WorkoutSessionService {
         MediaType.IMAGE_PNG.toString().equals(file.getContentType());
   }
 
+  private TrainerEntity getTrainer() {
+    return trainerRepository
+        .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+        .orElseThrow(UserNotFoundException::new);
+  }
 
 }

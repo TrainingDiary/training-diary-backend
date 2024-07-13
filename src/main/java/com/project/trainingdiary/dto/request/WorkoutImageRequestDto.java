@@ -16,6 +16,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class WorkoutImageRequestDto {
 
   private Long sessionId;
-  private List<MultipartFile> mediaFiles;
+  private List<MultipartFile> images;
 
 }

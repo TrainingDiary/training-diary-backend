@@ -304,7 +304,7 @@ class WorkoutSessionServiceTest {
 
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
-        .mediaFiles(List.of(mockFile))
+        .images(List.of(mockFile))
         .build();
 
     workoutSessionService.uploadWorkoutMedia(dto);
@@ -357,7 +357,7 @@ class WorkoutSessionServiceTest {
 
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
-        .mediaFiles(List.of(mockFile))
+        .images(List.of(mockFile))
         .build();
 
     assertThrows(MediaCountExceededException.class,
@@ -399,7 +399,7 @@ class WorkoutSessionServiceTest {
 
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
-        .mediaFiles(List.of(mockFile))
+        .images(List.of(mockFile))
         .build();
 
     assertThrows(InvalidFileTypeException.class,
