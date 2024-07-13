@@ -1,6 +1,7 @@
 package com.project.trainingdiary.service;
 
 import static com.project.trainingdiary.model.UserRoleType.TRAINEE;
+import static com.project.trainingdiary.model.UserRoleType.TRAINER;
 import static com.project.trainingdiary.model.WorkoutMediaType.IMAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -110,7 +111,7 @@ class WorkoutSessionServiceTest {
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    trainer = TrainerEntity.builder().id(1L).email("trainer@gmail.com").role(TRAINEE).build();
+    trainer = TrainerEntity.builder().id(1L).email("trainer@gmail.com").role(TRAINER).build();
     trainee = TraineeEntity.builder().id(10L).role(TRAINEE).build();
     ptContract = PtContractEntity.builder().id(100L).trainer(trainer)
         .trainee(trainee).build();
@@ -290,7 +291,7 @@ class WorkoutSessionServiceTest {
 
   @Test
   @DisplayName("이미지 업로드 성공")
-  void testUploadWorkoutMediaSuccess() throws IOException {
+  void testUploadWorkoutImageSuccess() throws IOException {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, 10000L))
         .thenReturn(Optional.of(workoutSession));
@@ -299,15 +300,14 @@ class WorkoutSessionServiceTest {
     byte[] imageBytes = Files.readAllBytes(
         Paths.get(System.getProperty("user.home") + "/Downloads/test.jpeg"));
     MockMultipartFile mockFile = new MockMultipartFile(
-        "file", "test.jpg", "image/jpeg", imageBytes
-    );
+        "file", "test.jpg", "image/jpeg", imageBytes);
 
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
         .images(List.of(mockFile))
         .build();
 
-    workoutSessionService.uploadWorkoutMedia(dto);
+    workoutSessionService.uploadWorkoutImage(dto);
 
     ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
         WorkoutMediaEntity.class);
@@ -327,9 +327,6 @@ class WorkoutSessionServiceTest {
     List<String> capturedBuckets = bucketCaptor.getAllValues();
     List<String> capturedKeys = keyCaptor.getAllValues();
 
-    // 디버깅을 위해 캡처된 키 값들을 출력
-    System.out.println("Captured Keys: " + capturedKeys);
-
     assertEquals(bucket, capturedBuckets.get(0));
     assertTrue(capturedKeys.stream().anyMatch(key -> key.startsWith("thumb_")));
 
@@ -341,8 +338,50 @@ class WorkoutSessionServiceTest {
   }
 
   @Test
+  @DisplayName("이미지 업로드 실패 - 운동 일지를 찾을 수 없을 때 예외 발생")
+  void testUploadWorkoutImageFailWorkoutSessionNotFound() throws IOException {
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.empty());
+
+    byte[] imageBytes = Files.readAllBytes(
+        Paths.get(System.getProperty("user.home") + "/Downloads/test.jpeg"));
+    MockMultipartFile mockFile =
+        new MockMultipartFile("file", "test.jpg", "image/jpeg", imageBytes);
+
+    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
+        .sessionId(workoutSession.getId())
+        .images(List.of(mockFile))
+        .build();
+
+    assertThrows(WorkoutSessionNotFoundException.class,
+        () -> workoutSessionService.uploadWorkoutImage(dto));
+
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
+        WorkoutMediaEntity.class);
+    ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
+        WorkoutSessionEntity.class);
+
+    verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
+    verify(s3Operations, never()).upload(bucketCaptor.capture(), keyCaptor.capture(),
+        inputStreamCaptor.capture(), metadataCaptor.capture());
+    verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
+
+    assertTrue(mediaCaptor.getAllValues().isEmpty());
+    assertTrue(bucketCaptor.getAllValues().isEmpty());
+    assertTrue(keyCaptor.getAllValues().isEmpty());
+    assertTrue(inputStreamCaptor.getAllValues().isEmpty());
+    assertTrue(metadataCaptor.getAllValues().isEmpty());
+    assertTrue(sessionCaptor.getAllValues().isEmpty());
+  }
+
+  @Test
   @DisplayName("이미지 업로드 실패 - 이미지 개수가 10개를 초과하면 예외 발생")
-  void testUploadWorkoutMediaFailExcessiveImages() throws IOException {
+  void testUploadWorkoutImageFailExcessiveImages() throws IOException {
     workoutSession.getWorkoutMedia()
         .addAll(Collections.nCopies(10, WorkoutMediaEntity.builder().mediaType(IMAGE).build()));
 
@@ -361,7 +400,7 @@ class WorkoutSessionServiceTest {
         .build();
 
     assertThrows(MediaCountExceededException.class,
-        () -> workoutSessionService.uploadWorkoutMedia(dto));
+        () -> workoutSessionService.uploadWorkoutImage(dto));
 
     ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
         WorkoutMediaEntity.class);
@@ -388,14 +427,13 @@ class WorkoutSessionServiceTest {
 
   @Test
   @DisplayName("이미지 업로드 실패 - 파일 타입이 맞지 않으면 예외 발생")
-  void testUploadWorkoutMediaFailInvalidFileType() {
+  void testUploadWorkoutImageFailInvalidFileType() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, 10000L))
         .thenReturn(Optional.of(workoutSession));
 
     MockMultipartFile mockFile = new MockMultipartFile(
-        "file", "test.txt", "text/plain", "test text content" .getBytes()
-    );
+        "file", "test.txt", "text/plain", "test text content".getBytes());
 
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
@@ -403,7 +441,7 @@ class WorkoutSessionServiceTest {
         .build();
 
     assertThrows(InvalidFileTypeException.class,
-        () -> workoutSessionService.uploadWorkoutMedia(dto));
+        () -> workoutSessionService.uploadWorkoutImage(dto));
 
     ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
         WorkoutMediaEntity.class);
