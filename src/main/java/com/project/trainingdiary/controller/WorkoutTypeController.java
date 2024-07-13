@@ -3,6 +3,7 @@ package com.project.trainingdiary.controller;
 import com.project.trainingdiary.dto.request.WorkoutTypeCreateRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.dto.response.CustomResponse;
 import com.project.trainingdiary.dto.response.WorkoutTypeResponseDto;
 import com.project.trainingdiary.service.WorkoutTypeService;
 import jakarta.validation.Valid;
@@ -22,7 +23,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 // TODO
-//  로그인 후 운동 종류 다루기 때문에 트레이너 id 넣는 부분 수정 필요
+//  1. 로그인 후 운동 종류 다루기 때문에 트레이너 id 넣는 부분 수정 필요
+//  2. api 명세 보고 수정
+//  3. path 에 위치한 id를 dto(body)로 받기
 
 @RestController
 @RequiredArgsConstructor
@@ -32,42 +35,42 @@ public class WorkoutTypeController {
   private final WorkoutTypeService workoutTypeService;
 
   @PostMapping
-  public CommonResponse<?> createWorkoutType(
+  public CustomResponse<?> createWorkoutType(
       @Valid @RequestBody WorkoutTypeCreateRequestDto dto
   ) {
     workoutTypeService.createWorkoutType(dto);
-    return CommonResponse.created();
+    return CustomResponse.success();
   }
 
   @PutMapping("/{id}")
-  public CommonResponse<?> updateWorkoutType(
+  public CustomResponse<?> updateWorkoutType(
       @PathVariable Long id,
       @Valid @RequestBody WorkoutTypeUpdateRequestDto dto
   ) {
     workoutTypeService.updateWorkoutType(1L, id, dto);
-    return CommonResponse.success();
+    return CustomResponse.success();
   }
 
   @DeleteMapping("/{id}")
-  public CommonResponse<?> deleteWorkoutType(@PathVariable Long id) {
+  public CustomResponse<?> deleteWorkoutType(@PathVariable Long id) {
     workoutTypeService.deleteWorkoutType(1L, id);
-    return CommonResponse.success();
+    return CustomResponse.success();
   }
 
   @GetMapping
-  public CommonResponse<?> getWorkoutTypes(
+  public CustomResponse<?> getWorkoutTypes(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size
   ) {
     Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
     Page<WorkoutTypeResponseDto> responsePage = workoutTypeService.getWorkoutTypes(1L, pageable);
-    return CommonResponse.success(responsePage);
+    return CustomResponse.success(responsePage);
   }
 
   @GetMapping("/{id}")
-  public CommonResponse<?> getWorkoutTypeDetails(@PathVariable Long id) {
+  public CustomResponse<?> getWorkoutTypeDetails(@PathVariable Long id) {
     WorkoutTypeResponseDto responseDto = workoutTypeService.getWorkoutTypeDetails(1L, id);
-    return CommonResponse.created(responseDto);
+    return CustomResponse.success(responseDto);
   }
 
 }
