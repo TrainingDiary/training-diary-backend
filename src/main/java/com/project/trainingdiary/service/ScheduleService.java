@@ -4,6 +4,7 @@ import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
@@ -183,7 +184,7 @@ public class ScheduleService {
    * 일정 예약 거절
    */
   @Transactional
-  public void rejectSchedule(RejectScheduleRequestDto dto) {
+  public RejectScheduleResponseDto rejectSchedule(RejectScheduleRequestDto dto) {
     getTrainer();
 
     ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
@@ -205,6 +206,8 @@ public class ScheduleService {
 
     ptContract.unuseSession();
     ptContractRepository.save(ptContract);
+
+    return new RejectScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
 
   private TraineeEntity getTrainee() {
