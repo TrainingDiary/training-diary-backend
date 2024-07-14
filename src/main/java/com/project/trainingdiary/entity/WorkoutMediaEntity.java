@@ -26,8 +26,8 @@ public class WorkoutMediaEntity extends BaseEntity {
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
-  private String thumbnailKey;
-  private String originalKey;
+  private String originalUrl;
+  private String thumbnailUrl;
 
   @Enumerated(value = STRING)
   private WorkoutMediaType mediaType;
