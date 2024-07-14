@@ -215,7 +215,6 @@ public class ScheduleService {
    */
   @Transactional
   public RegisterScheduleResponseDto registerSchedule(RegisterScheduleRequestDto dto) {
-    System.out.println("dto = " + dto);
     TrainerEntity trainer = getTrainer();
     PtContractEntity ptContract = getPtContract(trainer.getId(), dto.getTraineeId());
 
