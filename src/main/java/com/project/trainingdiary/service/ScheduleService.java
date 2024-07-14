@@ -3,13 +3,16 @@ package com.project.trainingdiary.service;
 import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.impl.PtContractNotEnoughSession;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
 import com.project.trainingdiary.exception.impl.ScheduleInvalidException;
@@ -21,6 +24,7 @@ import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
 import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
@@ -30,10 +34,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -56,26 +58,24 @@ public class ScheduleService {
   public void createSchedule(OpenScheduleRequestDto dto) {
     TrainerEntity trainer = getTrainer();
 
-    List<ScheduleEntity> scheduleEntities = dto.getDateTimes().stream()
-        .flatMap(dateTime -> dateTime.getStartTimes().stream()
-            .map(startTime -> {
-              LocalDate startDate = dateTime.getStartDate();
-              LocalDateTime startAt = LocalDateTime.of(startDate, startTime);
-              LocalDateTime endAt = startAt.plusHours(1);
-              return ScheduleEntity.of(startAt, endAt, trainer);
-            }))
-        .collect(Collectors.toList());
-
+    List<LocalDateTime> requestedStartTimes = getRequestedTimes(dto.getDateTimes());
     Set<LocalDateTime> existings = scheduleRepository.findScheduleDatesByDates(
-        getEarliest(scheduleEntities),
-        getLatest(scheduleEntities)
+        getEarliest(requestedStartTimes),
+        getLatest(requestedStartTimes)
     );
 
-    for (ScheduleEntity schedule : scheduleEntities) {
-      if (existings.contains(schedule.getStartAt())) {
+    for (LocalDateTime time : requestedStartTimes) {
+      if (existings.contains(time)) {
         throw new ScheduleAlreadyExistException();
       }
     }
+
+    List<ScheduleEntity> scheduleEntities = requestedStartTimes.stream()
+        .map(startTime -> {
+          LocalDateTime endAt = startTime.plusHours(1);
+          return ScheduleEntity.of(startTime, endAt, trainer);
+        })
+        .toList();
 
     scheduleRepository.saveAll(scheduleEntities);
   }
@@ -139,10 +139,10 @@ public class ScheduleService {
       throw new ScheduleStartTooSoon();
     }
 
-    PtContractEntity ptContract = ptContractRepository.findByTrainerIdAndTraineeId(
-            schedule.getTrainer().getId(), trainee.getId()
-        )
-        .orElseThrow(PtContractNotExistException::new);
+    PtContractEntity ptContract = getPtContract(
+        schedule.getTrainer().getId(),
+        trainee.getId()
+    );
 
     schedule.apply(ptContract);
     scheduleRepository.save(schedule);
@@ -210,6 +210,93 @@ public class ScheduleService {
     return new RejectScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
 
+  /**
+   * 일정 확정 등록(트레이니의 신청 과정 없이 바로 등록함)
+   */
+  @Transactional
+  public RegisterScheduleResponseDto registerSchedule(RegisterScheduleRequestDto dto) {
+    System.out.println("dto = " + dto);
+    TrainerEntity trainer = getTrainer();
+    PtContractEntity ptContract = getPtContract(trainer.getId(), dto.getTraineeId());
+
+    List<LocalDateTime> requestedStartTimes = getRequestedTimes(dto.getDateTimes());
+    Set<LocalDateTime> existingStartTimes = scheduleRepository.findScheduleDatesByDates(
+        getEarliest(requestedStartTimes),
+        getLatest(requestedStartTimes)
+    );
+    existingStartTimes.retainAll(requestedStartTimes); // 요청한 것 중 존재하는 시간만 남김
+
+    // 남은 PT 횟수가 부족하면 에러를 냄
+    if (requestedStartTimes.size() > ptContract.getRemainSession()) {
+      throw new PtContractNotEnoughSession();
+    }
+
+    // 존재하지 않는 스케쥴은 생성하기
+    List<ScheduleEntity> newSchedules = createNewSchedules(
+        requestedStartTimes, existingStartTimes, ptContract
+    );
+
+    // 이미 존재하는 스케쥴은 기존 스케쥴을 사용해서 업데이트
+    List<ScheduleEntity> existingSchedules = updateExistingSchedules(
+        existingStartTimes, ptContract
+    );
+
+    scheduleRepository.saveAll(newSchedules);
+    scheduleRepository.saveAll(existingSchedules);
+    ptContractRepository.save(ptContract);
+
+    return new RegisterScheduleResponseDto(
+        newSchedules.size() + existingSchedules.size(),
+        ptContract.getRemainSession()
+    );
+  }
+
+  private List<ScheduleEntity> createNewSchedules(
+      List<LocalDateTime> requestedStartTimes,
+      Set<LocalDateTime> existingsStartTimes,
+      PtContractEntity ptContract
+  ) {
+    TrainerEntity trainer = getTrainer();
+    return requestedStartTimes.stream()
+        .filter(time -> !existingsStartTimes.contains(time))
+        .map(startTime -> {
+          LocalDateTime endAt = startTime.plusHours(1);
+          return ScheduleEntity.of(startTime, endAt, trainer);
+        })
+        .peek(schedule -> {
+          schedule.apply(ptContract);
+          schedule.acceptReserveApplied();
+          ptContract.useSession();
+        })
+        .toList();
+  }
+
+  private List<ScheduleEntity> updateExistingSchedules(
+      Set<LocalDateTime> existingsStartTimes,
+      PtContractEntity ptContract
+  ) {
+    return existingsStartTimes.stream()
+        .map(time -> scheduleRepository.findByDates(time, time).stream()
+            .findFirst()
+            .orElseThrow(ScheduleNotFoundException::new)
+        )
+        .peek(schedule -> {
+          if (schedule.getScheduleStatus() != ScheduleStatus.OPEN) {
+            throw new ScheduleStatusNotOpenException();
+          }
+          schedule.apply(ptContract);
+          schedule.acceptReserveApplied();
+          ptContract.useSession();
+        })
+        .toList();
+  }
+
+  private PtContractEntity getPtContract(Long trainerId, Long traineeId) {
+    return ptContractRepository.findByTrainerIdAndTraineeId(trainerId,
+            traineeId)
+        .orElseThrow(PtContractNotExistException::new);
+  }
+
   private TraineeEntity getTrainee() {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
     return traineeRepository.findByEmail(email)
@@ -222,17 +309,23 @@ public class ScheduleService {
         .orElseThrow(UserNotFoundException::new);
   }
 
-  private static LocalDateTime getLatest(List<ScheduleEntity> scheduleEntities) {
-    return scheduleEntities.stream()
-        .max(Comparator.comparing(ScheduleEntity::getStartAt))
-        .map(ScheduleEntity::getStartAt)
+  private List<LocalDateTime> getRequestedTimes(List<ScheduleDateTimes> dateTimes) {
+    return dateTimes.stream()
+        .flatMap(dateTime -> dateTime.getStartTimes().stream()
+            .map(startTime -> LocalDateTime.of(dateTime.getStartDate(), startTime))
+        )
+        .toList();
+  }
+
+  private static LocalDateTime getLatest(List<LocalDateTime> times) {
+    return times.stream()
+        .max(LocalDateTime::compareTo)
         .orElseThrow(ScheduleInvalidException::new);
   }
 
-  private static LocalDateTime getEarliest(List<ScheduleEntity> scheduleEntities) {
-    return scheduleEntities.stream()
-        .min(Comparator.comparing(ScheduleEntity::getStartAt))
-        .map(ScheduleEntity::getStartAt)
+  private static LocalDateTime getEarliest(List<LocalDateTime> times) {
+    return times.stream()
+        .min(LocalDateTime::compareTo)
         .orElseThrow(ScheduleInvalidException::new);
   }
 }

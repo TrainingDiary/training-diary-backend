@@ -44,6 +44,10 @@ public class PtContractEntity extends BaseEntity {
   @JoinColumn(name = "trainee_id")
   private TraineeEntity trainee;
 
+  public int getRemainSession() {
+    return this.totalSession - this.usedSession;
+  }
+
   public void addSession(int addition) {
     this.totalSession += addition;
     this.totalSessionUpdatedAt = LocalDateTime.now();
