@@ -104,7 +104,6 @@ class WorkoutSessionServiceTest {
   @Mock
   private S3Operations s3Operations;
 
-
   @InjectMocks
   private WorkoutSessionService workoutSessionService;
 
@@ -319,9 +318,9 @@ class WorkoutSessionServiceTest {
     S3Resource s3ResourceThumbnail = mock(S3Resource.class);
 
     when(s3ResourceOriginal.getURL()).thenReturn(
-        new URL("https://test-bucket.s3.amazonaws.com/original"));
+        new URL("https://test-bucket.s3.amazonaws.com/original.jpg"));
     when(s3ResourceThumbnail.getURL()).thenReturn(
-        new URL("https://test-bucket.s3.amazonaws.com/thumbnail"));
+        new URL("https://test-bucket.s3.amazonaws.com/thumb_original.jpg"));
 
     ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
@@ -350,8 +349,10 @@ class WorkoutSessionServiceTest {
     assertEquals(bucket, capturedBuckets.get(0));
     assertEquals(bucket, capturedBuckets.get(1));
 
-    assertTrue(capturedKeys.get(0).matches("[0-9a-fA-F-]{36}"));
+    // Check that keys contain the correct UUID structure for original and thumbnail
+    assertTrue(capturedKeys.get(0).matches("[0-9a-fA-F-]{36}\\.jpg"));
     assertTrue(capturedKeys.get(1).startsWith("thumb_"));
+    assertTrue(capturedKeys.get(1).matches("thumb_[0-9a-fA-F-]{36}\\.jpg"));
 
     ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
         WorkoutSessionEntity.class);
