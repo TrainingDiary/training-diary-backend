@@ -1,13 +1,12 @@
-package com.project.trainingdiary.repository;
+package com.project.trainingdiary.repository.ptContract;
 
 import com.project.trainingdiary.entity.PtContractEntity;
 import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface PtContractRepository extends JpaRepository<PtContractEntity, Long> {
+public interface PtContractRepository extends JpaRepository<PtContractEntity, Long>,
+    PtContractRepositoryCustom {
 
   @Query("select case when count(p) > 0 "
       + "then true "
@@ -27,20 +26,4 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       + "and p.trainee.id = ?2 "
       + "and p.isTerminated = false")
   Optional<PtContractEntity> findByTrainerIdAndTraineeId(long trainerId, long traineeId);
-
-  @Query("select p "
-      + "from pt_contract p "
-      + "join fetch p.trainer t1 "
-      + "join fetch p.trainee t2 "
-      + "where t2.email = ?1 "
-      + "and p.isTerminated = false")
-  Page<PtContractEntity> findByTraineeEmail(String email, Pageable pageable);
-
-  @Query("select p "
-      + "from pt_contract p "
-      + "join fetch p.trainer t1 "
-      + "join fetch p.trainee t2 "
-      + "where t1.email = ?1 "
-      + "and p.isTerminated = false")
-  Page<PtContractEntity> findByTrainerEmail(String email, Pageable pageable);
 }
