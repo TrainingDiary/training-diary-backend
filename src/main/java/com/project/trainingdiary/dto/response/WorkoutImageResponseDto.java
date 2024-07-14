@@ -19,8 +19,10 @@ public class WorkoutImageResponseDto {
   private List<String> originalUrls;
   private List<String> thumbnailUrls;
 
-  public static WorkoutImageResponseDto fromEntity(List<WorkoutMediaEntity> workoutMediaList,
-      Long sessionId) {
+  public static WorkoutImageResponseDto fromEntity(
+      List<WorkoutMediaEntity> workoutMediaList,
+      Long sessionId
+  ) {
 
     return WorkoutImageResponseDto.builder()
         .sessionId(sessionId)
