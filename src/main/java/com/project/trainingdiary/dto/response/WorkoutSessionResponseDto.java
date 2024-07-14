@@ -37,12 +37,12 @@ public class WorkoutSessionResponseDto {
 
     List<String> photoUrls = entity.getWorkoutMedia().stream()
         .filter(media -> media.getMediaType() == IMAGE)
-        .map(WorkoutMediaEntity::getOriginalKey)
+        .map(WorkoutMediaEntity::getOriginalUrl)
         .toList();
 
     List<String> videoUrls = entity.getWorkoutMedia().stream()
         .filter(media -> media.getMediaType() == VIDEO)
-        .map(WorkoutMediaEntity::getOriginalKey)
+        .map(WorkoutMediaEntity::getOriginalUrl)
         .toList();
 
     return WorkoutSessionResponseDto.builder()
