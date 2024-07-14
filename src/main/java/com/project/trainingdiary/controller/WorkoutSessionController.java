@@ -3,6 +3,7 @@ package com.project.trainingdiary.controller;
 import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
 import com.project.trainingdiary.dto.response.CustomResponse;
+import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
 import com.project.trainingdiary.service.WorkoutSessionService;
@@ -64,14 +65,14 @@ public class WorkoutSessionController {
   }
 
   @PutMapping("/workout-sessions/photos")
-  public CustomResponse<?> uploadWorkoutMedia (
+  public CustomResponse<?> uploadWorkoutImage(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("images") List<MultipartFile> images
   ) throws IOException {
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(sessionId).images(images).build();
-    workoutSessionService.uploadWorkoutMedia(dto);
-    return CustomResponse.success();
+    WorkoutImageResponseDto imageResponseDto = workoutSessionService.uploadWorkoutImage(dto);
+    return CustomResponse.success(imageResponseDto);
   }
 
 }
