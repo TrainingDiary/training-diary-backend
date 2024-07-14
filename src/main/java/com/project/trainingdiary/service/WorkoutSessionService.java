@@ -136,8 +136,10 @@ public class WorkoutSessionService {
         throw new InvalidFileTypeException();
       }
 
+      // 확장자 추출
+      String extension = getExtension(file.getOriginalFilename());
       // key (이미지 이름) 설정 후 업로드
-      String originalKey = UUID.randomUUID().toString();
+      String originalKey = UUID.randomUUID() + "." + extension;
       S3Resource s3Resource;
       try (InputStream inputStream = file.getInputStream()) {
         s3Resource = s3Operations.upload(bucket, originalKey, inputStream,
@@ -189,6 +191,17 @@ public class WorkoutSessionService {
   private boolean isValidImageType(MultipartFile file) {
     return MediaType.IMAGE_JPEG.toString().equals(file.getContentType()) ||
         MediaType.IMAGE_PNG.toString().equals(file.getContentType());
+  }
+
+  /**
+   * 확장자 추출
+   */
+  private String getExtension(String filename) {
+    if (filename == null) {
+      return "";
+    }
+    int dotIndex = filename.lastIndexOf('.');
+    return (dotIndex == -1) ? "" : filename.substring(dotIndex + 1);
   }
 
   /**
