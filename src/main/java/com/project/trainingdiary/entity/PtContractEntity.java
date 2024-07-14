@@ -73,12 +73,14 @@ public class PtContractEntity extends BaseEntity {
 
   public PtContractResponseDto toResponseDto() {
     return PtContractResponseDto.builder()
-        .id(id)
+        .ptContractId(id)
         .trainerId(trainer.getId())
+        .trainerName(trainer.getName())
         .traineeId(trainee.getId())
+        .traineeName(trainee.getName())
         .usedSession(usedSession)
         .totalSession(totalSession)
-        .createdAt(getCreatedAt())
+        .remainSession(totalSession - usedSession)
         .totalSessionUpdatedAt(totalSessionUpdatedAt)
         .build();
   }

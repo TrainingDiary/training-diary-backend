@@ -30,15 +30,17 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
 
   @Query("select p "
       + "from pt_contract p "
-      + "join p.trainer t "
-      + "where t.email = ?1 "
+      + "join fetch p.trainer t1 "
+      + "join fetch p.trainee t2 "
+      + "where t2.email = ?1 "
       + "and p.isTerminated = false")
   Page<PtContractEntity> findByTraineeEmail(String email, Pageable pageable);
 
   @Query("select p "
       + "from pt_contract p "
-      + "join p.trainer t "
-      + "where t.email = ?1 "
+      + "join fetch p.trainer t1 "
+      + "join fetch p.trainee t2 "
+      + "where t1.email = ?1 "
       + "and p.isTerminated = false")
   Page<PtContractEntity> findByTrainerEmail(String email, Pageable pageable);
 }
