@@ -13,6 +13,7 @@ import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
+import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleOpenCloseService;
 import com.project.trainingdiary.service.ScheduleTraineeService;
@@ -20,6 +21,7 @@ import com.project.trainingdiary.service.ScheduleTrainerService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,19 +50,19 @@ public class ScheduleController {
   }
 
   @GetMapping("/trainers")
-  public CommonResponse<?> getScheduleListByTrainer(
+  public ResponseEntity<List<ScheduleResponseDto>> getScheduleListByTrainer(
       @RequestParam LocalDate startDate,
       @RequestParam LocalDate endDate
   ) {
-    return CommonResponse.success(scheduleTrainerService.getScheduleList(startDate, endDate));
+    return ResponseEntity.ok(scheduleTrainerService.getScheduleList(startDate, endDate));
   }
 
   @GetMapping("/trainees")
-  public CommonResponse<?> getScheduleListByTrainee(
+  public ResponseEntity<List<ScheduleResponseDto>> getScheduleListByTrainee(
       @RequestParam LocalDate startDate,
       @RequestParam LocalDate endDate
   ) {
-    return CommonResponse.success(scheduleTraineeService.getScheduleList(startDate, endDate));
+    return ResponseEntity.ok(scheduleTraineeService.getScheduleList(startDate, endDate));
   }
 
   @PostMapping("/trainers/close")
