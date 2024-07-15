@@ -5,6 +5,7 @@ import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
 import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
+import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.service.PtContractService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,9 +36,10 @@ public class PtContractController {
 
   @GetMapping
   public CommonResponse<?> getPtContractList(
-      Pageable pageable
+      Pageable pageable,
+      @RequestParam PtContractSort sortBy
   ) {
-    Page<PtContractResponseDto> ptContracts = ptContractService.getPtContractList(pageable);
+    Page<PtContractResponseDto> ptContracts = ptContractService.getPtContractList(pageable, sortBy);
     return CommonResponse.success(ptContracts);
   }
 

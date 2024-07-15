@@ -10,11 +10,13 @@ import lombok.Setter;
 @Builder
 public class PtContractResponseDto {
 
-  private Long id;
+  private Long ptContractId;
   private LocalDateTime totalSessionUpdatedAt;
   private int totalSession;
   private int usedSession;
+  private int remainSession;
   private Long trainerId;
+  private String trainerName;
   private Long traineeId;
-  private LocalDateTime createdAt;
+  private String traineeName;
 }
