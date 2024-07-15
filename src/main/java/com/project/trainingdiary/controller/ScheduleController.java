@@ -1,15 +1,19 @@
 package com.project.trainingdiary.controller;
 
+import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,5 +58,21 @@ public class ScheduleController {
   ) {
     scheduleService.applySchedule(dto, LocalDateTime.now());
     return CommonResponse.success();
+  }
+
+  @PostMapping("/trainers/accept")
+  public CommonResponse<?> acceptSchedule(
+      @RequestBody @Valid AcceptScheduleRequestDto dto
+  ) {
+    scheduleService.acceptSchedule(dto);
+    return CommonResponse.success();
+  }
+
+  @PostMapping("/trainers/reject")
+  public ResponseEntity<RejectScheduleResponseDto> rejectSchedule(
+      @RequestBody @Valid RejectScheduleRequestDto dto
+  ) {
+    RejectScheduleResponseDto response = scheduleService.rejectSchedule(dto);
+    return ResponseEntity.ok(response);
   }
 }

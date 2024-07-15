@@ -1,7 +1,10 @@
 package com.project.trainingdiary.service;
 
+import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
@@ -15,6 +18,8 @@ import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
 import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
+import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
+import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.repository.PtContractRepository;
@@ -36,7 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
-@Transactional(readOnly = true)
 public class ScheduleService {
 
   private static final int MAX_QUERY_DAYS = 180;
@@ -49,7 +53,6 @@ public class ScheduleService {
   /**
    * 일정이 예약 가능하도록 열기
    */
-  @Transactional
   public void createSchedule(OpenScheduleRequestDto dto) {
     TrainerEntity trainer = getTrainer();
 
@@ -96,7 +99,6 @@ public class ScheduleService {
   /**
    * 열린 일정을 닫기
    */
-  @Transactional
   public void closeSchedules(List<Long> scheduleIds) {
     // TODO: trainee는 일정을 닫을 수 없음
 
@@ -119,7 +121,6 @@ public class ScheduleService {
   /**
    * 일정 예약 신청
    */
-  @Transactional
   public void applySchedule(ApplyScheduleRequestDto dto, LocalDateTime currentTime) {
     TraineeEntity trainee = getTrainee();
 
@@ -145,6 +146,68 @@ public class ScheduleService {
 
     schedule.apply(ptContract);
     scheduleRepository.save(schedule);
+  }
+
+  /**
+   * 일정 예약 수락
+   */
+  @Transactional
+  public void acceptSchedule(AcceptScheduleRequestDto dto) {
+    getTrainer();
+
+    ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
+        .orElseThrow(ScheduleNotFoundException::new);
+
+    // 예약 상태가 RESERVE_APPLIED인지 확인
+    if (!schedule.getScheduleStatus().equals(ScheduleStatus.RESERVE_APPLIED)) {
+      throw new ScheduleStatusNotReserveApplied();
+    }
+
+    PtContractEntity ptContract = schedule.getPtContract();
+    // PT 계약이 존재하지 않음
+    if (ptContract == null) {
+      throw new PtContractNotExistException();
+    }
+    // 전체 세션의 갯수와 사용한 세션의 갯수를 비교해 더 사용할 수 있는지 확인
+    if (ptContract.getTotalSession() <= ptContract.getUsedSession()) {
+      throw new UsedSessionExceededTotalSession();
+    }
+
+    schedule.acceptReserveApplied();
+    scheduleRepository.save(schedule);
+
+    ptContract.useSession();
+    ptContractRepository.save(ptContract);
+  }
+
+  /**
+   * 일정 예약 거절
+   */
+  @Transactional
+  public RejectScheduleResponseDto rejectSchedule(RejectScheduleRequestDto dto) {
+    getTrainer();
+
+    ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
+        .orElseThrow(ScheduleNotFoundException::new);
+
+    // 예약 상태가 RESERVE_APPLIED인지 확인
+    if (!schedule.getScheduleStatus().equals(ScheduleStatus.RESERVE_APPLIED)) {
+      throw new ScheduleStatusNotReserveApplied();
+    }
+
+    PtContractEntity ptContract = schedule.getPtContract();
+    // PT 계약이 존재하지 않음
+    if (ptContract == null) {
+      throw new PtContractNotExistException();
+    }
+
+    schedule.rejectReserveApplied();
+    scheduleRepository.save(schedule);
+
+    ptContract.unuseSession();
+    ptContractRepository.save(ptContract);
+
+    return new RejectScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
 
   private TraineeEntity getTrainee() {

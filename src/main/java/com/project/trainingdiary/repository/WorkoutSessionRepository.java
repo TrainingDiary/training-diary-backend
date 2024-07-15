@@ -1,5 +1,6 @@
 package com.project.trainingdiary.repository;
 
+import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.WorkoutSessionEntity;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -12,5 +13,8 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSessionEn
       Pageable pageable);
 
   Optional<WorkoutSessionEntity> findByIdAndPtContract_Trainee_Id(Long sessionId, Long traineeId);
+
+  Optional<WorkoutSessionEntity> findByPtContract_TrainerAndId(TrainerEntity trainer,
+      Long sessionId);
 
 }

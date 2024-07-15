@@ -1,5 +1,6 @@
 package com.project.trainingdiary.entity;
 
+import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
@@ -18,7 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @ToString
 @NoArgsConstructor
@@ -45,7 +46,7 @@ public class WorkoutSessionEntity extends BaseEntity {
   @JoinColumn(name = "workout_session_id")
   private List<WorkoutMediaEntity> workoutMedia;
 
-  @ManyToOne
+  @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "pt_contract_id")
   private PtContractEntity ptContract;
 
