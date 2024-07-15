@@ -1,6 +1,5 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.CustomResponse;
 import com.project.trainingdiary.dto.response.ExampleResponseDto;
 import com.project.trainingdiary.exception.GlobalException;
@@ -49,7 +48,8 @@ public class SampleController {
   }
 
   @GetMapping("api/test/protected")
-  public CustomResponse<String> protectedEndpoint(@AuthenticationPrincipal UserPrincipal userPrincipal) {
+  public CustomResponse<String> protectedEndpoint(
+      @AuthenticationPrincipal UserPrincipal userPrincipal) {
     log.info("User: {}", userPrincipal.getUsername());
     return CustomResponse.success("인증 권한 있습니다");
   }

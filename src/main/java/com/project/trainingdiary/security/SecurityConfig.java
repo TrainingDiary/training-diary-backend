@@ -57,6 +57,6 @@ class FailedAuthenticationEntryPoint implements AuthenticationEntryPoint {
     response.setContentType("application/json;charset=UTF-8");
     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-    response.getWriter().write("{\"message\": \"No Permission\", \"statusCode\": \"401\"}");
+    response.getWriter().write("{\"message\": \"인증 권한이 없습니다\", \"errorCode\": \"401\"}");
   }
 }
