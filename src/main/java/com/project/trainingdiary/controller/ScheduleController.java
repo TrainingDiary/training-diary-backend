@@ -106,7 +106,8 @@ public class ScheduleController {
       @RequestBody @Valid CancelScheduleByTraineeRequestDto dto
   ) {
     CancelScheduleByTraineeResponseDto response = scheduleService.cancelSchedule(
-        dto, LocalDateTime.now());
+        dto, LocalDateTime.now()
+    );
     return ResponseEntity.ok(response);
   }
 }

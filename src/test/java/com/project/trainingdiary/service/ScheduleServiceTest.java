@@ -11,9 +11,13 @@ import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
+import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
+import com.project.trainingdiary.dto.request.CancelScheduleByTrainerRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
+import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
@@ -27,8 +31,10 @@ import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
 import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
+import com.project.trainingdiary.exception.impl.ScheduleStartWithin1Day;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
+import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
 import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
@@ -1031,5 +1037,226 @@ class ScheduleServiceTest {
         PtContractNotEnoughSession.class,
         () -> scheduleService.registerSchedule(dto)
     );
+  }
+
+  @Test
+  @DisplayName("트레이너의 일정 취소 - 성공")
+  void cancelScheduleByTrainer() {
+    //given
+    setupTrainerAuth();
+    CancelScheduleByTrainerRequestDto dto = new CancelScheduleByTrainerRequestDto(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.RESERVED)
+                .trainer(trainer)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(5)
+                        .build()
+                )
+                .build()
+        ));
+
+    CancelScheduleByTrainerResponseDto response = scheduleService.cancelSchedule(
+        dto);
+    ArgumentCaptor<PtContractEntity> ptContractCaptor = ArgumentCaptor.forClass(
+        PtContractEntity.class);
+    ArgumentCaptor<ScheduleEntity> scheduleCaptor = ArgumentCaptor.forClass(ScheduleEntity.class);
+
+    //then
+    verify(ptContractRepository).save(ptContractCaptor.capture());
+    verify(scheduleRepository).save(scheduleCaptor.capture());
+
+    assertEquals(4, ptContractCaptor.getValue().getUsedSession());
+    assertEquals(ScheduleStatus.OPEN, scheduleCaptor.getValue().getScheduleStatus());
+    assertEquals(ScheduleStatus.OPEN, response.getScheduleStatus());
+  }
+
+  @Test
+  @DisplayName("트레이너의 일정 취소 - 실패(스케쥴이 없음)")
+  void cancelScheduleByTrainerFail_NoSchedule() {
+    //given
+    setupTrainerAuth();
+    CancelScheduleByTrainerRequestDto dto = new CancelScheduleByTrainerRequestDto(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        ScheduleNotFoundException.class,
+        () -> scheduleService.cancelSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("트레이너의 일정 취소 - 실패(일정 상태가 OPEN이라 취소할 수 없음)")
+  void cancelScheduleByTrainerFail_OpenStatus() {
+    //given
+    setupTrainerAuth();
+    CancelScheduleByTrainerRequestDto dto = new CancelScheduleByTrainerRequestDto(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.OPEN)
+                .trainer(trainer)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(5)
+                        .build()
+                )
+                .build())
+        );
+
+    //then
+    assertThrows(
+        ScheduleStatusNotReserveAppliedOrReserved.class,
+        () -> scheduleService.cancelSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("트레이니의 일정 취소 - 성공")
+  void cancelScheduleByTrainee() {
+    //given
+    setupTraineeAuth();
+    CancelScheduleByTraineeRequestDto dto = new CancelScheduleByTraineeRequestDto(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .startAt(LocalDateTime.of(2024, 7, 16, 9, 0, 0))
+                .scheduleStatus(ScheduleStatus.RESERVED)
+                .trainer(trainer)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(5)
+                        .trainer(trainer)
+                        .trainee(trainee)
+                        .build()
+                )
+                .build()
+        ));
+
+    CancelScheduleByTraineeResponseDto response = scheduleService.cancelSchedule(
+        dto,
+        LocalDateTime.of(2024, 7, 15, 8, 0, 0)
+    );
+    ArgumentCaptor<PtContractEntity> ptContractCaptor = ArgumentCaptor.forClass(
+        PtContractEntity.class);
+    ArgumentCaptor<ScheduleEntity> scheduleCaptor = ArgumentCaptor.forClass(ScheduleEntity.class);
+
+    //then
+    verify(ptContractRepository).save(ptContractCaptor.capture());
+    verify(scheduleRepository).save(scheduleCaptor.capture());
+
+    assertEquals(4, ptContractCaptor.getValue().getUsedSession());
+    assertEquals(ScheduleStatus.OPEN, scheduleCaptor.getValue().getScheduleStatus());
+    assertEquals(ScheduleStatus.OPEN, response.getScheduleStatus());
+  }
+
+  @Test
+  @DisplayName("트레이니의 일정 취소 - 실패(스케쥴이 없음)")
+  void cancelScheduleByTraineeFail_NoSchedule() {
+    //given
+    setupTraineeAuth();
+    CancelScheduleByTraineeRequestDto dto = new CancelScheduleByTraineeRequestDto(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        ScheduleNotFoundException.class,
+        () -> scheduleService.cancelSchedule(
+            dto,
+            LocalDateTime.of(2024, 7, 15, 8, 0, 0)
+        ));
+  }
+
+  @Test
+  @DisplayName("트레이니의 일정 취소 - 실패(일정 상태가 OPEN이라 취소할 수 없음)")
+  void cancelScheduleByTraineeFail_OpenStatus() {
+    //given
+    setupTraineeAuth();
+    CancelScheduleByTraineeRequestDto dto = new CancelScheduleByTraineeRequestDto(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(ScheduleEntity.builder()
+            .id(100L)
+            .scheduleStatus(ScheduleStatus.OPEN)
+            .trainer(trainer)
+            .ptContract(
+                PtContractEntity.builder()
+                    .id(1000L)
+                    .trainer(trainer)
+                    .trainee(trainee)
+                    .totalSession(10)
+                    .usedSession(5)
+                    .build()
+            )
+            .build())
+        );
+
+    //then
+    assertThrows(
+        ScheduleStatusNotReserveAppliedOrReserved.class,
+        () -> scheduleService.cancelSchedule(
+            dto,
+            LocalDateTime.of(2024, 7, 15, 8, 0, 0)
+        ));
+  }
+
+  @Test
+  @DisplayName("트레이니의 일정 취소 - 실패(RESERVED 상태의 일정이 24시간 미만으로 남았음)")
+  void cancelScheduleByTraineeFail_ReservedWithin1Day() {
+    //given
+    setupTraineeAuth();
+    CancelScheduleByTraineeRequestDto dto = new CancelScheduleByTraineeRequestDto(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(ScheduleEntity.builder()
+            .id(100L)
+            .startAt(LocalDateTime.of(2024, 7, 16, 7, 0, 0)) // 내일 아침 7시 예약
+            .scheduleStatus(ScheduleStatus.RESERVED)
+            .trainer(trainer)
+            .ptContract(
+                PtContractEntity.builder()
+                    .id(1000L)
+                    .trainer(trainer)
+                    .trainee(trainee)
+                    .totalSession(10)
+                    .usedSession(5)
+                    .build()
+            )
+            .build())
+        );
+
+    //then
+    assertThrows(
+        ScheduleStartWithin1Day.class,
+        () -> scheduleService.cancelSchedule(
+            dto,
+            LocalDateTime.of(2024, 7, 15, 8, 0, 0) // 전날 아침 8시에 취소하려함
+        ));
   }
 }
