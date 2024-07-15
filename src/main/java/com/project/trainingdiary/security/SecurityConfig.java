@@ -37,6 +37,7 @@ public class SecurityConfig {
             .permitAll() // Swagger UI
             .requestMatchers("/api/pt-contracts/**").authenticated()
             .requestMatchers("/api/schedules/**").authenticated()
+            .requestMatchers("/api/trainees/**", "api/trainers/**").authenticated()
             .anyRequest().authenticated())
         .exceptionHandling(exception -> exception
             .authenticationEntryPoint(new FailedAuthenticationEntryPoint()))
