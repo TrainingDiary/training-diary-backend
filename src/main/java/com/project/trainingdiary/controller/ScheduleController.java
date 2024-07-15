@@ -14,7 +14,10 @@ import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
+import com.project.trainingdiary.service.ScheduleOpenCloseService;
 import com.project.trainingdiary.service.ScheduleService;
+import com.project.trainingdiary.service.ScheduleTraineeService;
+import com.project.trainingdiary.service.ScheduleTrainerService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -34,12 +37,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class ScheduleController {
 
   private final ScheduleService scheduleService;
+  private final ScheduleTrainerService scheduleTrainerService;
+  private final ScheduleTraineeService scheduleTraineeService;
+  private final ScheduleOpenCloseService scheduleOpenCloseService;
 
   @PostMapping("/trainers/open")
   public CommonResponse<?> openSchedule(
       @RequestBody @Valid OpenScheduleRequestDto dto
   ) {
-    scheduleService.createSchedule(dto);
+    scheduleOpenCloseService.createSchedule(dto);
     return CommonResponse.success(SuccessMessage.SCHEDULE_OPEN_SUCCESS);
   }
 
@@ -55,7 +61,7 @@ public class ScheduleController {
   public CommonResponse<?> closeSchedules(
       @RequestBody @Valid CloseScheduleRequestDto dto
   ) {
-    scheduleService.closeSchedules(dto.scheduleIds);
+    scheduleOpenCloseService.closeSchedules(dto.scheduleIds);
     return CommonResponse.success();
   }
 
@@ -63,7 +69,7 @@ public class ScheduleController {
   public CommonResponse<?> applySchedule(
       @RequestBody @Valid ApplyScheduleRequestDto dto
   ) {
-    scheduleService.applySchedule(dto, LocalDateTime.now());
+    scheduleTraineeService.applySchedule(dto, LocalDateTime.now());
     return CommonResponse.success();
   }
 
@@ -71,7 +77,7 @@ public class ScheduleController {
   public CommonResponse<?> acceptSchedule(
       @RequestBody @Valid AcceptScheduleRequestDto dto
   ) {
-    scheduleService.acceptSchedule(dto);
+    scheduleTrainerService.acceptSchedule(dto);
     return CommonResponse.success();
   }
 
@@ -79,7 +85,7 @@ public class ScheduleController {
   public ResponseEntity<RejectScheduleResponseDto> rejectSchedule(
       @RequestBody @Valid RejectScheduleRequestDto dto
   ) {
-    RejectScheduleResponseDto response = scheduleService.rejectSchedule(dto);
+    RejectScheduleResponseDto response = scheduleTrainerService.rejectSchedule(dto);
     return ResponseEntity.ok(response);
   }
 
@@ -87,7 +93,7 @@ public class ScheduleController {
   public ResponseEntity<RegisterScheduleResponseDto> rejectSchedule(
       @RequestBody @Valid RegisterScheduleRequestDto dto
   ) {
-    RegisterScheduleResponseDto response = scheduleService.registerSchedule(dto);
+    RegisterScheduleResponseDto response = scheduleOpenCloseService.registerSchedule(dto);
     return ResponseEntity.ok(response);
   }
 
@@ -96,7 +102,7 @@ public class ScheduleController {
   public ResponseEntity<CancelScheduleByTrainerResponseDto> cancelScheduleByTrainer(
       @RequestBody @Valid CancelScheduleByTrainerRequestDto dto
   ) {
-    CancelScheduleByTrainerResponseDto response = scheduleService.cancelSchedule(dto);
+    CancelScheduleByTrainerResponseDto response = scheduleTrainerService.cancelSchedule(dto);
     return ResponseEntity.ok(response);
   }
 
@@ -105,7 +111,7 @@ public class ScheduleController {
   public ResponseEntity<CancelScheduleByTraineeResponseDto> cancelScheduleByTrainer(
       @RequestBody @Valid CancelScheduleByTraineeRequestDto dto
   ) {
-    CancelScheduleByTraineeResponseDto response = scheduleService.cancelSchedule(
+    CancelScheduleByTraineeResponseDto response = scheduleTraineeService.cancelSchedule(
         dto, LocalDateTime.now()
     );
     return ResponseEntity.ok(response);
