@@ -5,18 +5,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.impl.PtContractNotEnoughSession;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
 import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
@@ -40,6 +44,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -81,9 +86,11 @@ class ScheduleServiceTest {
   private TrainerEntity trainer;
   private TraineeEntity trainee;
   private List<ScheduleResponseDto> responseData;
+  private List<ScheduleDateTimes> dateTimesForRegister;
 
   @BeforeEach
   public void setup() {
+    setupDateTimes();
     setupTrainee();
     setupTrainer();
     setupScheduleResponseDto();
@@ -143,6 +150,29 @@ class ScheduleServiceTest {
 
     lenient().when(traineeRepository.findByEmail(trainee.getEmail()))
         .thenReturn(Optional.of(trainee));
+  }
+
+  private void setupDateTimes() {
+    dateTimesForRegister = List.of(
+        ScheduleDateTimes.builder()
+            .startDate(LocalDate.of(2024, 1, 2))
+            .startTimes(List.of(
+                LocalTime.of(20, 0)
+            ))
+            .build(),
+        ScheduleDateTimes.builder()
+            .startDate(LocalDate.of(2024, 1, 5))
+            .startTimes(List.of(
+                LocalTime.of(20, 0)
+            ))
+            .build(),
+        ScheduleDateTimes.builder()
+            .startDate(LocalDate.of(2024, 1, 8))
+            .startTimes(List.of(
+                LocalTime.of(22, 0)
+            ))
+            .build()
+    );
   }
 
   @AfterEach
@@ -791,6 +821,215 @@ class ScheduleServiceTest {
     assertThrows(
         PtContractNotExistException.class,
         () -> scheduleService.rejectSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 등록 - 성공(OPEN된 일정이 없는 경우)")
+  void registerScheduleSuccess_NoOpen() {
+    //given
+    setupTrainerAuth();
+    RegisterScheduleRequestDto dto = new RegisterScheduleRequestDto(trainee.getId(),
+        dateTimesForRegister);
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
+        .thenReturn(Optional.of(
+            PtContractEntity.builder()
+                .id(1000L)
+                .trainer(trainer)
+                .trainee(trainee)
+                .totalSession(10)
+                .usedSession(0)
+                .isTerminated(false)
+                .build()
+        ));
+
+    when(scheduleRepository.findScheduleDatesByDates(
+        LocalDateTime.of(2024, 1, 2, 20, 0),
+        LocalDateTime.of(2024, 1, 8, 22, 0)
+    ))
+        .thenReturn(new HashSet<>());
+
+    ArgumentCaptor<List<ScheduleEntity>> captorSchedule = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
+        PtContractEntity.class);
+
+    //then
+    RegisterScheduleResponseDto response = scheduleService.registerSchedule(dto);
+
+    verify(scheduleRepository, times(2)).saveAll(captorSchedule.capture());
+    verify(ptContractRepository).save(captorPtContract.capture());
+
+    assertEquals(3, captorSchedule.getAllValues().get(0).size());
+    assertEquals(0, captorSchedule.getAllValues().get(1).size());
+    assertEquals(3, captorPtContract.getValue().getUsedSession());
+    assertEquals(7, response.getRemainSession());
+  }
+
+  @Test
+  @DisplayName("일정 등록 - 성공(이미 OPEN된 일정이 있는 경우라도 성공)")
+  void registerScheduleSuccess_Open() {
+    //given
+    setupTrainerAuth();
+    RegisterScheduleRequestDto dto = new RegisterScheduleRequestDto(trainee.getId(),
+        dateTimesForRegister);
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
+        .thenReturn(Optional.of(
+            PtContractEntity.builder()
+                .id(1000L)
+                .trainer(trainer)
+                .trainee(trainee)
+                .totalSession(10)
+                .usedSession(0)
+                .isTerminated(false)
+                .build()
+        ));
+
+    when(scheduleRepository.findScheduleDatesByDates(
+        LocalDateTime.of(2024, 1, 2, 20, 0),
+        LocalDateTime.of(2024, 1, 8, 22, 0)
+    ))
+        .thenReturn(new HashSet<>(
+            List.of(LocalDateTime.of(2024, 1, 2, 20, 0))
+        ));
+
+    when(scheduleRepository.findByDates(
+        LocalDateTime.of(2024, 1, 2, 20, 0),
+        LocalDateTime.of(2024, 1, 2, 20, 0)
+    ))
+        .thenReturn(
+            List.of(
+                ScheduleEntity.builder()
+                    .id(100L)
+                    .startAt(LocalDateTime.of(2024, 1, 2, 20, 0))
+                    .scheduleStatus(ScheduleStatus.OPEN)
+                    .trainer(trainer)
+                    .build()
+            )
+        );
+
+    ArgumentCaptor<List<ScheduleEntity>> captorSchedule = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
+        PtContractEntity.class);
+
+    //then
+    RegisterScheduleResponseDto response = scheduleService.registerSchedule(dto);
+
+    verify(scheduleRepository, times(2)).saveAll(captorSchedule.capture());
+    verify(ptContractRepository).save(captorPtContract.capture());
+
+    assertEquals(2, captorSchedule.getAllValues().get(0).size());
+    assertEquals(1, captorSchedule.getAllValues().get(1).size());
+    assertEquals(3, captorPtContract.getValue().getUsedSession());
+    assertEquals(7, response.getRemainSession());
+  }
+
+  @Test
+  @DisplayName("일정 등록 - 실패(OPEN 상태가 아닌 일정이 이미 있는 경우)")
+  void registerScheduleFail_ScheduleExistButNotOpen() {
+    //given
+    setupTrainerAuth();
+    RegisterScheduleRequestDto dto = new RegisterScheduleRequestDto(trainee.getId(),
+        dateTimesForRegister);
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
+        .thenReturn(Optional.of(
+            PtContractEntity.builder()
+                .id(1000L)
+                .trainer(trainer)
+                .trainee(trainee)
+                .totalSession(10)
+                .usedSession(0)
+                .isTerminated(false)
+                .build()
+        ));
+
+    when(scheduleRepository.findScheduleDatesByDates(
+        LocalDateTime.of(2024, 1, 2, 20, 0),
+        LocalDateTime.of(2024, 1, 8, 22, 0)
+    ))
+        .thenReturn(new HashSet<>(
+            List.of(LocalDateTime.of(2024, 1, 2, 20, 0))
+        ));
+
+    when(scheduleRepository.findByDates(
+        LocalDateTime.of(2024, 1, 2, 20, 0),
+        LocalDateTime.of(2024, 1, 2, 20, 0)
+    ))
+        .thenReturn(
+            List.of(
+                ScheduleEntity.builder()
+                    .id(100L)
+                    .startAt(LocalDateTime.of(2024, 1, 2, 20, 0))
+                    .scheduleStatus(ScheduleStatus.RESERVED)
+                    .trainer(trainer)
+                    .build()
+            )
+        );
+
+    //then
+    assertThrows(
+        ScheduleStatusNotOpenException.class,
+        () -> scheduleService.registerSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 등록 - 실패(PT 계약이 없는 경우)")
+  void registerScheduleFail_NoPtContract() {
+    //given
+    setupTrainerAuth();
+    RegisterScheduleRequestDto dto = new RegisterScheduleRequestDto(trainee.getId(),
+        dateTimesForRegister);
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        PtContractNotExistException.class,
+        () -> scheduleService.registerSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 등록 - 실패(PT 횟수가 부족한 경우)")
+  void registerScheduleFail_SessionNotEnough() {
+    //given
+    setupTrainerAuth();
+    RegisterScheduleRequestDto dto = new RegisterScheduleRequestDto(trainee.getId(),
+        dateTimesForRegister);
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
+        .thenReturn(Optional.of(
+            PtContractEntity.builder()
+                .id(1000L)
+                .trainer(trainer)
+                .trainee(trainee)
+                .totalSession(10)
+                .usedSession(8)
+                .isTerminated(false)
+                .build()
+        ));
+
+    when(scheduleRepository.findScheduleDatesByDates(
+        LocalDateTime.of(2024, 1, 2, 20, 0),
+        LocalDateTime.of(2024, 1, 8, 22, 0)
+    ))
+        .thenReturn(new HashSet<>(
+            List.of(LocalDateTime.of(2024, 1, 2, 20, 0))
+        ));
+
+    //then
+    assertThrows(
+        PtContractNotEnoughSession.class,
+        () -> scheduleService.registerSchedule(dto)
     );
   }
 }
