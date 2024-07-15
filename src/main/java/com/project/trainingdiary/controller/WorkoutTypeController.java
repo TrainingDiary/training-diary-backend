@@ -2,7 +2,6 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.WorkoutTypeCreateRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
-import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.CustomResponse;
 import com.project.trainingdiary.dto.response.WorkoutTypeResponseDto;
 import com.project.trainingdiary.service.WorkoutTypeService;
