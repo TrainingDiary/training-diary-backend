@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,10 +69,10 @@ public class UserController {
   }
 
   @GetMapping("/{id}")
-  public CustomResponse<MemberInfoResponseDto> viewUserInfo(
+  public ResponseEntity<MemberInfoResponseDto> viewUserInfo(
       @PathVariable Long id
   ) {
     MemberInfoResponseDto user = userService.memberInfo(id);
-    return CustomResponse.success(user, SuccessMessage.VIEW_USER_INFO_SUCCESS);
+    return ResponseEntity.ok(user);
   }
 }

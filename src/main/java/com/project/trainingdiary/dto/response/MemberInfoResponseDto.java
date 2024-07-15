@@ -4,8 +4,8 @@ import com.project.trainingdiary.model.UserRoleType;
 import lombok.Builder;
 import lombok.Getter;
 
-@Builder
 @Getter
+@Builder
 public class MemberInfoResponseDto {
 
   private long id;
