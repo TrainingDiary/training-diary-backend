@@ -21,3 +21,9 @@ spring:
           auth: true
   jwt:
     secret:
+
+  spring:
+    cloud:
+      aws:
+        s3:
+          bucket: test-bucket
