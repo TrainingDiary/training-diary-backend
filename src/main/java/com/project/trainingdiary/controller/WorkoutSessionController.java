@@ -29,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 // TODO
 //  1. api 명세 보고 수정
 //  2. path 에 위치한 id를 dto(body)로 받기
-//  3. createWorkoutSession 반환 값 설정
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/trainees")
@@ -42,7 +41,7 @@ public class WorkoutSessionController {
       @RequestBody WorkoutSessionCreateRequestDto dto
   ) {
     workoutSessionService.createWorkoutSession(dto);
-    return ResponseEntity.ok("");
+    return ResponseEntity.ok("");   // 반환 값 수정
   }
 
   @GetMapping("/{id}/workout-sessions")
