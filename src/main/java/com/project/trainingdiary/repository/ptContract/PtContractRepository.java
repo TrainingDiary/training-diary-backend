@@ -26,4 +26,10 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       + "and p.trainee.id = ?2 "
       + "and p.isTerminated = false")
   Optional<PtContractEntity> findByTrainerIdAndTraineeId(long trainerId, long traineeId);
+
+  @Query("select p "
+      + "from pt_contract p "
+      + "where p.trainee.id = ?1 "
+      + "and p.isTerminated = false")
+  Optional<PtContractEntity> findByTraineeId(long traineeId);
 }

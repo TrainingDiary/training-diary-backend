@@ -11,11 +11,13 @@ import lombok.Setter;
 @Builder
 public class ScheduleResponseDetail {
 
-  private Long id;
+  private Long scheduleId;
 
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
   private LocalTime startTime;
+  private Long trainerId;
   private String trainerName;
+  private Long traineeId;
   private String traineeName;
   private ScheduleStatus status;
 }

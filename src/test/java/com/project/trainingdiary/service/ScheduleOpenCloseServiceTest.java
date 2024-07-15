@@ -73,10 +73,10 @@ class ScheduleOpenCloseServiceTest {
   private PtContractRepository ptContractRepository;
 
   @InjectMocks
-  private ScheduleService scheduleService;
+  private ScheduleOpenCloseService scheduleOpenCloseService;
 
   @InjectMocks
-  private ScheduleOpenCloseService scheduleOpenCloseService;
+  private ScheduleTrainerService scheduleTrainerService;
 
   private TrainerEntity trainer;
   private TraineeEntity trainee;
@@ -243,7 +243,7 @@ class ScheduleOpenCloseServiceTest {
         .dateTimes(dateTimes)
         .build();
 
-    when(scheduleService.getScheduleList(
+    when(scheduleTrainerService.getScheduleList(
         LocalDate.of(2024, 1, 1),
         LocalDate.of(2024, 3, 1)
     ))
@@ -251,7 +251,7 @@ class ScheduleOpenCloseServiceTest {
 
     //when
     scheduleOpenCloseService.createSchedule(dto);
-    List<ScheduleResponseDto> schedules = scheduleService.getScheduleList(
+    List<ScheduleResponseDto> schedules = scheduleTrainerService.getScheduleList(
         LocalDate.of(2024, 1, 1),
         LocalDate.of(2024, 3, 1)
     );

@@ -15,7 +15,6 @@ import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleOpenCloseService;
-import com.project.trainingdiary.service.ScheduleService;
 import com.project.trainingdiary.service.ScheduleTraineeService;
 import com.project.trainingdiary.service.ScheduleTrainerService;
 import jakarta.validation.Valid;
@@ -36,7 +35,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/schedules")
 public class ScheduleController {
 
-  private final ScheduleService scheduleService;
   private final ScheduleTrainerService scheduleTrainerService;
   private final ScheduleTraineeService scheduleTraineeService;
   private final ScheduleOpenCloseService scheduleOpenCloseService;
@@ -49,12 +47,20 @@ public class ScheduleController {
     return CommonResponse.success(SuccessMessage.SCHEDULE_OPEN_SUCCESS);
   }
 
-  @GetMapping
-  public CommonResponse<?> getScheduleList(
+  @GetMapping("/trainers")
+  public CommonResponse<?> getScheduleListByTrainer(
       @RequestParam LocalDate startDate,
       @RequestParam LocalDate endDate
   ) {
-    return CommonResponse.success(scheduleService.getScheduleList(startDate, endDate));
+    return CommonResponse.success(scheduleTrainerService.getScheduleList(startDate, endDate));
+  }
+
+  @GetMapping("/trainees")
+  public CommonResponse<?> getScheduleListByTrainee(
+      @RequestParam LocalDate startDate,
+      @RequestParam LocalDate endDate
+  ) {
+    return CommonResponse.success(scheduleTraineeService.getScheduleList(startDate, endDate));
   }
 
   @PostMapping("/trainers/close")
