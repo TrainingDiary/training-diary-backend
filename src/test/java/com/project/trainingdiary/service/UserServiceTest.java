@@ -40,7 +40,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -216,7 +215,8 @@ public class UserServiceTest {
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime(); // 1 hour later
 
-    LocalDateTime refreshTokenExpiryDate = Instant.ofEpochMilli(System.currentTimeMillis() + 604800000)
+    LocalDateTime refreshTokenExpiryDate = Instant.ofEpochMilli(
+            System.currentTimeMillis() + 604800000)
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime(); // 7 days later
 

@@ -1,9 +1,11 @@
 package com.project.trainingdiary.entity;
 
+import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import com.project.trainingdiary.model.WorkoutMediaType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
@@ -24,8 +26,10 @@ public class WorkoutMediaEntity extends BaseEntity {
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
-  private String mediaUrl;
+  private String originalUrl;
+  private String thumbnailUrl;
 
+  @Enumerated(value = STRING)
   private WorkoutMediaType mediaType;
 
 }
