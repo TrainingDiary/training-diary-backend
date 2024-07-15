@@ -4,6 +4,7 @@ import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRe
 import com.project.trainingdiary.dto.request.SignInRequestDto;
 import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
+import com.project.trainingdiary.dto.response.MemberInfoResponseDto;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
@@ -29,6 +30,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -259,5 +261,33 @@ public class UserService implements UserDetailsService {
     TrainerEntity trainer = trainerRepository.findByEmail(username)
         .orElseThrow(UserNotFoundException::new);
     return UserPrincipal.create(trainer);
+  }
+
+  /**
+   * 주어진 사용자 이름으로 사용자를 로드합니다.
+   */
+  public MemberInfoResponseDto memberInfo(Long id) {
+
+    Optional<TraineeEntity> traineeOpt = traineeRepository.findById(id);
+
+    if (traineeOpt.isPresent()) {
+      TraineeEntity trainee = traineeOpt.get();
+      return MemberInfoResponseDto.builder()
+          .id(trainee.getId())
+          .email(trainee.getEmail())
+          .name(trainee.getName())
+          .role(trainee.getRole())
+          .build();
+    }
+
+    TrainerEntity trainer = trainerRepository.findById(id)
+        .orElseThrow(UserNotFoundException::new);
+
+    return MemberInfoResponseDto.builder()
+        .id(trainer.getId())
+        .name(trainer.getName())
+        .role(trainer.getRole())
+        .email(trainer.getEmail())
+        .build();
   }
 }

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
@@ -683,6 +684,113 @@ class ScheduleServiceTest {
     assertThrows(
         UsedSessionExceededTotalSession.class,
         () -> scheduleService.acceptSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 거절 - 성공")
+  void rejectSchedule() {
+    //given
+    setupTrainerAuth();
+    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(5)
+                        .build()
+                )
+                .build()
+        ));
+
+    ArgumentCaptor<PtContractEntity> captor = ArgumentCaptor.forClass(PtContractEntity.class);
+    scheduleService.rejectSchedule(dto);
+
+    //then
+    verify(ptContractRepository).save(captor.capture());
+    assertEquals(4, captor.getValue().getUsedSession());
+  }
+
+  @Test
+  @DisplayName("일정 거절 - 실패(없는 일정)")
+  void rejectScheduleFail_NoSchedule() {
+    //given
+    setupTrainerAuth();
+    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.empty());
+
+    //then
+    assertThrows(
+        ScheduleNotFoundException.class,
+        () -> scheduleService.rejectSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 거절 - 실패(아무도 신청하지 않은 예약을 거절하려 함)")
+  void rejectScheduleFail_NoReserveApplied() {
+    //given
+    setupTrainerAuth();
+    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.OPEN)
+                .ptContract(
+                    PtContractEntity.builder()
+                        .id(1000L)
+                        .totalSession(10)
+                        .usedSession(5)
+                        .build()
+                )
+                .build()
+        ));
+
+    //then
+    assertThrows(
+        ScheduleStatusNotReserveApplied.class,
+        () -> scheduleService.rejectSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 거절 - 실패(연결된 PT 계약이 없음)")
+  void rejectScheduleFail_NoPtContract() {
+    //given
+    setupTrainerAuth();
+    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
+    dto.setScheduleId(100L);
+
+    //when
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .ptContract(null)
+                .build()
+        ));
+
+    //then
+    assertThrows(
+        PtContractNotExistException.class,
+        () -> scheduleService.rejectSchedule(dto)
     );
   }
 }
