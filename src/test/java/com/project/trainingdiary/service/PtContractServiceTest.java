@@ -16,11 +16,12 @@ import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.UserRoleType;
-import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
+import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -219,11 +220,12 @@ class PtContractServiceTest {
     Pageable pageRequest = PageRequest.of(0, 20);
 
     //when
-    when(ptContractRepository.findByTrainerEmail("trainer@example.com", pageRequest))
+    when(ptContractRepository.findByTrainerEmail("trainer@example.com", pageRequest,
+        PtContractSort.NAME))
         .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
-    ptContractService.getPtContractList(pageRequest);
+    ptContractService.getPtContractList(pageRequest, PtContractSort.NAME);
   }
 
   @Test
@@ -256,11 +258,12 @@ class PtContractServiceTest {
     Pageable pageRequest = PageRequest.of(0, 20);
 
     //when
-    when(ptContractRepository.findByTraineeEmail("trainee@example.com", pageRequest))
+    when(ptContractRepository.findByTraineeEmail("trainee@example.com", pageRequest,
+        PtContractSort.NAME))
         .thenReturn(new PageImpl<>(list, pageRequest, 1));
 
     //then
-    ptContractService.getPtContractList(pageRequest);
+    ptContractService.getPtContractList(pageRequest, PtContractSort.NAME);
   }
 
   @Test

@@ -10,10 +10,11 @@ import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.UserRoleType;
-import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
+import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,13 +51,12 @@ public class PtContractService {
   /**
    * PT 계약을 목록으로 조회
    */
-  public Page<PtContractResponseDto> getPtContractList(Pageable pageable) {
-    //TODO: 연관된 트레이너, 트레이니 이름 추가. 이름순 정렬
+  public Page<PtContractResponseDto> getPtContractList(Pageable pageable, PtContractSort sortBy) {
     if (getMyRole().equals(UserRoleType.TRAINEE)) {
-      return ptContractRepository.findByTraineeEmail(getEmail(), pageable)
+      return ptContractRepository.findByTraineeEmail(getEmail(), pageable, sortBy)
           .map(PtContractEntity::toResponseDto);
     } else {
-      return ptContractRepository.findByTrainerEmail(getEmail(), pageable)
+      return ptContractRepository.findByTrainerEmail(getEmail(), pageable, sortBy)
           .map(PtContractEntity::toResponseDto);
     }
   }
