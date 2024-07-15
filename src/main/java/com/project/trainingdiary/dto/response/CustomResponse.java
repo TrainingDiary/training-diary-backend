@@ -9,7 +9,10 @@ import org.springframework.http.ResponseEntity;
 
 /**
  * Response 공통화. 성공의 경우 SuccessMessage를 정의 후 사용해주세요. 실패의 경우 GlobalException을 활용해주세요.
+ *
+ * @deprecated 이 클래스 대신 ResponseEntity를 사용하세요.
  */
+@Deprecated
 public class CustomResponse<T> extends ResponseEntity<Map<String, Object>> {
 
   private static final String STATUS_CODE = "statusCode";
