@@ -2,9 +2,13 @@ package com.project.trainingdiary.service;
 
 import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
+import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
+import com.project.trainingdiary.dto.request.CancelScheduleByTrainerRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
+import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
@@ -20,8 +24,10 @@ import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
 import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
+import com.project.trainingdiary.exception.impl.ScheduleStartWithin1Day;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
+import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
 import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
@@ -248,6 +254,69 @@ public class ScheduleService {
         newSchedules.size() + existingSchedules.size(),
         ptContract.getRemainSession()
     );
+  }
+
+  /**
+   * 트레이너의 일정 취소
+   */
+  @Transactional
+  public CancelScheduleByTrainerResponseDto cancelSchedule(
+      CancelScheduleByTrainerRequestDto dto
+  ) {
+    TrainerEntity trainer = getTrainer();
+
+    ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
+        .filter(s -> s.getTrainer().equals(trainer))
+        .orElseThrow(ScheduleNotFoundException::new);
+
+    if (schedule.getScheduleStatus().equals(ScheduleStatus.OPEN)) {
+      throw new ScheduleStatusNotReserveAppliedOrReserved();
+    }
+
+    // PtContract의 사용을 먼저 취소하고, schedule cancel을 해야함. cancel을 먼저하면 ptContract가 null로 변함
+    PtContractEntity ptContract = schedule.getPtContract();
+    ptContract.unuseSession();
+    ptContractRepository.save(ptContract);
+
+    schedule.cancel();
+    scheduleRepository.save(schedule);
+
+    return new CancelScheduleByTrainerResponseDto(schedule.getId(), schedule.getScheduleStatus());
+  }
+
+  /**
+   * 트레이니의 일정 취소
+   */
+  @Transactional
+  public CancelScheduleByTraineeResponseDto cancelSchedule(
+      CancelScheduleByTraineeRequestDto dto,
+      LocalDateTime now
+  ) {
+    TraineeEntity trainee = getTrainee();
+
+    ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
+        .filter(s -> s.getPtContract().getTrainee().equals(trainee))
+        .orElseThrow(ScheduleNotFoundException::new);
+
+    if (schedule.getScheduleStatus().equals(ScheduleStatus.OPEN)) {
+      throw new ScheduleStatusNotReserveAppliedOrReserved();
+    }
+
+    // 트레이니는 PT 시작 24시간 전이고, RESERVED로 확정된 일정은 취소할 수 없음
+    if (schedule.getStartAt().minusDays(1).isBefore(now) &&
+        (schedule.getScheduleStatus().equals(ScheduleStatus.RESERVED))) {
+      throw new ScheduleStartWithin1Day();
+    }
+
+    // PtContract의 사용을 먼저 취소하고, schedule cancel을 해야함. cancel을 먼저하면 ptContract가 null로 변함
+    PtContractEntity ptContract = schedule.getPtContract();
+    ptContract.unuseSession();
+    ptContractRepository.save(ptContract);
+
+    schedule.cancel();
+    scheduleRepository.save(schedule);
+
+    return new CancelScheduleByTraineeResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
 
   private List<ScheduleEntity> createNewSchedules(

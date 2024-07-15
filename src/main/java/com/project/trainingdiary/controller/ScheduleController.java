@@ -2,10 +2,14 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
+import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
+import com.project.trainingdiary.dto.request.CancelScheduleByTrainerRequestDto;
 import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
+import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
@@ -16,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -83,6 +88,25 @@ public class ScheduleController {
       @RequestBody @Valid RegisterScheduleRequestDto dto
   ) {
     RegisterScheduleResponseDto response = scheduleService.registerSchedule(dto);
+    return ResponseEntity.ok(response);
+  }
+
+  @PreAuthorize("hasRole('TRAINER')")
+  @PostMapping("/trainers/cancel")
+  public ResponseEntity<CancelScheduleByTrainerResponseDto> cancelScheduleByTrainer(
+      @RequestBody @Valid CancelScheduleByTrainerRequestDto dto
+  ) {
+    CancelScheduleByTrainerResponseDto response = scheduleService.cancelSchedule(dto);
+    return ResponseEntity.ok(response);
+  }
+
+  @PreAuthorize("hasRole('TRAINEE')")
+  @PostMapping("/trainees/cancel")
+  public ResponseEntity<CancelScheduleByTraineeResponseDto> cancelScheduleByTrainer(
+      @RequestBody @Valid CancelScheduleByTraineeRequestDto dto
+  ) {
+    CancelScheduleByTraineeResponseDto response = scheduleService.cancelSchedule(
+        dto, LocalDateTime.now());
     return ResponseEntity.ok(response);
   }
 }
