@@ -46,17 +46,20 @@ import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -134,6 +137,8 @@ class WorkoutSessionServiceTest {
     workoutSession = WorkoutSessionEntity.builder().id(10000L).sessionDate(LocalDate.now())
         .sessionNumber(1).ptContract(ptContract).workouts(new ArrayList<>())
         .workoutMedia(new ArrayList<>()).build();
+
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
   }
 
   @AfterEach
@@ -311,8 +316,15 @@ class WorkoutSessionServiceTest {
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, 10000L))
         .thenReturn(Optional.of(workoutSession));
 
-    byte[] imageBytes = Files.readAllBytes(
-        Paths.get(System.getProperty("user.home") + "/Downloads/test.jpeg"));
+    BufferedImage img = new BufferedImage(500, 500, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g2d = img.createGraphics();
+    g2d.setColor(Color.RED);
+    g2d.fillRect(0, 0, 500, 500);
+    g2d.dispose();
+
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    ImageIO.write(img, "jpg", byteArrayOutputStream);
+    byte[] imageBytes = byteArrayOutputStream.toByteArray();
     MockMultipartFile mockFile = new MockMultipartFile(
         "file", "test.jpg", "image/jpeg", imageBytes);
 
@@ -381,8 +393,15 @@ class WorkoutSessionServiceTest {
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, 10000L))
         .thenReturn(Optional.of(workoutSession));
 
-    byte[] imageBytes = Files.readAllBytes(
-        Paths.get(System.getProperty("user.home") + "/Downloads/test.jpeg"));
+    BufferedImage img = new BufferedImage(500, 500, BufferedImage.TYPE_INT_RGB);
+    Graphics2D g2d = img.createGraphics();
+    g2d.setColor(Color.RED);
+    g2d.fillRect(0, 0, 500, 500);
+    g2d.dispose();
+
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    ImageIO.write(img, "jpg", byteArrayOutputStream);
+    byte[] imageBytes = byteArrayOutputStream.toByteArray();
     MockMultipartFile mockFile = new MockMultipartFile(
         "file", "test.jpg", "image/jpeg", imageBytes);
 
