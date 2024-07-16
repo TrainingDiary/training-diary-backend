@@ -1,18 +1,22 @@
 package com.project.trainingdiary.entity;
 
+import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.model.TargetType;
 import com.project.trainingdiary.model.UserRoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
-import java.util.Date;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,23 +51,21 @@ public class TraineeEntity extends BaseEntity {
   private UserRoleType role;
 
   @Temporal(TemporalType.DATE)
-  private Date birthDate;
+  private LocalDate birthDate;
 
   private String gender;
 
   private int totalSessions;
 
-  private double currentWeight;
+  private double height;
 
-  private double currentSkeletalMuscleMass;
+  @OneToMany(mappedBy = "trainee", cascade = ALL, orphanRemoval = true)
+  private List<InBodyRecordHistoryEntity> inBodyRecords;
 
-  private double currentBodyFatPercentage;
+  @Enumerated(STRING)
+  private TargetType targetType;
 
-  private double targetWeight;
-
-  private double targetSkeletalMuscleMass;
-
-  private double targetBodyFatPercentage;
+  private double targetValue;
 
   private String targetReward;
 }
