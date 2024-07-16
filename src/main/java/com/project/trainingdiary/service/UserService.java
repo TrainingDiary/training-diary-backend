@@ -10,8 +10,6 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
 import com.project.trainingdiary.exception.impl.PasswordMismatchedException;
-import com.project.trainingdiary.exception.impl.TraineeEmailDuplicateException;
-import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
 import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
@@ -30,7 +28,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -59,85 +56,58 @@ public class UserService implements UserDetailsService {
   private static final String REFRESH_TOKEN_COOKIE_NAME = "Refresh-Token";
   private static final String ACCESS_TOKEN_COOKIE_NAME = "Access-Token";
 
-  /**
-   * 이메일 중복을 확인하고 인증 코드를 발송합니다.
-   */
   public void checkDuplicateEmailAndSendVerification(
       SendVerificationAndCheckDuplicateRequestDto dto) {
     validateEmailNotExists(dto.getEmail());
     sendVerificationCode(dto.getEmail());
   }
 
-  /**
-   * 인증 코드를 확인합니다.
-   */
   public void checkVerificationCode(VerifyCodeRequestDto dto) {
     VerificationEntity verificationEntity = getVerificationEntity(dto.getEmail());
     validateVerificationCode(verificationEntity, dto.getVerificationCode());
   }
 
-  /**
-   * 회원가입을 처리합니다.
-   */
   @Transactional
   public void signUp(SignUpRequestDto dto, HttpServletResponse response) {
+    VerificationEntity verificationEntity = getVerificationEntity(dto.getEmail());
     validateEmailNotExists(dto.getEmail());
     validatePasswordsMatch(dto.getPassword(), dto.getConfirmPassword());
+    validateVerificationCode(verificationEntity, dto.getVerificationCode());
     String encodedPassword = passwordEncoder.encode(dto.getPassword());
     saveUser(dto, encodedPassword);
     generateTokensAndSetCookies(dto.getEmail(), response);
     verificationRepository.deleteByEmail(dto.getEmail());
   }
 
-  /**
-   * 로그인 처리를 합니다.
-   */
   public SignInResponseDto signIn(SignInRequestDto dto, HttpServletResponse response) {
     UserDetails userDetails = loadUserByUsername(dto.getEmail());
     validatePassword(dto.getPassword(), userDetails.getPassword());
     return generateTokensAndSetCookies(userDetails.getUsername(), response);
   }
 
-  /**
-   * 로그아웃 처리를 합니다.
-   */
   public void signOut(HttpServletRequest request, HttpServletResponse response) {
     blacklistAndClearCookies(request, response);
   }
 
-  /**
-   * 주어진 이메일이 이미 존재하는지 확인합니다.
-   */
   private void validateEmailNotExists(String email) {
-    if (traineeRepository.findByEmail(email).isPresent()) {
-      throw new TraineeEmailDuplicateException();
-    }
-    if (trainerRepository.findByEmail(email).isPresent()) {
-      throw new TrainerEmailDuplicateException();
+    if (traineeRepository.findByEmail(email).isPresent() || trainerRepository.findByEmail(email)
+        .isPresent()) {
+      throw new UserNotFoundException();
     }
   }
 
-  /**
-   * 인증 코드를 발송합니다.
-   */
   private void sendVerificationCode(String email) {
     String verificationCode = VerificationCodeGeneratorUtil.generateVerificationCode();
     emailProvider.sendVerificationEmail(email, verificationCode);
     verificationRepository.save(VerificationEntity.of(email, verificationCode));
   }
 
-  /**
-   * 주어진 비밀번호와 확인 비밀번호가 일치하는지 확인합니다.
-   */
   private void validatePasswordsMatch(String password, String confirmPassword) {
     if (!password.equals(confirmPassword)) {
       throw new PasswordMismatchedException();
     }
   }
 
-  /**
-   * 인증 코드를 검증합니다.
-   */
   private void validateVerificationCode(VerificationEntity verificationEntity,
       String verificationCode) {
     if (!verificationEntity.getVerificationCode().equals(verificationCode)) {
@@ -148,16 +118,10 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  /**
-   * 이메일에 대한 인증 엔티티를 가져옵니다.
-   */
   private VerificationEntity getVerificationEntity(String email) {
     return verificationRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
   }
 
-  /**
-   * 사용자를 저장합니다.
-   */
   private void saveUser(SignUpRequestDto dto, String encodedPassword) {
     if (dto.getRole() == UserRoleType.TRAINEE) {
       saveTrainee(dto, encodedPassword);
@@ -168,42 +132,32 @@ public class UserService implements UserDetailsService {
     }
   }
 
-  /**
-   * 새로운 트레이니를 저장합니다.
-   */
   private void saveTrainee(SignUpRequestDto dto, String encodedPassword) {
-    TraineeEntity trainee = new TraineeEntity();
-    trainee.setName(dto.getName());
-    trainee.setEmail(dto.getEmail());
-    trainee.setPassword(encodedPassword);
-    trainee.setRole(UserRoleType.TRAINEE);
+    TraineeEntity trainee = TraineeEntity.builder()
+        .name(dto.getName())
+        .email(dto.getEmail())
+        .password(encodedPassword)
+        .role(UserRoleType.TRAINEE)
+        .build();
     traineeRepository.save(trainee);
   }
 
-  /**
-   * 새로운 트레이너를 저장합니다.
-   */
   private void saveTrainer(SignUpRequestDto dto, String encodedPassword) {
-    TrainerEntity trainer = new TrainerEntity();
-    trainer.setName(dto.getName());
-    trainer.setEmail(dto.getEmail());
-    trainer.setPassword(encodedPassword);
-    trainer.setRole(UserRoleType.TRAINER);
+    TrainerEntity trainer = TrainerEntity.builder()
+        .name(dto.getName())
+        .email(dto.getEmail())
+        .password(encodedPassword)
+        .role(UserRoleType.TRAINER)
+        .build();
     trainerRepository.save(trainer);
   }
 
-  /**
-   * 비밀번호를 검증합니다.
-   */
   private void validatePassword(String rawPassword, String encodedPassword) {
     if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
       throw new WrongPasswordException();
     }
   }
 
-  /**
-   * 토큰을 생성하고 쿠키를 설정합니다.
-   */
   private SignInResponseDto generateTokensAndSetCookies(String username,
       HttpServletResponse response) {
     String accessToken = tokenProvider.createAccessToken(username);
@@ -223,71 +177,48 @@ public class UserService implements UserDetailsService {
     return new SignInResponseDto(accessToken, refreshToken);
   }
 
-  /**
-   * 토큰을 블랙리스트에 추가하고 쿠키를 제거합니다.
-   */
   private void blacklistAndClearCookies(HttpServletRequest request, HttpServletResponse response) {
     Cookie accessTokenCookie = cookieProvider.getCookie(request, ACCESS_TOKEN_COOKIE_NAME);
     Cookie refreshTokenCookie = cookieProvider.getCookie(request, REFRESH_TOKEN_COOKIE_NAME);
 
-    if (accessTokenCookie != null && tokenProvider.validateToken(accessTokenCookie.getValue())) {
-      log.info("블랙리스트에 추가된 access 토큰: {}", accessTokenCookie.getValue());
-      tokenProvider.blacklistToken(accessTokenCookie.getValue());
-      redisTokenRepository.deleteToken(
-          "accessToken:" + tokenProvider.getUsernameFromToken(accessTokenCookie.getValue()));
-    }
-
-    if (refreshTokenCookie != null && tokenProvider.validateToken(refreshTokenCookie.getValue())) {
-      log.info("블랙리스트에 추가된 refresh 토큰: {}", refreshTokenCookie.getValue());
-      tokenProvider.blacklistToken(refreshTokenCookie.getValue());
-      redisTokenRepository.deleteToken(
-          "refreshToken:" + tokenProvider.getUsernameFromToken(refreshTokenCookie.getValue()));
-    }
+    blacklistToken(accessTokenCookie);
+    blacklistToken(refreshTokenCookie);
 
     cookieProvider.clearCookie(response, ACCESS_TOKEN_COOKIE_NAME);
     cookieProvider.clearCookie(response, REFRESH_TOKEN_COOKIE_NAME);
   }
 
-  /**
-   * 주어진 사용자 이름으로 사용자를 로드합니다.
-   */
-  @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    TraineeEntity trainee = traineeRepository.findByEmail(username).orElse(null);
-
-    if (trainee != null) {
-      return UserPrincipal.create(trainee);
+  private void blacklistToken(Cookie tokenCookie) {
+    if (tokenCookie != null && tokenProvider.validateToken(tokenCookie.getValue())) {
+      log.info("블랙리스트에 추가된 토큰: {}", tokenCookie.getValue());
+      tokenProvider.blacklistToken(tokenCookie.getValue());
+      redisTokenRepository.deleteToken(tokenProvider.getUsernameFromToken(tokenCookie.getValue()));
     }
-    TrainerEntity trainer = trainerRepository.findByEmail(username)
-        .orElseThrow(UserNotFoundException::new);
-    return UserPrincipal.create(trainer);
   }
 
-  /**
-   * 주어진 사용자 이름으로 사용자를 로드합니다.
-   */
+  @Override
+  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    return traineeRepository.findByEmail(username)
+        .map(UserPrincipal::create)
+        .orElseGet(() -> UserPrincipal.create(trainerRepository.findByEmail(username)
+            .orElseThrow(UserNotFoundException::new)));
+  }
+
   public MemberInfoResponseDto memberInfo(Long id) {
-
-    Optional<TraineeEntity> traineeOpt = traineeRepository.findById(id);
-
-    if (traineeOpt.isPresent()) {
-      TraineeEntity trainee = traineeOpt.get();
-      return MemberInfoResponseDto.builder()
-          .id(trainee.getId())
-          .email(trainee.getEmail())
-          .name(trainee.getName())
-          .role(trainee.getRole())
-          .build();
-    }
-
-    TrainerEntity trainer = trainerRepository.findById(id)
-        .orElseThrow(UserNotFoundException::new);
-
-    return MemberInfoResponseDto.builder()
-        .id(trainer.getId())
-        .name(trainer.getName())
-        .role(trainer.getRole())
-        .email(trainer.getEmail())
-        .build();
+    return traineeRepository.findById(id)
+        .map(trainee -> MemberInfoResponseDto.builder()
+            .id(trainee.getId())
+            .email(trainee.getEmail())
+            .name(trainee.getName())
+            .role(trainee.getRole())
+            .build())
+        .orElseGet(() -> trainerRepository.findById(id)
+            .map(trainer -> MemberInfoResponseDto.builder()
+                .id(trainer.getId())
+                .email(trainer.getEmail())
+                .name(trainer.getName())
+                .role(trainer.getRole())
+                .build())
+            .orElseThrow(UserNotFoundException::new));
   }
 }
