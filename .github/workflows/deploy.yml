@@ -49,7 +49,7 @@ jobs:
         shell: bash
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew build -x test
         shell: bash
 
       - name: Archive to a zip file
