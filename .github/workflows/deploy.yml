@@ -1,0 +1,69 @@
+name: training-diary
+
+on:
+  push:
+    branches:
+      - cicd
+
+env:
+  CODE_DEPLOY_APPLICATION_NAME: training-diary-v1
+  CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: training-diary-v1-group
+  APPLICATION_YML: ./src/main/resources/application.yml
+  SPRING_PROFILE: ec2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+          architecture: x64
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Download configuration files from S3
+        run: |
+          aws s3 cp --region ap-northeast-2 s3://${{ secrets.S3_BUCKET_NAME }}/application-${{ env.SPRING_PROFILE }}.yml ./src/main/resources/
+
+      - name: Change spring profile to ${{ env.SPRING_PROFILE }}
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: ${{ env.APPLICATION_YML }}
+        env:
+          spring.profiles.active: ${{ env.SPRING_PROFILE }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+        shell: bash
+
+      - name: Build
+        run: ./gradlew build
+        shell: bash
+
+      - name: Archive to a zip file
+        run: |
+          mv build/libs/*.jar .
+          zip -r ./$GITHUB_SHA ./*.jar scripts/ appspec.yml
+        shell: bash
+
+      - name: Upload to S3
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://${{ secrets.S3_BUCKET_NAME }}/$GITHUB_SHA.zip
+
+      - name: Run CodeDeploy
+        run: |
+          aws deploy create-deployment \
+          --application-name ${{ env.CODE_DEPLOY_APPLICATION_NAME }} \
+          --deployment-group-name ${{ env.CODE_DEPLOY_DEPLOYMENT_GROUP_NAME }} \
+          --s3-location bucket=${{ secrets.S3_BUCKET_NAME }},bundleType=zip,key=$GITHUB_SHA.zip
