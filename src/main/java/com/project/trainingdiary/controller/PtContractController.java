@@ -3,7 +3,6 @@ package com.project.trainingdiary.controller;
 import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
 import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
-import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.service.PtContractService;
@@ -11,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,43 +27,43 @@ public class PtContractController {
   private final PtContractService ptContractService;
 
   @PostMapping
-  public CommonResponse<?> createPtContract(
+  public ResponseEntity<Void> createPtContract(
       @RequestBody @Valid CreatePtContractRequestDto dto
   ) {
     ptContractService.createPtContract(dto);
-    return CommonResponse.created();
+    return ResponseEntity.ok().build();
   }
 
   @GetMapping
-  public CommonResponse<?> getPtContractList(
+  public ResponseEntity<Page<PtContractResponseDto>> getPtContractList(
       Pageable pageable,
       @RequestParam PtContractSort sortBy
   ) {
     Page<PtContractResponseDto> ptContracts = ptContractService.getPtContractList(pageable, sortBy);
-    return CommonResponse.success(ptContracts);
+    return ResponseEntity.ok(ptContracts);
   }
 
   @GetMapping("/{id}")
-  public CommonResponse<?> getPtContract(
+  public ResponseEntity<PtContractResponseDto> getPtContract(
       @PathVariable long id
   ) {
     PtContractResponseDto ptContract = ptContractService.getPtContract(id);
-    return CommonResponse.success(ptContract);
+    return ResponseEntity.ok(ptContract);
   }
 
   @PostMapping("/add-session")
-  public CommonResponse<?> addPtContractSession(
+  public ResponseEntity<Void> addPtContractSession(
       @RequestBody @Valid AddPtContractSessionRequestDto dto
   ) {
     ptContractService.addPtContractSession(dto);
-    return CommonResponse.success();
+    return ResponseEntity.ok().build();
   }
 
   @PostMapping("/terminate")
-  public CommonResponse<?> terminatePtContract(
+  public ResponseEntity<Void> terminatePtContract(
       @RequestBody @Valid TerminatePtContractRequestDto dto
   ) {
     ptContractService.terminatePtContract(dto);
-    return CommonResponse.success();
+    return ResponseEntity.ok().build();
   }
 }
