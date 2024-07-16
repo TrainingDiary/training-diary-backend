@@ -1,6 +1,8 @@
 package com.project.trainingdiary.repository.ptContract;
 
 import com.project.trainingdiary.entity.PtContractEntity;
+import com.project.trainingdiary.entity.TraineeEntity;
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,4 +28,6 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       + "and p.trainee.id = ?2 "
       + "and p.isTerminated = false")
   Optional<PtContractEntity> findByTrainerIdAndTraineeId(long trainerId, long traineeId);
+
+  Collection<PtContractEntity> findByTrainee(TraineeEntity trainee);
 }
