@@ -1,12 +1,15 @@
 package com.project.trainingdiary.service;
 
 import static com.project.trainingdiary.model.WorkoutMediaType.IMAGE;
+import static com.project.trainingdiary.model.WorkoutMediaType.VIDEO;
 
 import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutVideoRequestDto;
 import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
+import com.project.trainingdiary.dto.response.WorkoutVideoResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.WorkoutEntity;
@@ -19,12 +22,12 @@ import com.project.trainingdiary.exception.impl.PtContractNotFoundException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
-import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutMediaRepository;
 import com.project.trainingdiary.repository.WorkoutRepository;
 import com.project.trainingdiary.repository.WorkoutSessionRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
+import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
@@ -202,6 +205,63 @@ public class WorkoutSessionService {
     }
     int dotIndex = filename.lastIndexOf('.');
     return (dotIndex == -1) ? "" : filename.substring(dotIndex + 1);
+  }
+
+
+  /**
+   * 운동 일지 - 동영상 업로드
+   */
+  public WorkoutVideoResponseDto uploadWorkoutVideo(WorkoutVideoRequestDto dto) throws IOException {
+    TrainerEntity trainer = getTrainer();
+    MultipartFile video = dto.getVideo();
+
+    // 동영상을 업로드할 운동 일지가 존재하는지 확인
+    WorkoutSessionEntity workoutSession = workoutSessionRepository.findByPtContract_TrainerAndId(
+            trainer, dto.getSessionId())
+        .orElseThrow(() -> new WorkoutSessionNotFoundException(dto.getSessionId()));
+
+    int existingVideoCount = (int) workoutSession.getWorkoutMedia().stream()
+        .filter(media -> media.getMediaType() == VIDEO).count();
+
+    // 운동 일지에 이미 동영상이 10개 존재한다면 더이상 업로드 할 수 없음
+    if (existingVideoCount >= MAX_MEDIA_COUNT) {
+      throw new MediaCountExceededException();
+    }
+
+    // 동영상 타입 확인
+    if (!isValidVideoType(video)) {
+      throw new InvalidFileTypeException();
+    }
+
+    // 확장자 추출
+    String extension = getExtension(video.getOriginalFilename());
+    // key (동영상 이름) 설정 후 업로드
+    String originalKey = UUID.randomUUID() + "." + extension;
+    S3Resource s3Resource;
+    try (InputStream inputStream = video.getInputStream()) {
+      s3Resource = s3Operations.upload(bucket, originalKey, inputStream,
+          ObjectMetadata.builder().contentType(video.getContentType()).build());
+    }
+    String originalUrl = s3Resource.getURL().toExternalForm();
+
+    WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder()
+        .originalUrl(originalUrl).mediaType(VIDEO).build();
+    workoutMediaRepository.save(workoutMedia);
+
+    workoutSession.getWorkoutMedia().add(workoutMedia);
+    workoutSessionRepository.save(workoutSession);
+
+    List<WorkoutMediaEntity> videoUrlList = workoutSession.getWorkoutMedia().stream()
+        .filter(media -> media.getMediaType() == VIDEO).toList();
+
+    return WorkoutVideoResponseDto.fromEntity(videoUrlList, dto.getSessionId());
+  }
+
+  /**
+   * 동영상 확인 - mp4 가능
+   */
+  private boolean isValidVideoType(MultipartFile file) {
+    return MediaType.valueOf("video/mp4").toString().equals(file.getContentType());
   }
 
   /**

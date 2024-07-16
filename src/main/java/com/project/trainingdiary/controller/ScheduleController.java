@@ -4,8 +4,10 @@ import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CommonResponse;
+import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleService;
@@ -73,6 +75,14 @@ public class ScheduleController {
       @RequestBody @Valid RejectScheduleRequestDto dto
   ) {
     RejectScheduleResponseDto response = scheduleService.rejectSchedule(dto);
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/trainers/register")
+  public ResponseEntity<RegisterScheduleResponseDto> rejectSchedule(
+      @RequestBody @Valid RegisterScheduleRequestDto dto
+  ) {
+    RegisterScheduleResponseDto response = scheduleService.registerSchedule(dto);
     return ResponseEntity.ok(response);
   }
 }

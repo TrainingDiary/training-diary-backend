@@ -3,7 +3,9 @@ package com.project.trainingdiary.service;
 import static com.project.trainingdiary.model.UserRoleType.TRAINEE;
 import static com.project.trainingdiary.model.UserRoleType.TRAINER;
 import static com.project.trainingdiary.model.WorkoutMediaType.IMAGE;
+import static com.project.trainingdiary.model.WorkoutMediaType.VIDEO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
@@ -17,9 +19,11 @@ import static org.mockito.Mockito.when;
 import com.project.trainingdiary.dto.request.WorkoutDto;
 import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutVideoRequestDto;
 import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
+import com.project.trainingdiary.dto.response.WorkoutVideoResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
@@ -33,15 +37,16 @@ import com.project.trainingdiary.exception.impl.PtContractNotFoundException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
-import com.project.trainingdiary.repository.PtContractRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutMediaRepository;
 import com.project.trainingdiary.repository.WorkoutRepository;
 import com.project.trainingdiary.repository.WorkoutSessionRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
+import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -73,11 +78,10 @@ import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.multipart.MultipartFile;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@TestPropertySource("classpath:application-test.yml")
 class WorkoutSessionServiceTest {
 
   @Value("${spring.cloud.aws.s3.bucket}")
@@ -103,6 +107,9 @@ class WorkoutSessionServiceTest {
 
   @Mock
   private S3Operations s3Operations;
+
+  @Mock
+  private MultipartFile video;
 
   @InjectMocks
   private WorkoutSessionService workoutSessionService;
@@ -349,7 +356,6 @@ class WorkoutSessionServiceTest {
     assertEquals(bucket, capturedBuckets.get(0));
     assertEquals(bucket, capturedBuckets.get(1));
 
-    // Check that keys contain the correct UUID structure for original and thumbnail
     assertTrue(capturedKeys.get(0).matches("[0-9a-fA-F-]{36}\\.jpg"));
     assertTrue(capturedKeys.get(1).startsWith("thumb_"));
     assertTrue(capturedKeys.get(1).matches("thumb_[0-9a-fA-F-]{36}\\.jpg"));
@@ -442,6 +448,167 @@ class WorkoutSessionServiceTest {
     verify(s3Operations, never()).upload(
         bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
         metadataCaptor.capture());
+    verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
+
+    assertTrue(mediaCaptor.getAllValues().isEmpty());
+    assertTrue(bucketCaptor.getAllValues().isEmpty());
+    assertTrue(keyCaptor.getAllValues().isEmpty());
+    assertTrue(inputStreamCaptor.getAllValues().isEmpty());
+    assertTrue(metadataCaptor.getAllValues().isEmpty());
+    assertTrue(sessionCaptor.getAllValues().isEmpty());
+  }
+
+  @Test
+  @DisplayName("동영상 업로드 성공")
+  public void testUploadWorkoutVideoSuccess() throws IOException {
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.of(workoutSession));
+    when(video.getContentType()).thenReturn("video/mp4");
+    InputStream inputStream = new ByteArrayInputStream("video".getBytes());
+    when(video.getInputStream()).thenReturn(inputStream);
+
+    WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
+        .sessionId(workoutSession.getId())
+        .video(video).build();
+
+    S3Resource s3Resource = mock(S3Resource.class);
+    when(s3Resource.getURL()).thenReturn(new URL("https://test-bucket.s3.amazonaws.com/original"));
+
+    ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
+
+    doAnswer(invocation -> s3Resource).when(s3Operations)
+        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
+            metadataCaptor.capture());
+
+    WorkoutVideoResponseDto response = workoutSessionService.uploadWorkoutVideo(dto);
+
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
+        WorkoutMediaEntity.class);
+    verify(workoutMediaRepository, times(1)).save(mediaCaptor.capture());
+    WorkoutMediaEntity savedMedia = mediaCaptor.getValue();
+    assertEquals("VIDEO", savedMedia.getMediaType().name());
+
+    List<String> capturedBuckets = bucketCaptor.getAllValues();
+    List<String> capturedKeys = keyCaptor.getAllValues();
+
+    assertEquals(bucket, capturedBuckets.get(0));
+    assertFalse(capturedKeys.isEmpty());
+
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
+        WorkoutSessionEntity.class);
+    verify(workoutSessionRepository, times(1)).save(sessionCaptor.capture());
+    WorkoutSessionEntity savedSession = sessionCaptor.getValue();
+    assertEquals(1, savedSession.getWorkoutMedia().size());
+
+    assertEquals(workoutSession.getId(), response.getSessionId());
+    assertEquals(1, response.getOriginalUrls().size());
+  }
+
+  @Test
+  @DisplayName("동영상 업로드 실패 - 운동 일지를 찾을 수 없을 때 예외 발생")
+  public void testUploadWorkoutVideoFailWorkoutSessionNotFound() {
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.empty());
+
+    WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
+        .sessionId(workoutSession.getId()).video(video).build();
+
+    assertThrows(WorkoutSessionNotFoundException.class,
+        () -> workoutSessionService.uploadWorkoutVideo(dto));
+
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
+        WorkoutMediaEntity.class);
+    ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
+        WorkoutSessionEntity.class);
+
+    verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
+    verify(s3Operations, never())
+        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
+            metadataCaptor.capture());
+    verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
+
+    assertTrue(mediaCaptor.getAllValues().isEmpty());
+    assertTrue(bucketCaptor.getAllValues().isEmpty());
+    assertTrue(keyCaptor.getAllValues().isEmpty());
+    assertTrue(inputStreamCaptor.getAllValues().isEmpty());
+    assertTrue(metadataCaptor.getAllValues().isEmpty());
+    assertTrue(sessionCaptor.getAllValues().isEmpty());
+  }
+
+  @Test
+  @DisplayName("동영상 업로드 실패 - 동영상 개수가 10개를 초과하면 예외 발생")
+  public void testUploadWorkoutVideoFailMediaCountExceeded() {
+    workoutSession.getWorkoutMedia().addAll(
+        Collections.nCopies(10, WorkoutMediaEntity.builder().mediaType(VIDEO).build()));
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.of(workoutSession));
+
+    WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
+        .sessionId(workoutSession.getId()).video(video).build();
+
+    assertThrows(MediaCountExceededException.class,
+        () -> workoutSessionService.uploadWorkoutVideo(dto));
+
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
+        WorkoutMediaEntity.class);
+    ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
+        WorkoutSessionEntity.class);
+
+    verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
+    verify(s3Operations, never())
+        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
+            metadataCaptor.capture());
+    verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
+
+    assertTrue(mediaCaptor.getAllValues().isEmpty());
+    assertTrue(bucketCaptor.getAllValues().isEmpty());
+    assertTrue(keyCaptor.getAllValues().isEmpty());
+    assertTrue(inputStreamCaptor.getAllValues().isEmpty());
+    assertTrue(metadataCaptor.getAllValues().isEmpty());
+    assertTrue(sessionCaptor.getAllValues().isEmpty());
+  }
+
+  @Test
+  @DisplayName("동영상 업로드 실패 - 파일 타입이 맞지 않으면 예외 발생")
+  public void testUploadWorkoutVideoFailInvalidFileType() {
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.of(workoutSession));
+    when(video.getContentType()).thenReturn("video/avi");
+
+    WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
+        .sessionId(workoutSession.getId()).video(video).build();
+
+    assertThrows(InvalidFileTypeException.class,
+        () -> workoutSessionService.uploadWorkoutVideo(dto));
+
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
+        WorkoutMediaEntity.class);
+    ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
+    ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
+        WorkoutSessionEntity.class);
+
+    verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
+    verify(s3Operations, never())
+        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
+            metadataCaptor.capture());
     verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
 
     assertTrue(mediaCaptor.getAllValues().isEmpty());

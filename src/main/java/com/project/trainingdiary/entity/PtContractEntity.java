@@ -46,6 +46,10 @@ public class PtContractEntity extends BaseEntity {
   @JoinColumn(name = "trainee_id")
   private TraineeEntity trainee;
 
+  public int getRemainSession() {
+    return this.totalSession - this.usedSession;
+  }
+
   public void addSession(int addition) {
     this.totalSession += addition;
     this.totalSessionUpdatedAt = LocalDateTime.now();
@@ -75,12 +79,14 @@ public class PtContractEntity extends BaseEntity {
 
   public PtContractResponseDto toResponseDto() {
     return PtContractResponseDto.builder()
-        .id(id)
+        .ptContractId(id)
         .trainerId(trainer.getId())
+        .trainerName(trainer.getName())
         .traineeId(trainee.getId())
+        .traineeName(trainee.getName())
         .usedSession(usedSession)
         .totalSession(totalSession)
-        .createdAt(getCreatedAt())
+        .remainSession(totalSession - usedSession)
         .totalSessionUpdatedAt(totalSessionUpdatedAt)
         .build();
   }
