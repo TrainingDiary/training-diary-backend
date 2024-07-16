@@ -1,6 +1,7 @@
 package com.project.trainingdiary.dto.response;
 
 import com.project.trainingdiary.entity.TraineeEntity;
+import com.project.trainingdiary.model.GenderType;
 import com.project.trainingdiary.model.TargetType;
 import java.time.LocalDate;
 import lombok.Builder;
@@ -12,7 +13,7 @@ public class EditTraineeInfoResponseDto {
 
   private Long traineeId;
   private LocalDate birthDate;
-  private String gender;
+  private GenderType gender;
   private double height;
   private int remainingSessions;
   private TargetType targetType;

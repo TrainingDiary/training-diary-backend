@@ -1,5 +1,6 @@
 package com.project.trainingdiary.dto.request;
 
+import com.project.trainingdiary.model.GenderType;
 import com.project.trainingdiary.model.TargetType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -19,8 +20,7 @@ public class EditTraineeInfoRequestDto {
   private LocalDate birthDate;
 
   @NotNull(message = "gender 값은 null이 될 수 없습니다.")
-  @Size(min = 1, max = 1, message = "gender 값은 M 또는 F이어야 합니다.")
-  private String gender;
+  private GenderType gender;
 
   @Positive(message = "height 값은 양수이어야 합니다.")
   private double height;

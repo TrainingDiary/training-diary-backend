@@ -4,6 +4,7 @@ import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.model.GenderType;
 import com.project.trainingdiary.model.TargetType;
 import com.project.trainingdiary.model.UserRoleType;
 import jakarta.persistence.Column;
@@ -53,7 +54,8 @@ public class TraineeEntity extends BaseEntity {
   @Temporal(TemporalType.DATE)
   private LocalDate birthDate;
 
-  private String gender;
+  @Enumerated(STRING)
+  private GenderType gender;
 
   private int totalSessions;
 

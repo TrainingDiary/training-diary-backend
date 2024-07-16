@@ -4,6 +4,7 @@ import com.project.trainingdiary.dto.traineeRecordDto.BodyFatHistoryDto;
 import com.project.trainingdiary.dto.traineeRecordDto.MuscleMassHistoryDto;
 import com.project.trainingdiary.dto.traineeRecordDto.WeightHistoryDto;
 import com.project.trainingdiary.entity.TraineeEntity;
+import com.project.trainingdiary.model.GenderType;
 import com.project.trainingdiary.model.TargetType;
 import java.time.LocalDate;
 import java.time.Period;
@@ -21,7 +22,7 @@ public class TraineeInfoResponseDto {
   private long traineeId;
   private String name;
   private int age;
-  private String gender;
+  private GenderType gender;
   private double height;
   private int remainingSessions;
 
