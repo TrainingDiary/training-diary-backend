@@ -1,6 +1,8 @@
 package com.project.trainingdiary.repository;
 
 import com.project.trainingdiary.entity.PtContractEntity;
+import com.project.trainingdiary.entity.TraineeEntity;
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,4 +43,6 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       + "where t.email = ?1 "
       + "and p.isTerminated = false")
   Page<PtContractEntity> findByTrainerEmail(String email, Pageable pageable);
+
+  Collection<PtContractEntity> findByTrainee(TraineeEntity trainee);
 }
