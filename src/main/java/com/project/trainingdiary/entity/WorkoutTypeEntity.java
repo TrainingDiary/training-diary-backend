@@ -1,7 +1,10 @@
 package com.project.trainingdiary.entity;
 
+import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
+import com.project.trainingdiary.dto.request.WorkoutTypeCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -35,8 +38,41 @@ public class WorkoutTypeEntity extends BaseEntity {
   private boolean timeInputRequired;
   private boolean speedInputRequired;
 
-  @ManyToOne
+  @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "trainer_id", referencedColumnName = "trainer_id")
   private TrainerEntity trainer;
+
+  public static WorkoutTypeEntity toEntity(
+      WorkoutTypeCreateRequestDto dto,
+      TrainerEntity entity
+  ) {
+
+    return WorkoutTypeEntity.builder()
+        .name(dto.getName())
+        .targetMuscle(dto.getTargetMuscle())
+        .remarks(dto.getRemarks())
+        .weightInputRequired(dto.isWeightInputRequired())
+        .repInputRequired(dto.isRepInputRequired())
+        .setInputRequired(dto.isSetInputRequired())
+        .timeInputRequired(dto.isTimeInputRequired())
+        .speedInputRequired(dto.isSpeedInputRequired())
+        .trainer(entity)
+        .build();
+
+  }
+
+  public static WorkoutTypeEntity updateEntity(
+      WorkoutTypeUpdateRequestDto dto,
+      WorkoutTypeEntity entity
+  ) {
+
+    return entity.toBuilder()
+        .id(dto.getWorkoutTypeId())
+        .name(dto.getName())
+        .targetMuscle(dto.getTargetMuscle())
+        .remarks(dto.getRemarks())
+        .build();
+
+  }
 
 }
