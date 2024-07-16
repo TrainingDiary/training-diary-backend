@@ -195,12 +195,22 @@ public class UserServiceTest {
   @Test
   @DisplayName("회원가입 실패 - 비밀번호 불일치")
   void signUpFailPasswordMismatch() {
+    // given
     SignUpRequestDto signUpDto = new SignUpRequestDto();
     signUpDto.setEmail("new@example.com");
     signUpDto.setPassword("password");
     signUpDto.setConfirmPassword("differentPassword");
     signUpDto.setRole(UserRoleType.TRAINEE);
 
+    VerificationEntity verificationEntity = new VerificationEntity();
+    verificationEntity.setEmail("new@example.com");
+    verificationEntity.setVerificationCode("123456");
+    verificationEntity.setExpiredAt(LocalDateTime.now().plusMinutes(5));
+
+    when(verificationRepository.findByEmail(signUpDto.getEmail()))
+        .thenReturn(java.util.Optional.of(verificationEntity));
+
+    // when / then
     assertThrows(PasswordMismatchedException.class, () -> userService.signUp(signUpDto, null));
   }
 
