@@ -3,7 +3,7 @@ name: training-diary
 on:
   push:
     branches:
-      - cicd
+      - main
 
 env:
   CODE_DEPLOY_APPLICATION_NAME: training-diary-v1
