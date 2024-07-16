@@ -62,6 +62,11 @@ public class ScheduleEntity {
     this.ptContract = null;
   }
 
+  public void cancel() {
+    this.scheduleStatus = ScheduleStatus.OPEN;
+    this.ptContract = null;
+  }
+
   public static ScheduleEntity of(
       LocalDateTime startAt,
       LocalDateTime endAt,
