@@ -19,6 +19,7 @@ import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.TraineeNotExistException;
 import com.project.trainingdiary.exception.impl.TrainerNotFoundException;
+import com.project.trainingdiary.model.GenderType;
 import com.project.trainingdiary.model.TargetType;
 import com.project.trainingdiary.repository.InBodyRecordHistoryRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
@@ -179,7 +180,7 @@ public class TrainerServiceTest {
     EditTraineeInfoRequestDto dto = new EditTraineeInfoRequestDto();
     dto.setTraineeId(traineeId);
     dto.setBirthDate(LocalDate.parse("2000-01-01"));
-    dto.setGender("Male");
+    dto.setGender(GenderType.MALE);
     dto.setHeight(180);
     dto.setTargetType(TargetType.TARGET_BODY_FAT_PERCENTAGE);
     dto.setTargetValue(70);
