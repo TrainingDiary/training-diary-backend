@@ -11,17 +11,21 @@ import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutVideoResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
+import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.WorkoutEntity;
 import com.project.trainingdiary.entity.WorkoutMediaEntity;
 import com.project.trainingdiary.entity.WorkoutSessionEntity;
 import com.project.trainingdiary.entity.WorkoutTypeEntity;
 import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
+import com.project.trainingdiary.exception.impl.InvalidUserRoleTypeException;
 import com.project.trainingdiary.exception.impl.MediaCountExceededException;
 import com.project.trainingdiary.exception.impl.PtContractNotFoundException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.exception.impl.WorkoutSessionAccessDeniedException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
+import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutMediaRepository;
 import com.project.trainingdiary.repository.WorkoutRepository;
@@ -60,11 +64,14 @@ public class WorkoutSessionService {
   private final WorkoutRepository workoutRepository;
   private final WorkoutMediaRepository workoutMediaRepository;
   private final TrainerRepository trainerRepository;
+  private final TraineeRepository traineeRepository;
   private final PtContractRepository ptContractRepository;
 
   private final S3Operations s3Operations;
 
   private static final int MAX_MEDIA_COUNT = 10;
+  private static final int THUMBNAIL_WIDTH = 150;
+  private static final int THUMBNAIL_HEIGHT = 150;
 
   @Value("${spring.cloud.aws.s3.bucket}")
   private String bucket;
@@ -72,7 +79,7 @@ public class WorkoutSessionService {
   /**
    * 트레이너의 운동 일지 생성
    */
-  public void createWorkoutSession(WorkoutSessionCreateRequestDto dto) {
+  public WorkoutSessionResponseDto createWorkoutSession(WorkoutSessionCreateRequestDto dto) {
     // 현재 로그인 되어있는 트레이너 본인의 엔티티
     TrainerEntity trainer = getTrainer();
 
@@ -91,7 +98,10 @@ public class WorkoutSessionService {
     }).toList();
 
     //  운동 일지 엔티티 저장
-    workoutSessionRepository.save(WorkoutSessionEntity.toEntity(dto, workouts, ptContract));
+    WorkoutSessionEntity workoutSession = workoutSessionRepository
+        .save(WorkoutSessionEntity.toEntity(dto, workouts, ptContract));
+
+    return WorkoutSessionResponseDto.fromEntity(workoutSession);
   }
 
   /**
@@ -106,11 +116,26 @@ public class WorkoutSessionService {
   /**
    * 운동 일지 상세 조회
    */
-  public WorkoutSessionResponseDto getWorkoutSessionDetails(Long traineeId, Long sessionId) {
-    WorkoutSessionEntity session = workoutSessionRepository
-        .findByIdAndPtContract_Trainee_Id(sessionId, traineeId)
+  public WorkoutSessionResponseDto getWorkoutSessionDetails(Long sessionId) {
+    WorkoutSessionEntity workoutSession = workoutSessionRepository.findById(sessionId)
         .orElseThrow(() -> new WorkoutSessionNotFoundException(sessionId));
-    return WorkoutSessionResponseDto.fromEntity(session);
+
+    String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator()
+        .next().getAuthority();
+    if ("ROLE_TRAINER".equals(role)) {
+      TrainerEntity trainer = getTrainer();
+      if (!workoutSession.getPtContract().getTrainer().equals(trainer)) {
+        throw new WorkoutSessionAccessDeniedException();
+      }
+    } else if ("ROLE_TRAINEE".equals(role)) {
+      TraineeEntity trainee = getTrainee();
+      if (!workoutSession.getPtContract().getTrainee().equals(trainee)) {
+        throw new WorkoutSessionAccessDeniedException();
+      }
+    } else {
+      throw new InvalidUserRoleTypeException();
+    }
+    return WorkoutSessionResponseDto.fromEntity(workoutSession);
   }
 
   /**
@@ -174,7 +199,7 @@ public class WorkoutSessionService {
       throws IOException {
     BufferedImage originalImage = ImageIO.read(file.getInputStream());
     BufferedImage thumbnailImage = Scalr
-        .resize(originalImage, Method.QUALITY, Mode.AUTOMATIC, 150, 150);
+        .resize(originalImage, Method.QUALITY, Mode.AUTOMATIC, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
 
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
       ImageIO.write(thumbnailImage, "jpg", byteArrayOutputStream);
@@ -269,6 +294,15 @@ public class WorkoutSessionService {
    */
   private TrainerEntity getTrainer() {
     return trainerRepository
+        .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+        .orElseThrow(UserNotFoundException::new);
+  }
+
+  /**
+   * 로그인한 트레이니 엔티티
+   */
+  private TraineeEntity getTrainee() {
+    return traineeRepository
         .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
         .orElseThrow(UserNotFoundException::new);
   }

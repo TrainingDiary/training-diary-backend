@@ -86,7 +86,9 @@ class PtContractServiceTest {
         .name("이트레이너")
         .role(UserRoleType.TRAINER)
         .build();
+  }
 
+  private void setupTrainerAuth() {
     // 트레이너의 인증정보가 들어있는 상태
     GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_TRAINER");
     Collection authorities = Collections.singleton(authority);
@@ -106,6 +108,23 @@ class PtContractServiceTest {
         .thenReturn(Optional.of(trainer));
   }
 
+  private void setupTraineeAuth() {
+    // 트레이니의 인증정보가 들어있는 상태
+    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_TRAINEE");
+    Collection authorities = Collections.singleton(authority);
+
+    Authentication authentication = mock(Authentication.class);
+    lenient().when(authentication.getAuthorities()).thenReturn(authorities);
+
+    UserDetails userDetails = UserPrincipal.create(trainee);
+    lenient().when(authentication.getPrincipal()).thenReturn(userDetails);
+    lenient().when(authentication.getName()).thenReturn(trainee.getEmail());
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+  }
+
   @AfterEach
   public void clearSecurityContext() {
     SecurityContextHolder.clearContext();
@@ -115,9 +134,9 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 생성 - 성공")
   void createPtContract() {
     //given
+    setupTrainerAuth();
     CreatePtContractRequestDto dto = new CreatePtContractRequestDto();
     dto.setTraineeEmail(trainee.getEmail());
-    dto.setSessionCount(0);
 
     //when
     when(traineeRepository.findByEmail(trainee.getEmail()))
@@ -125,17 +144,20 @@ class PtContractServiceTest {
     when(ptContractRepository.existsByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(false);
 
-    //then
+    ArgumentCaptor<PtContractEntity> captor = ArgumentCaptor.forClass(PtContractEntity.class);
     ptContractService.createPtContract(dto);
+
+    //then
+    verify(ptContractRepository).save(captor.capture());
   }
 
   @Test
   @DisplayName("PT 계약 생성 - 실패(트레이니를 찾을 수 없는 경우)")
   void createPtContractFail_TraineeNotFoundFromEmail() {
     //given
+    setupTrainerAuth();
     CreatePtContractRequestDto dto = new CreatePtContractRequestDto();
     dto.setTraineeEmail(trainee.getEmail());
-    dto.setSessionCount(0);
 
     //when
     when(traineeRepository.findByEmail(trainee.getEmail()))
@@ -152,9 +174,9 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 생성 - 실패(이미 계약이 존재하는 경우)")
   void createPtContractFail_PtContractAlreadyExist() {
     //given
+    setupTrainerAuth();
     CreatePtContractRequestDto dto = new CreatePtContractRequestDto();
     dto.setTraineeEmail(trainee.getEmail());
-    dto.setSessionCount(0);
 
     //when
     when(traineeRepository.findByEmail(trainee.getEmail()))
@@ -170,44 +192,10 @@ class PtContractServiceTest {
   }
 
   @Test
-  @DisplayName("PT 계약 단건 조회 - 성공")
-  void getPtContract() {
-    //given
-    //when
-    when(ptContractRepository.findById(1L))
-        .thenReturn(Optional.of(
-            PtContractEntity.builder()
-                .id(1L)
-                .trainee(trainee)
-                .trainer(trainer)
-                .totalSession(0)
-                .totalSessionUpdatedAt(LocalDateTime.now())
-                .build()
-        ));
-
-    //then
-    ptContractService.getPtContract(1L);
-  }
-
-  @Test
-  @DisplayName("PT 계약 단건 조회 - 실패(없는 계약 id로 조회)")
-  void getPtContractFail_NotFound() {
-    //given
-    //when
-    when(ptContractRepository.findById(1L))
-        .thenReturn(Optional.empty());
-
-    //then
-    assertThrows(
-        PtContractNotExistException.class,
-        () -> ptContractService.getPtContract(1L)
-    );
-  }
-
-  @Test
   @DisplayName("PT 계약 목록 조회 - 성공(트레이너)")
   void getPtContractListSuccess_Trainer() {
     //given
+    setupTrainerAuth();
     List<PtContractEntity> list = List.of(
         PtContractEntity.builder()
             .id(1L)
@@ -232,20 +220,7 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 목록 조회 - 성공(트레이니)")
   void getPtContractListSuccess_Trainee() {
     //given
-    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_TRAINEE");
-    Collection authorities = Collections.singleton(authority);
-
-    Authentication authentication = mock(Authentication.class);
-    lenient().when(authentication.getAuthorities()).thenReturn(authorities);
-
-    UserDetails userDetails = UserPrincipal.create(trainee);
-    lenient().when(authentication.getPrincipal()).thenReturn(userDetails);
-    lenient().when(authentication.getName()).thenReturn(trainee.getEmail());
-
-    SecurityContext securityContext = mock(SecurityContext.class);
-    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-    SecurityContextHolder.setContext(securityContext);
-
+    setupTraineeAuth();
     List<PtContractEntity> list = List.of(
         PtContractEntity.builder()
             .id(1L)
@@ -270,6 +245,7 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 횟수 증가 - 성공")
   void increasePtContractSession() {
     //given
+    setupTrainerAuth();
     AddPtContractSessionRequestDto dto = new AddPtContractSessionRequestDto();
     dto.setTraineeId(10L);
     dto.setAddition(20);
@@ -298,6 +274,7 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 횟수 증가 - 실패(둘 사이 계약이 없는 경우)")
   void increasePtContractSessionFail_NoContract() {
     //given
+    setupTrainerAuth();
     AddPtContractSessionRequestDto dto = new AddPtContractSessionRequestDto();
     dto.setTraineeId(10L);
     dto.setAddition(20);
@@ -317,6 +294,7 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 종료 - 성공")
   void terminatePtContract() {
     //given
+    setupTrainerAuth();
     TerminatePtContractRequestDto dto = new TerminatePtContractRequestDto();
     dto.setPtContractId(100L);
 
@@ -340,6 +318,7 @@ class PtContractServiceTest {
   @DisplayName("PT 계약 종료 - 실패(계약이 존재하지 않거나, 이미 종료된 계약이어서 조회되지 않음)")
   void terminatePtContractFail_NoContract() {
     //given
+    setupTrainerAuth();
     TerminatePtContractRequestDto dto = new TerminatePtContractRequestDto();
     dto.setPtContractId(100L);
 

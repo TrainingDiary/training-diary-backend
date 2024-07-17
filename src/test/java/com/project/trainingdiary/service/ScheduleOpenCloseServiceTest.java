@@ -9,11 +9,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
-import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
-import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
@@ -24,12 +21,7 @@ import com.project.trainingdiary.exception.impl.PtContractNotEnoughSession;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
 import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
-import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
-import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
-import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.ScheduleStatus;
@@ -64,9 +56,9 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@DisplayName("일정 서비스")
+@DisplayName("일정 열기/닫기/등록 서비스")
 @ExtendWith(MockitoExtension.class)
-class ScheduleServiceTest {
+class ScheduleOpenCloseServiceTest {
 
   @Mock
   private ScheduleRepository scheduleRepository;
@@ -81,7 +73,10 @@ class ScheduleServiceTest {
   private PtContractRepository ptContractRepository;
 
   @InjectMocks
-  private ScheduleService scheduleService;
+  private ScheduleOpenCloseService scheduleOpenCloseService;
+
+  @InjectMocks
+  private ScheduleTrainerService scheduleTrainerService;
 
   private TrainerEntity trainer;
   private TraineeEntity trainee;
@@ -248,15 +243,15 @@ class ScheduleServiceTest {
         .dateTimes(dateTimes)
         .build();
 
-    when(scheduleService.getScheduleList(
+    when(scheduleTrainerService.getScheduleList(
         LocalDate.of(2024, 1, 1),
         LocalDate.of(2024, 3, 1)
     ))
         .thenReturn(responseData);
 
     //when
-    scheduleService.createSchedule(dto);
-    List<ScheduleResponseDto> schedules = scheduleService.getScheduleList(
+    scheduleOpenCloseService.createSchedule(dto);
+    List<ScheduleResponseDto> schedules = scheduleTrainerService.getScheduleList(
         LocalDate.of(2024, 1, 1),
         LocalDate.of(2024, 3, 1)
     );
@@ -313,34 +308,7 @@ class ScheduleServiceTest {
     //then
     assertThrows(
         ScheduleAlreadyExistException.class,
-        () -> scheduleService.createSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 목록 조회 - 성공")
-  void getScheduleList() {
-    when(scheduleRepository.getScheduleList(
-        eq(LocalDateTime.of(2024, 1, 1, 0, 0)),
-        eq(LocalDateTime.of(2024, 3, 1, 23, 59))
-    ))
-        .thenReturn(responseData);
-
-    scheduleService.getScheduleList(
-        LocalDate.of(2024, 1, 1),
-        LocalDate.of(2024, 3, 1)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 목록 조회 - 실패(조회 범위가 너무 큰 경우)")
-  void getScheduleListFail_RangeTooLong() {
-    assertThrows(
-        ScheduleRangeTooLong.class,
-        () -> scheduleService.getScheduleList(
-            LocalDate.of(2024, 1, 1),
-            LocalDate.of(2024, 9, 1)
-        )
+        () -> scheduleOpenCloseService.createSchedule(dto)
     );
   }
 
@@ -359,7 +327,7 @@ class ScheduleServiceTest {
         );
 
     //when
-    scheduleService.closeSchedules(scheduleIds);
+    scheduleOpenCloseService.closeSchedules(scheduleIds);
     ArgumentCaptor<List<ScheduleEntity>> captor = ArgumentCaptor.forClass(List.class);
 
     //then
@@ -385,7 +353,7 @@ class ScheduleServiceTest {
     //then
     assertThrows(
         ScheduleNotFoundException.class,
-        () -> scheduleService.closeSchedules(scheduleIds)
+        () -> scheduleOpenCloseService.closeSchedules(scheduleIds)
     );
   }
 
@@ -408,419 +376,7 @@ class ScheduleServiceTest {
     //then
     assertThrows(
         ScheduleStatusNotOpenException.class,
-        () -> scheduleService.closeSchedules(scheduleIds)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 예약 신청 - 성공")
-  void applySchedule() {
-    //given
-    setupTraineeAuth();
-    ApplyScheduleRequestDto dto = new ApplyScheduleRequestDto();
-    dto.setScheduleId(100L);
-    LocalDateTime currentTime = LocalDateTime.now();
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
-                .startAt(currentTime.plusHours(2).withMinute(0).withSecond(0).withNano(0))
-                .trainer(trainer)
-                .build()
-        ));
-
-    when(traineeRepository.findByEmail("trainee@example.com"))
-        .thenReturn(Optional.of(trainee));
-
-    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
-        .thenReturn(Optional.of(
-            PtContractEntity.builder()
-                .id(1000L)
-                .trainer(trainer)
-                .trainee(trainee)
-                .build()
-        ));
-
-    ArgumentCaptor<ScheduleEntity> captor = ArgumentCaptor.forClass(ScheduleEntity.class);
-    scheduleService.applySchedule(dto, currentTime);
-
-    //then
-    verify(scheduleRepository).save(captor.capture());
-    assertEquals(1000L, captor.getValue().getPtContract().getId());
-  }
-
-  @Test
-  @DisplayName("일정 예약 신청 - 실패(일정이 없는 경우)")
-  void applyScheduleFail_NoSchedule() {
-    //given
-    setupTraineeAuth();
-    ApplyScheduleRequestDto dto = new ApplyScheduleRequestDto();
-    dto.setScheduleId(100L);
-    LocalDateTime currentTime = LocalDateTime.now();
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.empty());
-
-    //then
-    assertThrows(
-        ScheduleNotFoundException.class,
-        () -> scheduleService.applySchedule(dto, currentTime)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 예약 신청 - 실패(둘이 연결된 계약이 없는 경우)")
-  void applyScheduleFail_NoPtContract() {
-    //given
-    setupTraineeAuth();
-    ApplyScheduleRequestDto dto = new ApplyScheduleRequestDto();
-    dto.setScheduleId(100L);
-    LocalDateTime currentTime = LocalDateTime.now();
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
-                .startAt(currentTime.plusHours(2).withMinute(0).withSecond(0).withNano(0))
-                .trainer(trainer)
-                .build()
-        ));
-
-    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
-        .thenReturn(Optional.empty());
-
-    //then
-    assertThrows(
-        PtContractNotExistException.class,
-        () -> scheduleService.applySchedule(dto, currentTime)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 예약 신청 - 실패(OPEN 일정이 아닌 경우)")
-  void applyScheduleFail_ScheduleNotOpen() {
-    //given
-    setupTraineeAuth();
-    ApplyScheduleRequestDto dto = new ApplyScheduleRequestDto();
-    dto.setScheduleId(100L);
-    LocalDateTime currentTime = LocalDateTime.now();
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVED)
-                .startAt(currentTime.plusHours(2).withMinute(0).withSecond(0).withNano(0))
-                .trainer(trainer)
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        ScheduleStatusNotOpenException.class,
-        () -> scheduleService.applySchedule(dto, currentTime)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 예약 신청 - 실패(과거의 일정인 경우)")
-  void applyScheduleFail_ScheduleIsPast() {
-    //given
-    setupTraineeAuth();
-    ApplyScheduleRequestDto dto = new ApplyScheduleRequestDto();
-    dto.setScheduleId(100L);
-    LocalDateTime currentTime = LocalDateTime.now();
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
-                .startAt(currentTime.minusHours(2).withMinute(0).withSecond(0).withNano(0))
-                .trainer(trainer)
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        ScheduleStartIsPast.class,
-        () -> scheduleService.applySchedule(dto, currentTime)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 예약 신청 - 실패(1시간 이내 시작하는 일정인 경우)")
-  void applyScheduleFail_ScheduleTooSoon() {
-    //given
-    setupTraineeAuth();
-    ApplyScheduleRequestDto dto = new ApplyScheduleRequestDto();
-    dto.setScheduleId(100L);
-    LocalDateTime currentTime = LocalDateTime.now();
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
-                .startAt(currentTime.plusHours(1).withMinute(0).withSecond(0).withNano(0))
-                .trainer(trainer)
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        ScheduleStartTooSoon.class,
-        () -> scheduleService.applySchedule(dto, currentTime)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 수락 - 성공")
-  void acceptSchedule() {
-    //given
-    setupTrainerAuth();
-    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
-                .ptContract(
-                    PtContractEntity.builder()
-                        .id(1000L)
-                        .totalSession(10)
-                        .usedSession(5)
-                        .build()
-                )
-                .build()
-        ));
-
-    //then
-    scheduleService.acceptSchedule(dto);
-  }
-
-  @Test
-  @DisplayName("일정 수락 - 실패(없는 일정)")
-  void acceptScheduleFail_NoSchedule() {
-    //given
-    setupTrainerAuth();
-    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.empty());
-
-    //then
-    assertThrows(
-        ScheduleNotFoundException.class,
-        () -> scheduleService.acceptSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 수락 - 실패(아무도 신청하지 않은 예약을 수락하려 함)")
-  void acceptScheduleFail_NoReserveApplied() {
-    //given
-    setupTrainerAuth();
-    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
-                .ptContract(
-                    PtContractEntity.builder()
-                        .id(1000L)
-                        .totalSession(10)
-                        .usedSession(10) // 모두 사용
-                        .build()
-                )
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        ScheduleStatusNotReserveApplied.class,
-        () -> scheduleService.acceptSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 수락 - 실패(연결된 PT 계약이 없음)")
-  void acceptScheduleFail_NoPtContract() {
-    //given
-    setupTrainerAuth();
-    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
-                .ptContract(null)
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        PtContractNotExistException.class,
-        () -> scheduleService.acceptSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 수락 - 실패(모든 세션 횟수를 사용함)")
-  void acceptScheduleFail_UsedAllSession() {
-    //given
-    setupTrainerAuth();
-    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
-                .ptContract(
-                    PtContractEntity.builder()
-                        .id(1000L)
-                        .totalSession(10)
-                        .usedSession(10) // 모두 사용
-                        .build()
-                )
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        UsedSessionExceededTotalSession.class,
-        () -> scheduleService.acceptSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 거절 - 성공")
-  void rejectSchedule() {
-    //given
-    setupTrainerAuth();
-    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
-                .ptContract(
-                    PtContractEntity.builder()
-                        .id(1000L)
-                        .totalSession(10)
-                        .usedSession(5)
-                        .build()
-                )
-                .build()
-        ));
-
-    ArgumentCaptor<PtContractEntity> captor = ArgumentCaptor.forClass(PtContractEntity.class);
-    scheduleService.rejectSchedule(dto);
-
-    //then
-    verify(ptContractRepository).save(captor.capture());
-    assertEquals(4, captor.getValue().getUsedSession());
-  }
-
-  @Test
-  @DisplayName("일정 거절 - 실패(없는 일정)")
-  void rejectScheduleFail_NoSchedule() {
-    //given
-    setupTrainerAuth();
-    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.empty());
-
-    //then
-    assertThrows(
-        ScheduleNotFoundException.class,
-        () -> scheduleService.rejectSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 거절 - 실패(아무도 신청하지 않은 예약을 거절하려 함)")
-  void rejectScheduleFail_NoReserveApplied() {
-    //given
-    setupTrainerAuth();
-    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
-                .ptContract(
-                    PtContractEntity.builder()
-                        .id(1000L)
-                        .totalSession(10)
-                        .usedSession(5)
-                        .build()
-                )
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        ScheduleStatusNotReserveApplied.class,
-        () -> scheduleService.rejectSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 거절 - 실패(연결된 PT 계약이 없음)")
-  void rejectScheduleFail_NoPtContract() {
-    //given
-    setupTrainerAuth();
-    RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
-                .ptContract(null)
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        PtContractNotExistException.class,
-        () -> scheduleService.rejectSchedule(dto)
+        () -> scheduleOpenCloseService.closeSchedules(scheduleIds)
     );
   }
 
@@ -856,7 +412,7 @@ class ScheduleServiceTest {
         PtContractEntity.class);
 
     //then
-    RegisterScheduleResponseDto response = scheduleService.registerSchedule(dto);
+    RegisterScheduleResponseDto response = scheduleOpenCloseService.registerSchedule(dto);
 
     verify(scheduleRepository, times(2)).saveAll(captorSchedule.capture());
     verify(ptContractRepository).save(captorPtContract.capture());
@@ -916,7 +472,7 @@ class ScheduleServiceTest {
         PtContractEntity.class);
 
     //then
-    RegisterScheduleResponseDto response = scheduleService.registerSchedule(dto);
+    RegisterScheduleResponseDto response = scheduleOpenCloseService.registerSchedule(dto);
 
     verify(scheduleRepository, times(2)).saveAll(captorSchedule.capture());
     verify(ptContractRepository).save(captorPtContract.capture());
@@ -974,7 +530,7 @@ class ScheduleServiceTest {
     //then
     assertThrows(
         ScheduleStatusNotOpenException.class,
-        () -> scheduleService.registerSchedule(dto)
+        () -> scheduleOpenCloseService.registerSchedule(dto)
     );
   }
 
@@ -993,7 +549,7 @@ class ScheduleServiceTest {
     //then
     assertThrows(
         PtContractNotExistException.class,
-        () -> scheduleService.registerSchedule(dto)
+        () -> scheduleOpenCloseService.registerSchedule(dto)
     );
   }
 
@@ -1029,7 +585,7 @@ class ScheduleServiceTest {
     //then
     assertThrows(
         PtContractNotEnoughSession.class,
-        () -> scheduleService.registerSchedule(dto)
+        () -> scheduleOpenCloseService.registerSchedule(dto)
     );
   }
 }
