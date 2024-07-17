@@ -11,17 +11,21 @@ import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutVideoResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
+import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.WorkoutEntity;
 import com.project.trainingdiary.entity.WorkoutMediaEntity;
 import com.project.trainingdiary.entity.WorkoutSessionEntity;
 import com.project.trainingdiary.entity.WorkoutTypeEntity;
 import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
+import com.project.trainingdiary.exception.impl.InvalidUserRoleTypeException;
 import com.project.trainingdiary.exception.impl.MediaCountExceededException;
 import com.project.trainingdiary.exception.impl.PtContractNotFoundException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.exception.impl.WorkoutSessionAccessDeniedException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
+import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutMediaRepository;
 import com.project.trainingdiary.repository.WorkoutRepository;
@@ -60,6 +64,7 @@ public class WorkoutSessionService {
   private final WorkoutRepository workoutRepository;
   private final WorkoutMediaRepository workoutMediaRepository;
   private final TrainerRepository trainerRepository;
+  private final TraineeRepository traineeRepository;
   private final PtContractRepository ptContractRepository;
 
   private final S3Operations s3Operations;
@@ -111,11 +116,26 @@ public class WorkoutSessionService {
   /**
    * 운동 일지 상세 조회
    */
-  public WorkoutSessionResponseDto getWorkoutSessionDetails(Long traineeId, Long sessionId) {
-    WorkoutSessionEntity session = workoutSessionRepository
-        .findByIdAndPtContract_Trainee_Id(sessionId, traineeId)
+  public WorkoutSessionResponseDto getWorkoutSessionDetails(Long sessionId) {
+    WorkoutSessionEntity workoutSession = workoutSessionRepository.findById(sessionId)
         .orElseThrow(() -> new WorkoutSessionNotFoundException(sessionId));
-    return WorkoutSessionResponseDto.fromEntity(session);
+
+    String role = SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator()
+        .next().getAuthority();
+    if ("ROLE_TRAINER".equals(role)) {
+      TrainerEntity trainer = getTrainer();
+      if (!workoutSession.getPtContract().getTrainer().equals(trainer)) {
+        throw new WorkoutSessionAccessDeniedException();
+      }
+    } else if ("ROLE_TRAINEE".equals(role)) {
+      TraineeEntity trainee = getTrainee();
+      if (!workoutSession.getPtContract().getTrainee().equals(trainee)) {
+        throw new WorkoutSessionAccessDeniedException();
+      }
+    } else {
+      throw new InvalidUserRoleTypeException();
+    }
+    return WorkoutSessionResponseDto.fromEntity(workoutSession);
   }
 
   /**
@@ -274,6 +294,15 @@ public class WorkoutSessionService {
    */
   private TrainerEntity getTrainer() {
     return trainerRepository
+        .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
+        .orElseThrow(UserNotFoundException::new);
+  }
+
+  /**
+   * 로그인한 트레이니 엔티티
+   */
+  private TraineeEntity getTrainee() {
+    return traineeRepository
         .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
         .orElseThrow(UserNotFoundException::new);
   }

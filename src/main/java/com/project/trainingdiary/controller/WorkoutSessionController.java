@@ -58,11 +58,9 @@ public class WorkoutSessionController {
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getWorkoutSessionDetails(
-      @PathVariable Long traineeId,
-      @PathVariable Long sessionId
+      @PathVariable Long id
   ) {
-    WorkoutSessionResponseDto responseDto = workoutSessionService
-        .getWorkoutSessionDetails(traineeId, sessionId);
+    WorkoutSessionResponseDto responseDto = workoutSessionService.getWorkoutSessionDetails(id);
     return ResponseEntity.ok(responseDto);
   }
 
