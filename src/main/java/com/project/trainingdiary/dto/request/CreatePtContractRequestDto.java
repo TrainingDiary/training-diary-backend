@@ -1,7 +1,7 @@
 package com.project.trainingdiary.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,9 +9,7 @@ import lombok.Setter;
 @Setter
 public class CreatePtContractRequestDto {
 
-  @NotNull(message = "traineeEmail를 입력하세요")
+  @NotNull(message = "traineeEmail을 입력하세요")
+  @Schema(example = "hello@example.com")
   private String traineeEmail;
-
-  @PositiveOrZero(message = "sessionCount는 0 이상이어야 합니다")
-  private int sessionCount;
 }
