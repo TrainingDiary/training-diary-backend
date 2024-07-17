@@ -28,8 +28,8 @@ public class WorkoutTypeService {
   public WorkoutTypeResponseDto createWorkoutType(WorkoutTypeCreateRequestDto dto) {
     TrainerEntity trainer = getTrainer();
 
-    WorkoutTypeEntity workoutType = workoutTypeRepository.save(
-        WorkoutTypeEntity.toEntity(dto, trainer));
+    WorkoutTypeEntity workoutType = workoutTypeRepository
+        .save(WorkoutTypeEntity.toEntity(dto, trainer));
 
     return WorkoutTypeResponseDto.fromEntity(workoutType);
   }
@@ -81,8 +81,8 @@ public class WorkoutTypeService {
   public WorkoutTypeResponseDto getWorkoutTypeDetails(Long workoutTypeId) {
     TrainerEntity trainer = getTrainer();
 
-    WorkoutTypeEntity entity = workoutTypeRepository.findByTrainer_IdAndId(trainer.getId(),
-            workoutTypeId)
+    WorkoutTypeEntity entity = workoutTypeRepository
+        .findByTrainer_IdAndId(trainer.getId(), workoutTypeId)
         .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutTypeId));
 
     return WorkoutTypeResponseDto.fromEntity(entity);
