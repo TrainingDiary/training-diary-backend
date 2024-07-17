@@ -9,12 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WorkoutSessionRepository extends JpaRepository<WorkoutSessionEntity, Long> {
 
-  Page<WorkoutSessionEntity> findByPtContract_Trainee_IdOrderBySessionDateDesc(Long traineeId,
-      Pageable pageable);
+  Page<WorkoutSessionEntity> findByPtContract_Trainee_IdOrderBySessionDateDesc
+      (Long traineeId, Pageable pageable);
 
-  Optional<WorkoutSessionEntity> findByIdAndPtContract_Trainee_Id(Long sessionId, Long traineeId);
-
-  Optional<WorkoutSessionEntity> findByPtContract_TrainerAndId(TrainerEntity trainer,
-      Long sessionId);
+  Optional<WorkoutSessionEntity> findByPtContract_TrainerAndId
+      (TrainerEntity trainer, Long sessionId);
 
 }
