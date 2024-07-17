@@ -2,7 +2,9 @@ package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -25,6 +27,7 @@ import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
 import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
+import com.project.trainingdiary.exception.impl.VerificationCodeNotYetVerifiedException;
 import com.project.trainingdiary.exception.impl.WrongPasswordException;
 import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.provider.CookieProvider;
@@ -190,17 +193,73 @@ public class UserServiceTest {
         Optional.of(verificationEntity));
 
     userService.checkVerificationCode(verifyDto);
+
+    verify(verificationRepository, times(1)).save(verificationEntityCaptor.capture());
+    VerificationEntity capturedVerificationEntity = verificationEntityCaptor.getValue();
+    assertNotNull(capturedVerificationEntity);
+    assertTrue(capturedVerificationEntity.isVerified());
+    assertNull(capturedVerificationEntity.getExpiredAt());
+  }
+
+  @Test
+  @DisplayName("인증 코드 만료 후에도 검증됨 - 예외 발생하지 않음")
+  void checkVerificationCodeSuccessEvenIfExpiredAfterVerification() {
+    verificationEntity.setVerified(true); // Already verified
+    verificationEntity.setExpiredAt(LocalDateTime.now().minusMinutes(1)); // Expired
+
+    when(verificationRepository.findByEmail(verifyDto.getEmail())).thenReturn(
+        Optional.of(verificationEntity));
+
+    userService.checkVerificationCode(verifyDto);
+
+    verify(verificationRepository, times(1)).save(verificationEntityCaptor.capture());
+    VerificationEntity capturedVerificationEntity = verificationEntityCaptor.getValue();
+    assertNotNull(capturedVerificationEntity);
+    assertTrue(capturedVerificationEntity.isVerified());
+    assertNull(capturedVerificationEntity.getExpiredAt());
+  }
+
+  @Test
+  @DisplayName("회원가입 실패 - 인증 코드 검증되지 않음")
+  void signUpFailWithoutVerification() {
+    SignUpRequestDto signUpDto = new SignUpRequestDto();
+    signUpDto.setEmail("new@example.com");
+    signUpDto.setPassword("password");
+    signUpDto.setConfirmPassword("password");
+    signUpDto.setRole(UserRoleType.TRAINEE);
+
+    VerificationEntity verificationEntity = new VerificationEntity();
+    verificationEntity.setEmail("new@example.com");
+    verificationEntity.setVerificationCode("123456");
+    verificationEntity.setExpiredAt(LocalDateTime.now().plusMinutes(5));
+    verificationEntity.setVerified(false); // Not verified
+
+    when(verificationRepository.findByEmail(signUpDto.getEmail()))
+        .thenReturn(Optional.of(verificationEntity));
+
+    assertThrows(
+        VerificationCodeNotYetVerifiedException.class, () -> userService.signUp(signUpDto, null));
   }
 
   @Test
   @DisplayName("회원가입 실패 - 비밀번호 불일치")
   void signUpFailPasswordMismatch() {
+    // given
     SignUpRequestDto signUpDto = new SignUpRequestDto();
     signUpDto.setEmail("new@example.com");
     signUpDto.setPassword("password");
     signUpDto.setConfirmPassword("differentPassword");
     signUpDto.setRole(UserRoleType.TRAINEE);
 
+    VerificationEntity verificationEntity = new VerificationEntity();
+    verificationEntity.setEmail("new@example.com");
+    verificationEntity.setVerificationCode("123456");
+    verificationEntity.setExpiredAt(LocalDateTime.now().plusMinutes(5));
+
+    when(verificationRepository.findByEmail(signUpDto.getEmail()))
+        .thenReturn(java.util.Optional.of(verificationEntity));
+
+    // when / then
     assertThrows(PasswordMismatchedException.class, () -> userService.signUp(signUpDto, null));
   }
 
@@ -233,8 +292,8 @@ public class UserServiceTest {
 
     SignInResponseDto responseDto = userService.signIn(signInDto, response);
 
-    assertEquals("accessToken", responseDto.getAccessToken());
-    assertEquals("refreshToken", responseDto.getRefreshToken());
+    assertEquals("trainee@example.com", responseDto.getEmail());
+    assertEquals("[ROLE_TRAINEE]", responseDto.getRole());
     assertEquals(accessTokenExpiryDate, tokenProvider.getExpiryDateFromToken("accessToken"));
     assertEquals(refreshTokenExpiryDate, tokenProvider.getExpiryDateFromToken("refreshToken"));
 
