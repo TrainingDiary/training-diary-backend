@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WorkoutTypeRepository extends JpaRepository<WorkoutTypeEntity, Long> {
 
-  Page<WorkoutTypeEntity> findByTrainer_Id(Long id, Pageable pageable);
+  Page<WorkoutTypeEntity> findByTrainer_IdOrderByCreatedAtDesc(Long id, Pageable pageable);
 
   Optional<WorkoutTypeEntity> findByTrainer_IdAndId(Long trainerId, Long workoutTypeId);
 
