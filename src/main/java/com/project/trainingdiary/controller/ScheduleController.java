@@ -13,14 +13,15 @@ import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto
 import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
+import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleOpenCloseService;
-import com.project.trainingdiary.service.ScheduleService;
 import com.project.trainingdiary.service.ScheduleTraineeService;
 import com.project.trainingdiary.service.ScheduleTrainerService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,7 +37,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/schedules")
 public class ScheduleController {
 
-  private final ScheduleService scheduleService;
   private final ScheduleTrainerService scheduleTrainerService;
   private final ScheduleTraineeService scheduleTraineeService;
   private final ScheduleOpenCloseService scheduleOpenCloseService;
@@ -49,12 +49,20 @@ public class ScheduleController {
     return CommonResponse.success(SuccessMessage.SCHEDULE_OPEN_SUCCESS);
   }
 
-  @GetMapping
-  public CommonResponse<?> getScheduleList(
+  @GetMapping("/trainers")
+  public ResponseEntity<List<ScheduleResponseDto>> getScheduleListByTrainer(
       @RequestParam LocalDate startDate,
       @RequestParam LocalDate endDate
   ) {
-    return CommonResponse.success(scheduleService.getScheduleList(startDate, endDate));
+    return ResponseEntity.ok(scheduleTrainerService.getScheduleList(startDate, endDate));
+  }
+
+  @GetMapping("/trainees")
+  public ResponseEntity<List<ScheduleResponseDto>> getScheduleListByTrainee(
+      @RequestParam LocalDate startDate,
+      @RequestParam LocalDate endDate
+  ) {
+    return ResponseEntity.ok(scheduleTraineeService.getScheduleList(startDate, endDate));
   }
 
   @PostMapping("/trainers/close")

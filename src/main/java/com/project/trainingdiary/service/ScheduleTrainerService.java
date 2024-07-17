@@ -5,11 +5,13 @@ import com.project.trainingdiary.dto.request.CancelScheduleByTrainerRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
+import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
 import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
@@ -18,6 +20,11 @@ import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -26,6 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @AllArgsConstructor
 public class ScheduleTrainerService {
+
+  private static final int MAX_QUERY_DAYS = 180;
+  private static final LocalTime START_TIME = LocalTime.of(0, 0);
+  private static final LocalTime END_TIME = LocalTime.of(23, 59);
 
   private final ScheduleRepository scheduleRepository;
   private final PtContractRepository ptContractRepository;
@@ -119,6 +130,22 @@ public class ScheduleTrainerService {
     scheduleRepository.save(schedule);
 
     return new CancelScheduleByTrainerResponseDto(schedule.getId(), schedule.getScheduleStatus());
+  }
+
+  /**
+   * 트레이너의 일정 목록 조회
+   */
+  public List<ScheduleResponseDto> getScheduleList(LocalDate startDate, LocalDate endDate) {
+    TrainerEntity trainer = getTrainer();
+
+    LocalDateTime startDateTime = LocalDateTime.of(startDate, START_TIME);
+    LocalDateTime endDateTime = LocalDateTime.of(endDate, END_TIME);
+
+    if (Duration.between(startDateTime, endDateTime).toDays() > MAX_QUERY_DAYS) {
+      throw new ScheduleRangeTooLong();
+    }
+
+    return scheduleRepository.getScheduleListByTrainer(trainer.getId(), startDateTime, endDateTime);
   }
 
   private TrainerEntity getTrainer() {

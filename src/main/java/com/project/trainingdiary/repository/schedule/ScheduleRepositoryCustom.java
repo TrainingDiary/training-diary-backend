@@ -6,5 +6,16 @@ import java.util.List;
 
 public interface ScheduleRepositoryCustom {
 
-  List<ScheduleResponseDto> getScheduleList(LocalDateTime startDateTime, LocalDateTime endDateTime);
+  List<ScheduleResponseDto> getScheduleListByTrainer(
+      long trainerId,
+      LocalDateTime startDateTime,
+      LocalDateTime endDateTime
+  );
+
+  List<ScheduleResponseDto> getScheduleListByTrainee(
+      long trainerId,
+      long traineeId,
+      LocalDateTime startDateTime,
+      LocalDateTime endDateTime
+  );
 }

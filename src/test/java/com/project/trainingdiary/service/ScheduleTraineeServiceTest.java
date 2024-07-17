@@ -71,9 +71,6 @@ class ScheduleTraineeServiceTest {
   private PtContractRepository ptContractRepository;
 
   @InjectMocks
-  private ScheduleService scheduleService;
-
-  @InjectMocks
   private ScheduleTraineeService scheduleTraineeService;
 
   private TrainerEntity trainer;

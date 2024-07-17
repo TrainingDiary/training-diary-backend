@@ -2,6 +2,7 @@ package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
 import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
@@ -31,6 +33,7 @@ import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,9 +70,6 @@ class ScheduleTrainerServiceTest {
 
   @Mock
   private PtContractRepository ptContractRepository;
-
-  @InjectMocks
-  private ScheduleService scheduleService;
 
   @InjectMocks
   private ScheduleTrainerService scheduleTrainerService;
@@ -122,25 +122,6 @@ class ScheduleTrainerServiceTest {
 
     lenient().when(trainerRepository.findByEmail(trainer.getEmail()))
         .thenReturn(Optional.of(trainer));
-  }
-
-  private void setupTraineeAuth() {
-    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_TRAINEE");
-    Collection authorities = Collections.singleton(authority);
-
-    Authentication authentication = mock(Authentication.class);
-    lenient().when(authentication.getAuthorities()).thenReturn(authorities);
-
-    UserDetails userDetails = UserPrincipal.create(trainee);
-    lenient().when(authentication.getPrincipal()).thenReturn(userDetails);
-    lenient().when(authentication.getName()).thenReturn(trainee.getEmail());
-
-    SecurityContext securityContext = mock(SecurityContext.class);
-    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
-    SecurityContextHolder.setContext(securityContext);
-
-    lenient().when(traineeRepository.findByEmail(trainee.getEmail()))
-        .thenReturn(Optional.of(trainee));
   }
 
   private void setupDateTimes() {
@@ -538,6 +519,38 @@ class ScheduleTrainerServiceTest {
     assertThrows(
         ScheduleStatusNotReserveAppliedOrReserved.class,
         () -> scheduleTrainerService.cancelSchedule(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 목록 조회 - 성공")
+  void getScheduleList() {
+    setupTrainerAuth();
+
+    when(scheduleRepository.getScheduleListByTrainer(
+        eq(1L),
+        eq(LocalDateTime.of(2024, 1, 1, 0, 0)),
+        eq(LocalDateTime.of(2024, 3, 1, 23, 59))
+    ))
+        .thenReturn(responseData);
+
+    scheduleTrainerService.getScheduleList(
+        LocalDate.of(2024, 1, 1),
+        LocalDate.of(2024, 3, 1)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 목록 조회 - 실패(조회 범위가 너무 큰 경우)")
+  void getScheduleListFail_RangeTooLong() {
+    setupTrainerAuth();
+
+    assertThrows(
+        ScheduleRangeTooLong.class,
+        () -> scheduleTrainerService.getScheduleList(
+            LocalDate.of(2024, 1, 1),
+            LocalDate.of(2024, 9, 1)
+        )
     );
   }
 }

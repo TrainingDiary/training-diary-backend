@@ -3,11 +3,13 @@ package com.project.trainingdiary.service;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
+import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
 import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
 import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
 import com.project.trainingdiary.exception.impl.ScheduleStartWithin1Day;
@@ -18,7 +20,11 @@ import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -27,6 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @AllArgsConstructor
 public class ScheduleTraineeService {
+
+  private static final int MAX_QUERY_DAYS = 180;
+  private static final LocalTime START_TIME = LocalTime.of(0, 0);
+  private static final LocalTime END_TIME = LocalTime.of(23, 59);
 
   private final ScheduleRepository scheduleRepository;
   private final PtContractRepository ptContractRepository;
@@ -97,6 +107,28 @@ public class ScheduleTraineeService {
     return new CancelScheduleByTraineeResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
 
+  /**
+   * 트레이너의 일정 목록 조회
+   */
+  public List<ScheduleResponseDto> getScheduleList(LocalDate startDate, LocalDate endDate) {
+    TraineeEntity trainee = getTrainee();
+    PtContractEntity ptContract = getPtContract(trainee.getId());
+
+    LocalDateTime startDateTime = LocalDateTime.of(startDate, START_TIME);
+    LocalDateTime endDateTime = LocalDateTime.of(endDate, END_TIME);
+
+    if (Duration.between(startDateTime, endDateTime).toDays() > MAX_QUERY_DAYS) {
+      throw new ScheduleRangeTooLong();
+    }
+
+    return scheduleRepository.getScheduleListByTrainee(
+        ptContract.getTrainer().getId(),
+        trainee.getId(),
+        startDateTime,
+        endDateTime
+    );
+  }
+
   private TraineeEntity getTrainee() {
     String email = SecurityContextHolder.getContext().getAuthentication().getName();
     return traineeRepository.findByEmail(email)
@@ -106,6 +138,11 @@ public class ScheduleTraineeService {
   private PtContractEntity getPtContract(Long trainerId, Long traineeId) {
     return ptContractRepository.findByTrainerIdAndTraineeId(trainerId,
             traineeId)
+        .orElseThrow(PtContractNotExistException::new);
+  }
+
+  private PtContractEntity getPtContract(Long traineeId) {
+    return ptContractRepository.findByTraineeId(traineeId)
         .orElseThrow(PtContractNotExistException::new);
   }
 }
