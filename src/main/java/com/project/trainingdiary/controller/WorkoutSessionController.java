@@ -3,15 +3,11 @@ package com.project.trainingdiary.controller;
 import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutVideoRequestDto;
-import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
-import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
-import com.project.trainingdiary.dto.response.WorkoutVideoResponseDto;
 import com.project.trainingdiary.service.WorkoutSessionService;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -40,8 +36,7 @@ public class WorkoutSessionController {
   public ResponseEntity<WorkoutSessionResponseDto> createWorkoutSession(
       @RequestBody WorkoutSessionCreateRequestDto dto
   ) {
-    WorkoutSessionResponseDto responseDto = workoutSessionService.createWorkoutSession(dto);
-    return ResponseEntity.ok(responseDto);   // 반환 값 수정
+    return ResponseEntity.ok(workoutSessionService.createWorkoutSession(dto));
   }
 
   @GetMapping("/trainees/{id}")
@@ -51,17 +46,14 @@ public class WorkoutSessionController {
       @RequestParam(defaultValue = "10") int size
   ) {
     Pageable pageable = PageRequest.of(page, size);
-    Page<WorkoutSessionListResponseDto> responsePage = workoutSessionService
-        .getWorkoutSessions(id, pageable);
-    return ResponseEntity.ok(responsePage);
+    return ResponseEntity.ok(workoutSessionService.getWorkoutSessions(id, pageable));
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<?> getWorkoutSessionDetails(
       @PathVariable Long id
   ) {
-    WorkoutSessionResponseDto responseDto = workoutSessionService.getWorkoutSessionDetails(id);
-    return ResponseEntity.ok(responseDto);
+    return ResponseEntity.ok(workoutSessionService.getWorkoutSessionDetails(id));
   }
 
   @PutMapping("/photos")
@@ -71,8 +63,7 @@ public class WorkoutSessionController {
   ) throws IOException {
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
         .sessionId(sessionId).images(images).build();
-    WorkoutImageResponseDto imageResponseDto = workoutSessionService.uploadWorkoutImage(dto);
-    return ResponseEntity.ok(imageResponseDto);
+    return ResponseEntity.ok(workoutSessionService.uploadWorkoutImage(dto));
   }
 
   @PutMapping("/videos")
@@ -82,8 +73,7 @@ public class WorkoutSessionController {
   ) throws IOException {
     WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
         .sessionId(sessionId).video(video).build();
-    WorkoutVideoResponseDto videoResponseDto = workoutSessionService.uploadWorkoutVideo(dto);
-    return ResponseEntity.ok(videoResponseDto);
+    return ResponseEntity.ok(workoutSessionService.uploadWorkoutVideo(dto));
   }
 
 }

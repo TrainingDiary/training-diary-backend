@@ -42,7 +42,9 @@ public class WorkoutTypeController {
   }
 
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteWorkoutType(@PathVariable Long id) {
+  public ResponseEntity<Void> deleteWorkoutType(
+      @PathVariable Long id
+  ) {
     workoutTypeService.deleteWorkoutType(id);
     return ResponseEntity.ok().build();
   }
@@ -57,7 +59,9 @@ public class WorkoutTypeController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<WorkoutTypeResponseDto> getWorkoutTypeDetails(@PathVariable Long id) {
+  public ResponseEntity<WorkoutTypeResponseDto> getWorkoutTypeDetails(
+      @PathVariable Long id
+  ) {
     return ResponseEntity.ok(workoutTypeService.getWorkoutTypeDetails(id));
   }
 
