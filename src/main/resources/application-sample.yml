@@ -49,3 +49,7 @@ spring:
 
 server:
   forward-headers-strategy: framework # Swagger에서 https 요청이 나가도록 하기 위함
+
+springdoc:
+  swagger-ui:
+    tagsSorter: alpha
