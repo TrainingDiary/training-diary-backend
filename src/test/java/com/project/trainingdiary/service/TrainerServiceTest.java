@@ -27,7 +27,6 @@ import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -130,7 +129,7 @@ public class TrainerServiceTest {
     when(trainerRepository.findByEmail(trainerEmail)).thenReturn(Optional.of(trainer));
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
     when(ptContractRepository.existsByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(true);
-    when(ptContractRepository.findByTrainee(trainee)).thenReturn(List.of(contract));
+    when(ptContractRepository.findByTraineeId(trainee.getId())).thenReturn(Optional.of(contract));
 
     // when
     TraineeInfoResponseDto responseDto = trainerService.getTraineeInfo(traineeId);

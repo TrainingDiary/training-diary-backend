@@ -4,10 +4,8 @@ import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRe
 import com.project.trainingdiary.dto.request.SignInRequestDto;
 import com.project.trainingdiary.dto.request.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
-import com.project.trainingdiary.dto.response.CustomResponse;
 import com.project.trainingdiary.dto.response.MemberInfoResponseDto;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
-import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

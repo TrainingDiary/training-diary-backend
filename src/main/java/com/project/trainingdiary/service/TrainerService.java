@@ -43,10 +43,10 @@ public class TrainerService {
 
     checkContract(trainer, trainee);
 
-    int totalSessions = ptContractRepository.findByTrainee(trainee).stream()
+    int totalSessions = ptContractRepository.findByTraineeId(trainee.getId()).stream()
         .mapToInt(PtContractEntity::getTotalSession)
         .sum();
-    int usedSessions = ptContractRepository.findByTrainee(trainee).stream()
+    int usedSessions = ptContractRepository.findByTraineeId(trainee.getId()).stream()
         .mapToInt(PtContractEntity::getUsedSession)
         .sum();
 
