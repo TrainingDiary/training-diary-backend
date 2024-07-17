@@ -24,6 +24,7 @@ public class TraineeInfoResponseDto {
   private int age;
   private GenderType gender;
   private double height;
+  private LocalDate birthDate;
   private int remainingSessions;
 
   private List<WeightHistoryDto> weightHistory;
@@ -38,6 +39,7 @@ public class TraineeInfoResponseDto {
         .traineeId(trainee.getId())
         .name(trainee.getName())
         .age(calculateAge(trainee.getBirthDate()))
+        .birthDate(trainee.getBirthDate())
         .gender(trainee.getGender())
         .height(trainee.getHeight())
         .remainingSessions(remainingSessions)
