@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,6 +29,7 @@ public class InBodyRecordHistoryEntity extends BaseEntity {
   private double weight;
   private double bodyFatPercentage;
   private double skeletalMuscleMass;
+  private LocalDate addedDate;
 
   @ManyToOne
   @JoinColumn(name = "trainee_id", nullable = false)

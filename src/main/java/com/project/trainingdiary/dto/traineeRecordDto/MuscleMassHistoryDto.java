@@ -1,7 +1,7 @@
 package com.project.trainingdiary.dto.traineeRecordDto;
 
 import com.project.trainingdiary.entity.InBodyRecordHistoryEntity;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,12 +9,12 @@ import lombok.Getter;
 @Builder
 public class MuscleMassHistoryDto {
 
-  private LocalDateTime date;
+  private LocalDate addedDate;
   private double muscleMass;
 
   public static MuscleMassHistoryDto fromEntity(InBodyRecordHistoryEntity entity) {
     return MuscleMassHistoryDto.builder()
-        .date(entity.getCreatedAt())
+        .addedDate(entity.getAddedDate())
         .muscleMass(entity.getSkeletalMuscleMass())
         .build();
   }
