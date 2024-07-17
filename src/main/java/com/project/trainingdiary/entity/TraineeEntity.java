@@ -57,8 +57,6 @@ public class TraineeEntity extends BaseEntity {
   @Enumerated(STRING)
   private GenderType gender;
 
-  private int totalSessions;
-
   private double height;
 
   @OneToMany(mappedBy = "trainee", cascade = ALL, orphanRemoval = true)
