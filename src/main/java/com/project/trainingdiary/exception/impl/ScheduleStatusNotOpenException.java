@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class ScheduleStatusNotOpenException extends GlobalException {
 
   public ScheduleStatusNotOpenException() {
-    super(HttpStatus.CONFLICT, "스케쥴이 OPEN 상태가 아닙니다.");
+    super(HttpStatus.CONFLICT, "일정이 OPEN 상태가 아닙니다.");
   }
 }
