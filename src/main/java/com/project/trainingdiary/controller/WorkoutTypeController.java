@@ -10,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,47 +27,38 @@ public class WorkoutTypeController {
 
   private final WorkoutTypeService workoutTypeService;
 
-  @PreAuthorize("hasRole('TRAINER')")
   @PostMapping
   public ResponseEntity<WorkoutTypeResponseDto> createWorkoutType(
       @Valid @RequestBody WorkoutTypeCreateRequestDto dto
   ) {
-    WorkoutTypeResponseDto responseDto = workoutTypeService.createWorkoutType(dto);
-    return ResponseEntity.ok(responseDto);
+    return ResponseEntity.ok(workoutTypeService.createWorkoutType(dto));
   }
 
-  @PreAuthorize("hasRole('TRAINER')")
   @PutMapping
   public ResponseEntity<WorkoutTypeResponseDto> updateWorkoutType(
       @Valid @RequestBody WorkoutTypeUpdateRequestDto dto
   ) {
-    WorkoutTypeResponseDto responseDto = workoutTypeService.updateWorkoutType(dto);
-    return ResponseEntity.ok(responseDto);
+    return ResponseEntity.ok(workoutTypeService.updateWorkoutType(dto));
   }
 
-  @PreAuthorize("hasRole('TRAINER')")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteWorkoutType(@PathVariable Long id) {
     workoutTypeService.deleteWorkoutType(id);
     return ResponseEntity.ok().build();
   }
 
-  @PreAuthorize("hasRole('TRAINER')")
   @GetMapping
   public ResponseEntity<Page<WorkoutTypeResponseDto>> getWorkoutTypes(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size
   ) {
     Pageable pageable = PageRequest.of(page, size);
-    Page<WorkoutTypeResponseDto> responsePage = workoutTypeService.getWorkoutTypes(pageable);
-    return ResponseEntity.ok(responsePage);
+    return ResponseEntity.ok(workoutTypeService.getWorkoutTypes(pageable));
   }
 
-  @PreAuthorize("hasRole('TRAINER')")
   @GetMapping("/{id}")
   public ResponseEntity<WorkoutTypeResponseDto> getWorkoutTypeDetails(@PathVariable Long id) {
-    WorkoutTypeResponseDto responseDto = workoutTypeService.getWorkoutTypeDetails(id);
-    return ResponseEntity.ok(responseDto);
+    return ResponseEntity.ok(workoutTypeService.getWorkoutTypeDetails(id));
   }
 
 }
