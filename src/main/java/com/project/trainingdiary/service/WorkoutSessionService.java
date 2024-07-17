@@ -65,6 +65,8 @@ public class WorkoutSessionService {
   private final S3Operations s3Operations;
 
   private static final int MAX_MEDIA_COUNT = 10;
+  private static final int THUMBNAIL_WIDTH = 150;
+  private static final int THUMBNAIL_HEIGHT = 150;
 
   @Value("${spring.cloud.aws.s3.bucket}")
   private String bucket;
@@ -72,7 +74,7 @@ public class WorkoutSessionService {
   /**
    * 트레이너의 운동 일지 생성
    */
-  public void createWorkoutSession(WorkoutSessionCreateRequestDto dto) {
+  public WorkoutSessionResponseDto createWorkoutSession(WorkoutSessionCreateRequestDto dto) {
     // 현재 로그인 되어있는 트레이너 본인의 엔티티
     TrainerEntity trainer = getTrainer();
 
@@ -91,7 +93,10 @@ public class WorkoutSessionService {
     }).toList();
 
     //  운동 일지 엔티티 저장
-    workoutSessionRepository.save(WorkoutSessionEntity.toEntity(dto, workouts, ptContract));
+    WorkoutSessionEntity workoutSession = workoutSessionRepository
+        .save(WorkoutSessionEntity.toEntity(dto, workouts, ptContract));
+
+    return WorkoutSessionResponseDto.fromEntity(workoutSession);
   }
 
   /**
@@ -174,7 +179,7 @@ public class WorkoutSessionService {
       throws IOException {
     BufferedImage originalImage = ImageIO.read(file.getInputStream());
     BufferedImage thumbnailImage = Scalr
-        .resize(originalImage, Method.QUALITY, Mode.AUTOMATIC, 150, 150);
+        .resize(originalImage, Method.QUALITY, Mode.AUTOMATIC, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
 
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
       ImageIO.write(thumbnailImage, "jpg", byteArrayOutputStream);
