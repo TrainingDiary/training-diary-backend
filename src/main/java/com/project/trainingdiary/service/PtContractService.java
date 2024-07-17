@@ -3,6 +3,7 @@ package com.project.trainingdiary.service;
 import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
 import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
+import com.project.trainingdiary.dto.response.CreatePtContractResponseDto;
 import com.project.trainingdiary.dto.response.PtContractResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
@@ -21,11 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
-@Transactional(readOnly = true)
 public class PtContractService {
 
   private final PtContractRepository ptContractRepository;
@@ -35,17 +34,18 @@ public class PtContractService {
   /**
    * PT 계약 생성
    */
-  @Transactional
-  public void createPtContract(CreatePtContractRequestDto dto) {
-    TrainerEntity trainer = getTrainer(); // 이 메서드를 호출한 사람은 트레이너임
+  public CreatePtContractResponseDto createPtContract(CreatePtContractRequestDto dto) {
+    TrainerEntity trainer = getTrainer();
     TraineeEntity trainee = getTrainee(dto.getTraineeEmail());
 
     if (ptContractRepository.existsByTrainerIdAndTraineeId(trainer.getId(), trainee.getId())) {
       throw new PtContractAlreadyExistException();
     }
 
-    PtContractEntity ptContract = PtContractEntity.of(trainer, trainee, dto.getSessionCount());
+    PtContractEntity ptContract = PtContractEntity.of(trainer, trainee, 0);
     ptContractRepository.save(ptContract);
+
+    return new CreatePtContractResponseDto(ptContract.getId());
   }
 
   /**
@@ -62,29 +62,8 @@ public class PtContractService {
   }
 
   /**
-   * PT 계약을 id로 조회
-   */
-  public PtContractResponseDto getPtContract(long id) {
-    PtContractEntity ptContract = ptContractRepository.findById(id)
-        .orElseThrow(PtContractNotExistException::new);
-
-    if (getMyRole().equals(UserRoleType.TRAINEE)) {
-      if (!ptContract.getTrainee().getEmail().equals(getEmail())) {
-        throw new PtContractNotExistException();
-      }
-    } else {
-      if (!ptContract.getTrainer().getEmail().equals(getEmail())) {
-        throw new PtContractNotExistException();
-      }
-    }
-
-    return ptContract.toResponseDto();
-  }
-
-  /**
    * PT 계약 횟수를 업데이트 함
    */
-  @Transactional
   public void addPtContractSession(AddPtContractSessionRequestDto dto) {
     TrainerEntity trainer = getTrainer();
 
@@ -100,7 +79,6 @@ public class PtContractService {
   /**
    * PT 계약을 종료함
    */
-  @Transactional
   public void terminatePtContract(TerminatePtContractRequestDto dto) {
     PtContractEntity ptContract = ptContractRepository.findByIdAndIsTerminatedFalse(
             dto.getPtContractId())
@@ -109,8 +87,6 @@ public class PtContractService {
     ptContract.terminate();
     ptContractRepository.save(ptContract);
   }
-
-  //TODO: usedSession 업데이트를 해야함 - 예약 시간이 지나는 순간에 하면 좋을 듯
 
   private TrainerEntity getTrainer() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
