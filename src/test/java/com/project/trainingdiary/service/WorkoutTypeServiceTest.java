@@ -86,10 +86,11 @@ class WorkoutTypeServiceTest {
   @Test
   @DisplayName("운동 종류 생성 성공")
   void testCreateWorkoutTypeSuccess() {
-    createRequestDto = new WorkoutTypeCreateRequestDto();
-    createRequestDto.setName("type2");
-    createRequestDto.setTargetMuscle("target2");
-    createRequestDto.setRemarks("remark2");
+    createRequestDto = WorkoutTypeCreateRequestDto.builder()
+        .name("type2")
+        .targetMuscle("target2")
+        .remarks("remark2")
+        .build();
 
     WorkoutTypeEntity newWorkoutType = WorkoutTypeEntity.builder()
         .id(11L)
@@ -128,11 +129,11 @@ class WorkoutTypeServiceTest {
   @Test
   @DisplayName("운동 종류 수정 성공")
   void testUpdateWorkoutTypeSuccess() {
-    updateRequestDto = new WorkoutTypeUpdateRequestDto();
-    updateRequestDto.setWorkoutTypeId(10L);
-    updateRequestDto.setName("type2");
-    updateRequestDto.setTargetMuscle("target2");
-    updateRequestDto.setRemarks("remark2");
+    updateRequestDto = WorkoutTypeUpdateRequestDto.builder()
+        .workoutTypeId(workoutType.getId())
+        .name("type2")
+        .targetMuscle("target2")
+        .remarks("remark2").build();
 
     WorkoutTypeEntity updateWorkoutType = WorkoutTypeEntity.builder()
         .id(10L)
@@ -165,8 +166,7 @@ class WorkoutTypeServiceTest {
   @Test
   @DisplayName("운동 종류 수정 실패 - 운동 종류 id 존재하지 않을 때 예외 발생")
   void testUpdateWorkoutTypeFailWorkoutTypeNotFound() {
-    updateRequestDto = new WorkoutTypeUpdateRequestDto();
-    updateRequestDto.setWorkoutTypeId(99L);
+    updateRequestDto = WorkoutTypeUpdateRequestDto.builder().workoutTypeId(99L).build();
 
     when(workoutTypeRepository.findByTrainer_IdAndId(trainer.getId(), 99L))
         .thenReturn(Optional.empty());
