@@ -10,11 +10,9 @@ import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
-import com.project.trainingdiary.dto.response.CommonResponse;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
-import com.project.trainingdiary.model.SuccessMessage;
 import com.project.trainingdiary.service.ScheduleOpenCloseService;
 import com.project.trainingdiary.service.ScheduleTraineeService;
 import com.project.trainingdiary.service.ScheduleTrainerService;
@@ -42,11 +40,11 @@ public class ScheduleController {
   private final ScheduleOpenCloseService scheduleOpenCloseService;
 
   @PostMapping("/trainers/open")
-  public CommonResponse<?> openSchedule(
+  public ResponseEntity<Void> openSchedule(
       @RequestBody @Valid OpenScheduleRequestDto dto
   ) {
     scheduleOpenCloseService.createSchedule(dto);
-    return CommonResponse.success(SuccessMessage.SCHEDULE_OPEN_SUCCESS);
+    return ResponseEntity.ok().build();
   }
 
   @GetMapping("/trainers")
@@ -66,43 +64,41 @@ public class ScheduleController {
   }
 
   @PostMapping("/trainers/close")
-  public CommonResponse<?> closeSchedules(
+  public ResponseEntity<Void> closeSchedules(
       @RequestBody @Valid CloseScheduleRequestDto dto
   ) {
     scheduleOpenCloseService.closeSchedules(dto.scheduleIds);
-    return CommonResponse.success();
+    return ResponseEntity.ok().build();
   }
 
   @PostMapping("/trainees/apply")
-  public CommonResponse<?> applySchedule(
+  public ResponseEntity<?> applySchedule(
       @RequestBody @Valid ApplyScheduleRequestDto dto
   ) {
     scheduleTraineeService.applySchedule(dto, LocalDateTime.now());
-    return CommonResponse.success();
+    return ResponseEntity.ok().build();
   }
 
   @PostMapping("/trainers/accept")
-  public CommonResponse<?> acceptSchedule(
+  public ResponseEntity<?> acceptSchedule(
       @RequestBody @Valid AcceptScheduleRequestDto dto
   ) {
     scheduleTrainerService.acceptSchedule(dto);
-    return CommonResponse.success();
+    return ResponseEntity.ok().build();
   }
 
   @PostMapping("/trainers/reject")
   public ResponseEntity<RejectScheduleResponseDto> rejectSchedule(
       @RequestBody @Valid RejectScheduleRequestDto dto
   ) {
-    RejectScheduleResponseDto response = scheduleTrainerService.rejectSchedule(dto);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(scheduleTrainerService.rejectSchedule(dto));
   }
 
   @PostMapping("/trainers/register")
   public ResponseEntity<RegisterScheduleResponseDto> rejectSchedule(
       @RequestBody @Valid RegisterScheduleRequestDto dto
   ) {
-    RegisterScheduleResponseDto response = scheduleOpenCloseService.registerSchedule(dto);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(scheduleOpenCloseService.registerSchedule(dto));
   }
 
   @PreAuthorize("hasRole('TRAINER')")
@@ -110,8 +106,7 @@ public class ScheduleController {
   public ResponseEntity<CancelScheduleByTrainerResponseDto> cancelScheduleByTrainer(
       @RequestBody @Valid CancelScheduleByTrainerRequestDto dto
   ) {
-    CancelScheduleByTrainerResponseDto response = scheduleTrainerService.cancelSchedule(dto);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(scheduleTrainerService.cancelSchedule(dto));
   }
 
   @PreAuthorize("hasRole('TRAINEE')")
@@ -119,9 +114,8 @@ public class ScheduleController {
   public ResponseEntity<CancelScheduleByTraineeResponseDto> cancelScheduleByTrainer(
       @RequestBody @Valid CancelScheduleByTraineeRequestDto dto
   ) {
-    CancelScheduleByTraineeResponseDto response = scheduleTraineeService.cancelSchedule(
+    return ResponseEntity.ok(scheduleTraineeService.cancelSchedule(
         dto, LocalDateTime.now()
-    );
-    return ResponseEntity.ok(response);
+    ));
   }
 }
