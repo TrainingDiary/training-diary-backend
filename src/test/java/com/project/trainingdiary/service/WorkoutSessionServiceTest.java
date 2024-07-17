@@ -6,6 +6,7 @@ import static com.project.trainingdiary.model.WorkoutMediaType.IMAGE;
 import static com.project.trainingdiary.model.WorkoutMediaType.VIDEO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
@@ -122,6 +123,8 @@ class WorkoutSessionServiceTest {
   private PtContractEntity ptContract;
   private WorkoutTypeEntity workoutType;
   private WorkoutSessionEntity workoutSession;
+  private WorkoutDto workoutDto;
+  private WorkoutSessionCreateRequestDto createRequestDto;
 
   @BeforeEach
   void init() {
@@ -131,9 +134,9 @@ class WorkoutSessionServiceTest {
 
     trainer = TrainerEntity.builder().id(1L).email("trainer@gmail.com").role(TRAINER).build();
     trainee = TraineeEntity.builder().id(10L).role(TRAINEE).build();
-    ptContract = PtContractEntity.builder().id(100L).trainer(trainer)
-        .trainee(trainee).build();
-    workoutType = WorkoutTypeEntity.builder().id(1000L).name("WorkoutType").build();
+    ptContract = PtContractEntity.builder().id(100L).trainer(trainer).trainee(trainee).build();
+    workoutType = WorkoutTypeEntity.builder().id(1000L).name("workout1").targetMuscle("target1")
+        .remarks("remark1").trainer(trainer).build();
     workoutSession = WorkoutSessionEntity.builder().id(10000L).sessionDate(LocalDate.now())
         .sessionNumber(1).ptContract(ptContract).workouts(new ArrayList<>())
         .workoutMedia(new ArrayList<>()).build();
@@ -149,30 +152,64 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("운동 일지 생성 성공")
   void testCreateWorkoutSessionSuccess() {
-    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+    createRequestDto = WorkoutSessionCreateRequestDto.builder()
+        .traineeId(trainee.getId())
+        .sessionDate(LocalDate.now())
+        .sessionNumber(1)
+        .specialNote("specialNote1")
+        .workouts(Collections.singletonList(
+            WorkoutDto.builder()
+                .workoutTypeId(workoutType.getId())
+                .workoutTypeName(workoutType.getName())
+                .targetMuscle(workoutType.getTargetMuscle())
+                .remarks(workoutType.getRemarks())
+                .build()))
+        .build();
+
+    WorkoutEntity workout = WorkoutEntity.builder()
+        .workoutTypeName(workoutType.getName())
+        .targetMuscle(workoutType.getTargetMuscle())
+        .remarks(workoutType.getRemarks())
+        .build();
+
+    WorkoutSessionEntity newWorkoutSession = WorkoutSessionEntity.builder()
+        .id(10001L)
+        .sessionDate(createRequestDto.getSessionDate())
+        .sessionNumber(createRequestDto.getSessionNumber())
+        .specialNote(createRequestDto.getSpecialNote())
+        .ptContract(ptContract)
+        .workouts(Collections.singletonList(workout))
+        .workoutMedia(new ArrayList<>())
+        .build();
+
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
-    when(workoutTypeRepository.findById(1000L)).thenReturn(Optional.of(workoutType));
-
-    WorkoutDto workoutDto = new WorkoutDto();
-    workoutDto.setWorkoutTypeId(1000L);
-
-    WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
-    workoutSessionCreateRequestDto.setTraineeId(10L);
-    workoutSessionCreateRequestDto.setWorkouts(List.of(workoutDto));
-
-    workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto);
+    when(workoutTypeRepository.findById(workoutType.getId()))
+        .thenReturn(Optional.of(workoutType));
 
     ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
-    verify(workoutRepository, times(1)).save(workoutCaptor.capture());
-    assertEquals("WorkoutType", workoutCaptor.getValue().getWorkoutTypeName());
+    when(workoutRepository.save(workoutCaptor.capture())).thenReturn(workout);
 
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor =
-        ArgumentCaptor.forClass(WorkoutSessionEntity.class);
-    verify(workoutSessionRepository, times(1)).save(sessionCaptor.capture());
-    assertEquals(ptContract, sessionCaptor.getValue().getPtContract());
-    assertEquals(1, sessionCaptor.getValue().getWorkouts().size());
-    assertEquals("WorkoutType", sessionCaptor.getValue().getWorkouts().get(0).getWorkoutTypeName());
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+    when(workoutSessionRepository.save(workoutSessionCaptor.capture()))
+        .thenReturn(newWorkoutSession);
+
+    WorkoutSessionResponseDto responseDto = workoutSessionService
+        .createWorkoutSession(createRequestDto);
+
+    assertNotNull(responseDto);
+    assertEquals(newWorkoutSession.getId(), responseDto.getId());
+    assertEquals(newWorkoutSession.getSessionDate(), responseDto.getSessionDate());
+    assertEquals(newWorkoutSession.getSessionNumber(), responseDto.getSessionNumber());
+    assertEquals(newWorkoutSession.getSpecialNote(), responseDto.getSpecialNote());
+    assertEquals(newWorkoutSession.getWorkouts().size(), responseDto.getWorkouts().size());
+
+    verify(ptContractRepository, times(1))
+        .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
+    verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
+    verify(workoutRepository, times(1)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(1)).save(workoutSessionCaptor.capture());
   }
 
   @Test
@@ -180,15 +217,13 @@ class WorkoutSessionServiceTest {
   void testCreateWorkoutSessionFailTrainerNotFound() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.empty());
 
-    WorkoutDto workoutDto = new WorkoutDto();
-    workoutDto.setWorkoutTypeId(1000L);
+    workoutDto = WorkoutDto.builder().workoutTypeId(workoutType.getId()).build();
 
-    WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
-    workoutSessionCreateRequestDto.setTraineeId(10L);
-    workoutSessionCreateRequestDto.setWorkouts(List.of(workoutDto));
+    createRequestDto = WorkoutSessionCreateRequestDto.builder()
+        .traineeId(trainer.getId()).workouts(List.of(workoutDto)).build();
 
     assertThrows(UserNotFoundException.class,
-        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto));
+        () -> workoutSessionService.createWorkoutSession(createRequestDto));
 
     verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
     verifyNoInteractions(ptContractRepository, workoutTypeRepository, workoutRepository,
@@ -199,21 +234,19 @@ class WorkoutSessionServiceTest {
   @DisplayName("운동 일지 생성 실패 - PT 계약이 존재 하지 않을 때 예외 발생")
   void testCreateWorkoutSessionFailPtContractNotFound() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L))
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.empty());
 
-    WorkoutDto workoutDto = new WorkoutDto();
-    workoutDto.setWorkoutTypeId(1000L);
+    workoutDto = WorkoutDto.builder().workoutTypeId(workoutType.getId()).build();
 
-    WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
-    workoutSessionCreateRequestDto.setTraineeId(10L);
-    workoutSessionCreateRequestDto.setWorkouts(List.of(workoutDto));
+    createRequestDto = WorkoutSessionCreateRequestDto.builder()
+        .traineeId(trainee.getId()).workouts(List.of(workoutDto)).build();
 
     assertThrows(PtContractNotFoundException.class,
-        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto));
+        () -> workoutSessionService.createWorkoutSession(createRequestDto));
 
     verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
-    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(), 10L);
+    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
     verifyNoInteractions(workoutTypeRepository, workoutRepository, workoutSessionRepository);
   }
 
@@ -221,23 +254,22 @@ class WorkoutSessionServiceTest {
   @DisplayName("운동 일지 생성 실패 - 운동 종류가 존재 하지 않을 때 예외 발생")
   void testCreateWorkoutSessionFailWorkoutTypeNotFound() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), 10L))
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
-    when(workoutTypeRepository.findById(1000L)).thenReturn(Optional.empty());
+    when(workoutTypeRepository.findById(workoutType.getId())).thenReturn(Optional.empty());
 
-    WorkoutDto workoutDto = new WorkoutDto();
-    workoutDto.setWorkoutTypeId(1000L);
+    workoutDto = WorkoutDto.builder().workoutTypeId(workoutType.getId()).build();
 
-    WorkoutSessionCreateRequestDto workoutSessionCreateRequestDto = new WorkoutSessionCreateRequestDto();
-    workoutSessionCreateRequestDto.setTraineeId(10L);
-    workoutSessionCreateRequestDto.setWorkouts(List.of(workoutDto));
+    createRequestDto = WorkoutSessionCreateRequestDto.builder()
+        .traineeId(trainee.getId()).workouts(List.of(workoutDto)).build();
 
     assertThrows(WorkoutTypeNotFoundException.class,
-        () -> workoutSessionService.createWorkoutSession(workoutSessionCreateRequestDto));
+        () -> workoutSessionService.createWorkoutSession(createRequestDto));
 
     verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
-    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(), 10L);
-    verify(workoutTypeRepository, times(1)).findById(1000L);
+    verify(ptContractRepository, times(1))
+        .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
+    verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
     verifyNoInteractions(workoutRepository, workoutSessionRepository);
   }
 
@@ -299,21 +331,21 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("운동 일지 상세 조회 실패 - 운동 일지가 존재하지 않을 때 예외 발생")
   void testGetWorkoutSessionDetailsFailInvalidSessionId() {
-    when(workoutSessionRepository.findByIdAndPtContract_Trainee_Id(1L, trainee.getId()))
+    when(workoutSessionRepository.findByIdAndPtContract_Trainee_Id(workoutSession.getId(), trainee.getId()))
         .thenReturn(Optional.empty());
 
     assertThrows(WorkoutSessionNotFoundException.class,
-        () -> workoutSessionService.getWorkoutSessionDetails(trainee.getId(), 1L));
+        () -> workoutSessionService.getWorkoutSessionDetails(trainee.getId(), workoutSession.getId()));
 
     verify(workoutSessionRepository, times(1))
-        .findByIdAndPtContract_Trainee_Id(1L, trainee.getId());
+        .findByIdAndPtContract_Trainee_Id(workoutSession.getId(), trainee.getId());
   }
 
   @Test
   @DisplayName("이미지 업로드 성공")
   void testUploadWorkoutImageSuccess() throws IOException {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, 10000L))
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
 
     BufferedImage img = new BufferedImage(500, 500, BufferedImage.TYPE_INT_RGB);
@@ -328,8 +360,8 @@ class WorkoutSessionServiceTest {
     MockMultipartFile mockFile = new MockMultipartFile(
         "file", "test.jpg", "image/jpeg", imageBytes);
 
-    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
-        .sessionId(10000L)
+    WorkoutImageRequestDto imageRequestDto = WorkoutImageRequestDto.builder()
+        .sessionId(workoutSession.getId())
         .images(List.of(mockFile))
         .build();
 
@@ -354,10 +386,10 @@ class WorkoutSessionServiceTest {
         .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
             metadataCaptor.capture());
 
-    WorkoutImageResponseDto response = workoutSessionService.uploadWorkoutImage(dto);
+    WorkoutImageResponseDto response = workoutSessionService.uploadWorkoutImage(imageRequestDto);
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
-        WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     verify(workoutMediaRepository, times(1)).save(mediaCaptor.capture());
     WorkoutMediaEntity savedMedia = mediaCaptor.getValue();
     assertEquals("IMAGE", savedMedia.getMediaType().name());
@@ -372,13 +404,13 @@ class WorkoutSessionServiceTest {
     assertTrue(capturedKeys.get(1).startsWith("thumb_"));
     assertTrue(capturedKeys.get(1).matches("thumb_[0-9a-fA-F-]{36}\\.jpg"));
 
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
     verify(workoutSessionRepository, times(1)).save(sessionCaptor.capture());
     WorkoutSessionEntity savedSession = sessionCaptor.getValue();
     assertEquals(1, savedSession.getWorkoutMedia().size());
 
-    assertEquals(10000L, response.getSessionId());
+    assertEquals(workoutSession.getId(), response.getSessionId());
     assertEquals(1, response.getOriginalUrls().size());
     assertEquals(1, response.getThumbnailUrls().size());
   }
@@ -390,7 +422,7 @@ class WorkoutSessionServiceTest {
         .addAll(Collections.nCopies(10, WorkoutMediaEntity.builder().mediaType(IMAGE).build()));
 
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, 10000L))
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
 
     BufferedImage img = new BufferedImage(500, 500, BufferedImage.TYPE_INT_RGB);
@@ -405,27 +437,26 @@ class WorkoutSessionServiceTest {
     MockMultipartFile mockFile = new MockMultipartFile(
         "file", "test.jpg", "image/jpeg", imageBytes);
 
-    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
-        .sessionId(10000L)
+    WorkoutImageRequestDto imageRequestDto = WorkoutImageRequestDto.builder()
+        .sessionId(workoutSession.getId())
         .images(List.of(mockFile))
         .build();
 
     assertThrows(MediaCountExceededException.class,
-        () -> workoutSessionService.uploadWorkoutImage(dto));
+        () -> workoutSessionService.uploadWorkoutImage(imageRequestDto));
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
-        WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
 
     verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
-    verify(s3Operations, never()).upload(
-        bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-        metadataCaptor.capture());
+    verify(s3Operations, never()).upload(bucketCaptor.capture(), keyCaptor.capture(),
+        inputStreamCaptor.capture(), metadataCaptor.capture());
     verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
 
     assertTrue(mediaCaptor.getAllValues().isEmpty());
@@ -440,33 +471,32 @@ class WorkoutSessionServiceTest {
   @DisplayName("이미지 업로드 실패 - 파일 타입이 맞지 않으면 예외 발생")
   void testUploadWorkoutImageFailInvalidFileType() {
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
-    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, 10000L))
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
 
     MockMultipartFile mockFile = new MockMultipartFile(
         "file", "test.txt", "text/plain", "test text content".getBytes());
 
-    WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
+    WorkoutImageRequestDto imageRequestDto = WorkoutImageRequestDto.builder()
         .sessionId(10000L)
         .images(List.of(mockFile))
         .build();
 
     assertThrows(InvalidFileTypeException.class,
-        () -> workoutSessionService.uploadWorkoutImage(dto));
+        () -> workoutSessionService.uploadWorkoutImage(imageRequestDto));
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
-        WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
 
     verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
-    verify(s3Operations, never()).upload(
-        bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-        metadataCaptor.capture());
+    verify(s3Operations, never()).upload(bucketCaptor.capture(), keyCaptor.capture(),
+        inputStreamCaptor.capture(), metadataCaptor.capture());
     verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
 
     assertTrue(mediaCaptor.getAllValues().isEmpty());
@@ -487,7 +517,7 @@ class WorkoutSessionServiceTest {
     InputStream inputStream = new ByteArrayInputStream("video".getBytes());
     when(video.getInputStream()).thenReturn(inputStream);
 
-    WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
+    WorkoutVideoRequestDto videoRequestDto = WorkoutVideoRequestDto.builder()
         .sessionId(workoutSession.getId())
         .video(video).build();
 
@@ -500,13 +530,13 @@ class WorkoutSessionServiceTest {
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
 
     doAnswer(invocation -> s3Resource).when(s3Operations)
-        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-            metadataCaptor.capture());
+        .upload(bucketCaptor.capture(), keyCaptor.capture(),
+            inputStreamCaptor.capture(), metadataCaptor.capture());
 
-    WorkoutVideoResponseDto response = workoutSessionService.uploadWorkoutVideo(dto);
+    WorkoutVideoResponseDto response = workoutSessionService.uploadWorkoutVideo(videoRequestDto);
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
-        WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     verify(workoutMediaRepository, times(1)).save(mediaCaptor.capture());
     WorkoutMediaEntity savedMedia = mediaCaptor.getValue();
     assertEquals("VIDEO", savedMedia.getMediaType().name());
@@ -517,8 +547,8 @@ class WorkoutSessionServiceTest {
     assertEquals(bucket, capturedBuckets.get(0));
     assertFalse(capturedKeys.isEmpty());
 
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
     verify(workoutSessionRepository, times(1)).save(sessionCaptor.capture());
     WorkoutSessionEntity savedSession = sessionCaptor.getValue();
     assertEquals(1, savedSession.getWorkoutMedia().size());
@@ -540,19 +570,18 @@ class WorkoutSessionServiceTest {
     assertThrows(WorkoutSessionNotFoundException.class,
         () -> workoutSessionService.uploadWorkoutVideo(dto));
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
-        WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
 
     verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
-    verify(s3Operations, never())
-        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-            metadataCaptor.capture());
+    verify(s3Operations, never()).upload(bucketCaptor.capture(), keyCaptor.capture(),
+        inputStreamCaptor.capture(), metadataCaptor.capture());
     verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
 
     assertTrue(mediaCaptor.getAllValues().isEmpty());
@@ -572,25 +601,24 @@ class WorkoutSessionServiceTest {
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
 
-    WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
+    WorkoutVideoRequestDto videoRequestDto = WorkoutVideoRequestDto.builder()
         .sessionId(workoutSession.getId()).video(video).build();
 
     assertThrows(MediaCountExceededException.class,
-        () -> workoutSessionService.uploadWorkoutVideo(dto));
+        () -> workoutSessionService.uploadWorkoutVideo(videoRequestDto));
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
-        WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
 
     verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
-    verify(s3Operations, never())
-        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-            metadataCaptor.capture());
+    verify(s3Operations, never()).upload(bucketCaptor.capture(), keyCaptor.capture(),
+        inputStreamCaptor.capture(), metadataCaptor.capture());
     verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
 
     assertTrue(mediaCaptor.getAllValues().isEmpty());
@@ -615,19 +643,18 @@ class WorkoutSessionServiceTest {
     assertThrows(InvalidFileTypeException.class,
         () -> workoutSessionService.uploadWorkoutVideo(dto));
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(
-        WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(
-        WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
 
     verify(workoutMediaRepository, never()).save(mediaCaptor.capture());
-    verify(s3Operations, never())
-        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-            metadataCaptor.capture());
+    verify(s3Operations, never()).upload(bucketCaptor.capture(), keyCaptor.capture(),
+        inputStreamCaptor.capture(), metadataCaptor.capture());
     verify(workoutSessionRepository, never()).save(sessionCaptor.capture());
 
     assertTrue(mediaCaptor.getAllValues().isEmpty());
