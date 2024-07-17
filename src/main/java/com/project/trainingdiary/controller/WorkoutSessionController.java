@@ -31,20 +31,20 @@ import org.springframework.web.multipart.MultipartFile;
 //  2. path 에 위치한 id를 dto(body)로 받기
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/trainees")
+@RequestMapping("api/workout-sessions")
 public class WorkoutSessionController {
 
   private final WorkoutSessionService workoutSessionService;
 
-  @PostMapping("/workout-sessions")
-  public ResponseEntity<?> createWorkoutSession(
+  @PostMapping
+  public ResponseEntity<WorkoutSessionResponseDto> createWorkoutSession(
       @RequestBody WorkoutSessionCreateRequestDto dto
   ) {
-    workoutSessionService.createWorkoutSession(dto);
-    return ResponseEntity.ok("");   // 반환 값 수정
+    WorkoutSessionResponseDto responseDto = workoutSessionService.createWorkoutSession(dto);
+    return ResponseEntity.ok(responseDto);   // 반환 값 수정
   }
 
-  @GetMapping("/{id}/workout-sessions")
+  @GetMapping("/trainees/{id}")
   public ResponseEntity<?> getWorkoutSessions(
       @PathVariable Long id,
       @RequestParam(defaultValue = "0") int page,
@@ -56,7 +56,7 @@ public class WorkoutSessionController {
     return ResponseEntity.ok(responsePage);
   }
 
-  @GetMapping("/{traineeId}/workout-sessions/{sessionId}")
+  @GetMapping("/{id}")
   public ResponseEntity<?> getWorkoutSessionDetails(
       @PathVariable Long traineeId,
       @PathVariable Long sessionId
@@ -66,7 +66,7 @@ public class WorkoutSessionController {
     return ResponseEntity.ok(responseDto);
   }
 
-  @PutMapping("/workout-sessions/photos")
+  @PutMapping("/photos")
   public ResponseEntity<?> uploadWorkoutImage(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("images") List<MultipartFile> images
@@ -77,7 +77,7 @@ public class WorkoutSessionController {
     return ResponseEntity.ok(imageResponseDto);
   }
 
-  @PutMapping("/workout-sessions/videos")
+  @PutMapping("/videos")
   public ResponseEntity<?> uploadWorkoutVideo(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("video") MultipartFile video
