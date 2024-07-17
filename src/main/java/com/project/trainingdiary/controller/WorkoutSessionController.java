@@ -22,9 +22,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-// TODO
-//  1. api 명세 보고 수정
-//  2. path 에 위치한 id를 dto(body)로 받기
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/workout-sessions")
