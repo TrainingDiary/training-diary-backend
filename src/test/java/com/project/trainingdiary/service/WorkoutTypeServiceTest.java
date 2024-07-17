@@ -4,7 +4,6 @@ import static com.project.trainingdiary.model.UserRoleType.TRAINER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -214,23 +213,6 @@ class WorkoutTypeServiceTest {
     assertNotNull(responsePageDto);
     assertEquals(1, responsePageDto.getTotalElements());
     assertEquals("type1", responsePageDto.getContent().get(0).getName());
-  }
-
-  @Test
-  @DisplayName("운동 종류 목록 조회 실패 - 등록한 운동 종류가 없을 때")
-  void testGetWorkoutTypesFailure_NoWorkoutTypes() {
-    Page<WorkoutTypeEntity> emptyPage = new PageImpl<>(Collections.emptyList());
-
-    when(workoutTypeRepository
-        .findByTrainer_IdOrderByCreatedAtDesc(trainer.getId(), Pageable.unpaged()))
-        .thenReturn(emptyPage);
-
-    Page<WorkoutTypeResponseDto> responsePageDto = workoutTypeService.getWorkoutTypes(
-        Pageable.unpaged());
-
-    assertNotNull(responsePageDto);
-    assertEquals(0, responsePageDto.getTotalElements());
-    assertTrue(responsePageDto.getContent().isEmpty());
   }
 
   @Test

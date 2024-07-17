@@ -33,11 +33,14 @@ import com.project.trainingdiary.entity.WorkoutMediaEntity;
 import com.project.trainingdiary.entity.WorkoutSessionEntity;
 import com.project.trainingdiary.entity.WorkoutTypeEntity;
 import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
+import com.project.trainingdiary.exception.impl.InvalidUserRoleTypeException;
 import com.project.trainingdiary.exception.impl.MediaCountExceededException;
 import com.project.trainingdiary.exception.impl.PtContractNotFoundException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.exception.impl.WorkoutSessionAccessDeniedException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
+import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutMediaRepository;
 import com.project.trainingdiary.repository.WorkoutRepository;
@@ -95,6 +98,9 @@ class WorkoutSessionServiceTest {
   private TrainerRepository trainerRepository;
 
   @Mock
+  private TraineeRepository traineeRepository;
+
+  @Mock
   private PtContractRepository ptContractRepository;
 
   @Mock
@@ -128,10 +134,6 @@ class WorkoutSessionServiceTest {
 
   @BeforeEach
   void init() {
-    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
-        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
-    SecurityContextHolder.getContext().setAuthentication(authentication);
-
     trainer = TrainerEntity.builder().id(1L).email("trainer@gmail.com").role(TRAINER).build();
     trainee = TraineeEntity.builder().id(10L).role(TRAINEE).build();
     ptContract = PtContractEntity.builder().id(100L).trainer(trainer).trainee(trainee).build();
@@ -142,6 +144,7 @@ class WorkoutSessionServiceTest {
         .workoutMedia(new ArrayList<>()).build();
 
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+    when(traineeRepository.findByEmail("trainee@gmail.com")).thenReturn(Optional.of(trainee));
   }
 
   @AfterEach
@@ -152,6 +155,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("운동 일지 생성 성공")
   void testCreateWorkoutSessionSuccess() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     createRequestDto = WorkoutSessionCreateRequestDto.builder()
         .traineeId(trainee.getId())
         .sessionDate(LocalDate.now())
@@ -215,6 +222,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("운동 일지 생성 실패 - 트레이너를 찾지 못할 때 예외 발생")
   void testCreateWorkoutSessionFailTrainerNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.empty());
 
     workoutDto = WorkoutDto.builder().workoutTypeId(workoutType.getId()).build();
@@ -233,6 +244,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("운동 일지 생성 실패 - PT 계약이 존재 하지 않을 때 예외 발생")
   void testCreateWorkoutSessionFailPtContractNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.empty());
@@ -246,13 +261,18 @@ class WorkoutSessionServiceTest {
         () -> workoutSessionService.createWorkoutSession(createRequestDto));
 
     verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
-    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
+    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(),
+        trainee.getId());
     verifyNoInteractions(workoutTypeRepository, workoutRepository, workoutSessionRepository);
   }
 
   @Test
   @DisplayName("운동 일지 생성 실패 - 운동 종류가 존재 하지 않을 때 예외 발생")
   void testCreateWorkoutSessionFailWorkoutTypeNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
@@ -311,39 +331,108 @@ class WorkoutSessionServiceTest {
   }
 
   @Test
-  @DisplayName("운동 일지 상세 조회 성공")
-  void testGetWorkoutSessionDetailsSuccess() {
-    when(workoutSessionRepository
-        .findByIdAndPtContract_Trainee_Id(workoutSession.getId(), trainee.getId()))
-        .thenReturn(Optional.of(workoutSession));
+  @DisplayName("운동 일지 상세 조회 성공 - 트레이너")
+  void testGetWorkoutSessionDetailsForTrainerSuccess() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    WorkoutSessionResponseDto result = workoutSessionService
-        .getWorkoutSessionDetails(trainee.getId(), workoutSession.getId());
+    when(workoutSessionRepository.findById(workoutSession.getId())).thenReturn(
+        Optional.of(workoutSession));
+    WorkoutSessionResponseDto responseDto = workoutSessionService.getWorkoutSessionDetails(
+        workoutSession.getId());
 
-    assertEquals(workoutSession.getId(), result.getId());
-    assertEquals(workoutSession.getSessionDate(), result.getSessionDate());
-    assertEquals(workoutSession.getSessionNumber(), result.getSessionNumber());
+    assertNotNull(responseDto);
+    assertEquals(workoutSession.getId(), responseDto.getId());
+    assertEquals(workoutSession.getSessionDate(), responseDto.getSessionDate());
+    assertEquals(workoutSession.getSessionNumber(), responseDto.getSessionNumber());
 
-    verify(workoutSessionRepository, times(1))
-        .findByIdAndPtContract_Trainee_Id(workoutSession.getId(), trainee.getId());
+    verify(workoutSessionRepository, times(1)).findById(workoutSession.getId());
   }
 
   @Test
-  @DisplayName("운동 일지 상세 조회 실패 - 운동 일지가 존재하지 않을 때 예외 발생")
-  void testGetWorkoutSessionDetailsFailInvalidSessionId() {
-    when(workoutSessionRepository.findByIdAndPtContract_Trainee_Id(workoutSession.getId(), trainee.getId()))
-        .thenReturn(Optional.empty());
+  @DisplayName("운동 일지 상세 조회 성공 - 트레이니")
+  void testGetWorkoutSessionDetailsForTraineeSuccess() {
+    Authentication authentication = new TestingAuthenticationToken("trainee@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINEE")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-    assertThrows(WorkoutSessionNotFoundException.class,
-        () -> workoutSessionService.getWorkoutSessionDetails(trainee.getId(), workoutSession.getId()));
+    when(workoutSessionRepository.findById(workoutSession.getId())).thenReturn(
+        Optional.of(workoutSession));
+    WorkoutSessionResponseDto response = workoutSessionService.getWorkoutSessionDetails(
+        workoutSession.getId());
 
-    verify(workoutSessionRepository, times(1))
-        .findByIdAndPtContract_Trainee_Id(workoutSession.getId(), trainee.getId());
+    assertNotNull(response);
+    assertEquals(workoutSession.getId(), response.getId());
+    assertEquals(workoutSession.getSessionDate(), response.getSessionDate());
+    assertEquals(workoutSession.getSessionNumber(), response.getSessionNumber());
+
+    verify(workoutSessionRepository, times(1)).findById(workoutSession.getId());
+  }
+
+  @Test
+  @DisplayName("운동 일지 상세 조회 실패 - 트레이너 본인이 작성한 일지가 아닌 경우 예외 발생")
+  void testGetWorkoutSessionDetailsAccessDeniedForTrainer() {
+    TrainerEntity anotherTrainer = TrainerEntity.builder().id(2L).email("another_trainer@gmail.com")
+        .role(TRAINER).build();
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(
+        Optional.of(anotherTrainer));
+    when(workoutSessionRepository.findById(workoutSession.getId())).thenReturn(
+        Optional.of(workoutSession));
+
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    assertThrows(WorkoutSessionAccessDeniedException.class,
+        () -> workoutSessionService.getWorkoutSessionDetails(workoutSession.getId()));
+
+    verify(workoutSessionRepository, times(1)).findById(workoutSession.getId());
+  }
+
+  @Test
+  @DisplayName("운동 일지 상세 조회 실패 - 트레이니 본인의 일지가 아닌 경우 예외 발생")
+  void testGetWorkoutSessionDetailsAccessDeniedForTrainee() {
+    Authentication authentication = new TestingAuthenticationToken("trainee@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINEE")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    TraineeEntity anotherTrainee = TraineeEntity.builder().id(11L)
+        .email("another_trainee@gmail.com").role(TRAINEE).build();
+    when(traineeRepository.findByEmail("trainee@gmail.com")).thenReturn(
+        Optional.of(anotherTrainee));
+    when(workoutSessionRepository.findById(workoutSession.getId())).thenReturn(
+        Optional.of(workoutSession));
+
+    assertThrows(WorkoutSessionAccessDeniedException.class,
+        () -> workoutSessionService.getWorkoutSessionDetails(workoutSession.getId()));
+
+    verify(workoutSessionRepository, times(1)).findById(workoutSession.getId());
+  }
+
+  @Test
+  @DisplayName("운동 일지 상세 조회 실패 - 트레이너와 트레이니가 아닌 다른 role 이용해 접근 시 예외 발생")
+  void testGetWorkoutSessionDetailsFailureInvalidRole() {
+    Authentication authentication = new TestingAuthenticationToken("unknown@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_UNKNOWN")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    when(workoutSessionRepository.findById(workoutSession.getId())).thenReturn(
+        Optional.of(workoutSession));
+
+    assertThrows(InvalidUserRoleTypeException.class,
+        () -> workoutSessionService.getWorkoutSessionDetails(workoutSession.getId()));
+
+    verify(workoutSessionRepository, times(1)).findById(workoutSession.getId());
   }
 
   @Test
   @DisplayName("이미지 업로드 성공")
   void testUploadWorkoutImageSuccess() throws IOException {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
@@ -418,6 +507,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("이미지 업로드 실패 - 이미지 개수가 10개를 초과하면 예외 발생")
   void testUploadWorkoutImageFailExcessiveImages() throws IOException {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     workoutSession.getWorkoutMedia()
         .addAll(Collections.nCopies(10, WorkoutMediaEntity.builder().mediaType(IMAGE).build()));
 
@@ -470,6 +563,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("이미지 업로드 실패 - 파일 타입이 맞지 않으면 예외 발생")
   void testUploadWorkoutImageFailInvalidFileType() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
@@ -510,6 +607,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("동영상 업로드 성공")
   public void testUploadWorkoutVideoSuccess() throws IOException {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
@@ -560,6 +661,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("동영상 업로드 실패 - 운동 일지를 찾을 수 없을 때 예외 발생")
   public void testUploadWorkoutVideoFailWorkoutSessionNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.empty());
@@ -595,6 +700,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("동영상 업로드 실패 - 동영상 개수가 10개를 초과하면 예외 발생")
   public void testUploadWorkoutVideoFailMediaCountExceeded() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     workoutSession.getWorkoutMedia().addAll(
         Collections.nCopies(10, WorkoutMediaEntity.builder().mediaType(VIDEO).build()));
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
@@ -632,6 +741,10 @@ class WorkoutSessionServiceTest {
   @Test
   @DisplayName("동영상 업로드 실패 - 파일 타입이 맞지 않으면 예외 발생")
   public void testUploadWorkoutVideoFailInvalidFileType() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
