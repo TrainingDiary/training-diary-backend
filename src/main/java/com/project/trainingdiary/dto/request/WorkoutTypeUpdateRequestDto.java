@@ -15,7 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class WorkoutTypeUpdateRequestDto {
 
-  @NotNull(message = "운동 종류의 id 값을 입력해주세요.")
+  @NotNull(message = "수정을 원하는 운동 종류의 id 값을 입력해주세요.")
   private Long workoutTypeId;
 
   @NotBlank(message = "운동 종류 이름은 필수 입력사항입니다.")
