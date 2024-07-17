@@ -66,8 +66,6 @@ public class ScheduleOpenCloseService {
    * 열린 일정을 닫기
    */
   public void closeSchedules(List<Long> scheduleIds) {
-    // TODO: trainee는 일정을 닫을 수 없음
-
     List<ScheduleEntity> schedules = scheduleRepository.findAllById(scheduleIds);
 
     if (scheduleIds.size() != schedules.size()) {
