@@ -22,8 +22,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
 import com.project.trainingdiary.exception.impl.PasswordMismatchedException;
-import com.project.trainingdiary.exception.impl.TraineeEmailDuplicateException;
-import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
+import com.project.trainingdiary.exception.impl.UserEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
 import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
@@ -125,7 +124,7 @@ public class UserServiceTest {
   void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainee() {
     when(traineeRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.of(traineeEntity));
 
-    assertThrows(TraineeEmailDuplicateException.class,
+    assertThrows(UserEmailDuplicateException.class,
         () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
   }
 
@@ -134,7 +133,7 @@ public class UserServiceTest {
   void checkDuplicateEmailThrowsExceptionWhenEmailExistsInTrainer() {
     when(trainerRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.of(trainerEntity));
 
-    assertThrows(TrainerEmailDuplicateException.class,
+    assertThrows(UserEmailDuplicateException.class,
         () -> userService.checkDuplicateEmailAndSendVerification(sendDto));
   }
 
