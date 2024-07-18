@@ -134,7 +134,8 @@ public class TrainerServiceTest {
     when(authentication.getName()).thenReturn(trainerEmail);
     when(trainerRepository.findByEmail(trainerEmail)).thenReturn(Optional.of(trainer));
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
-    when(ptContractRepository.findByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(Optional.of(contract));
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(
+        Optional.of(contract));
 
     // when
     TraineeInfoResponseDto responseDto = trainerService.getTraineeInfo(traineeId);
