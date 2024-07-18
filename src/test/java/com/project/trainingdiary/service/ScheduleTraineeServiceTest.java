@@ -240,15 +240,21 @@ class ScheduleTraineeServiceTest {
                 .id(1000L)
                 .trainer(trainer)
                 .trainee(trainee)
+                .totalSession(20)
+                .usedSession(10)
                 .build()
         ));
 
-    ArgumentCaptor<ScheduleEntity> captor = ArgumentCaptor.forClass(ScheduleEntity.class);
+    ArgumentCaptor<ScheduleEntity> captorSchedule = ArgumentCaptor.forClass(ScheduleEntity.class);
+    ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
+        PtContractEntity.class);
     scheduleTraineeService.applySchedule(dto, currentTime);
 
     //then
-    verify(scheduleRepository).save(captor.capture());
-    assertEquals(1000L, captor.getValue().getPtContract().getId());
+    verify(scheduleRepository).save(captorSchedule.capture());
+    verify(ptContractRepository).save(captorPtContract.capture());
+    assertEquals(ScheduleStatus.RESERVE_APPLIED, captorSchedule.getValue().getScheduleStatus());
+    assertEquals(11, captorPtContract.getValue().getUsedSession());
   }
 
   @Test
