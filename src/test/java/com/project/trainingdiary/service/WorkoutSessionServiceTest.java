@@ -14,12 +14,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.project.trainingdiary.dto.request.WorkoutDto;
+import com.project.trainingdiary.dto.request.WorkoutCreateRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutSessionUpdateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutUpdateRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutVideoRequestDto;
 import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
@@ -36,8 +37,9 @@ import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
 import com.project.trainingdiary.exception.impl.InvalidUserRoleTypeException;
 import com.project.trainingdiary.exception.impl.MediaCountExceededException;
 import com.project.trainingdiary.exception.impl.PtContractNotFoundException;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.exception.impl.WorkoutNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionAccessDeniedException;
+import com.project.trainingdiary.exception.impl.WorkoutSessionAlreadyExistException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
 import com.project.trainingdiary.repository.TraineeRepository;
@@ -128,9 +130,10 @@ class WorkoutSessionServiceTest {
   private TraineeEntity trainee;
   private PtContractEntity ptContract;
   private WorkoutTypeEntity workoutType;
+  private WorkoutEntity workout;
   private WorkoutSessionEntity workoutSession;
-  private WorkoutDto workoutDto;
   private WorkoutSessionCreateRequestDto createRequestDto;
+  private WorkoutSessionUpdateRequestDto updateRequestDto;
 
   @BeforeEach
   void init() {
@@ -139,12 +142,32 @@ class WorkoutSessionServiceTest {
     ptContract = PtContractEntity.builder().id(100L).trainer(trainer).trainee(trainee).build();
     workoutType = WorkoutTypeEntity.builder().id(1000L).name("workout1").targetMuscle("target1")
         .remarks("remark1").trainer(trainer).build();
+    workout = WorkoutEntity.builder().id(100000L).workoutTypeName(workoutType.getName())
+        .remarks(workoutType.getRemarks()).targetMuscle(workoutType.getTargetMuscle()).build();
     workoutSession = WorkoutSessionEntity.builder().id(10000L).sessionDate(LocalDate.now())
         .sessionNumber(1).ptContract(ptContract).workouts(new ArrayList<>())
         .workoutMedia(new ArrayList<>()).build();
 
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(traineeRepository.findByEmail("trainee@gmail.com")).thenReturn(Optional.of(trainee));
+
+    createRequestDto = WorkoutSessionCreateRequestDto.builder()
+        .traineeId(trainee.getId()).sessionDate(LocalDate.now()).sessionNumber(1)
+        .specialNote("specialNote").workouts(Collections.singletonList(
+            WorkoutCreateRequestDto.builder()
+                .workoutTypeId(workoutType.getId())
+                .weight(20).rep(10).sets(3).time(0).speed(0)
+                .build()))
+        .build();
+
+    updateRequestDto = WorkoutSessionUpdateRequestDto.builder()
+        .sessionId(workoutSession.getId()).sessionDate(LocalDate.now()).sessionNumber(1)
+        .specialNote("updateSpecialNote").workouts(Collections.singletonList(
+            WorkoutUpdateRequestDto.builder()
+                .workoutId(workout.getId()).workoutTypeId(workoutType.getId())
+                .weight(25).rep(10).sets(3).time(0).speed(0)
+                .build()))
+        .build();
   }
 
   @AfterEach
@@ -158,87 +181,53 @@ class WorkoutSessionServiceTest {
     Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
     SecurityContextHolder.getContext().setAuthentication(authentication);
-
-    createRequestDto = WorkoutSessionCreateRequestDto.builder()
-        .traineeId(trainee.getId())
-        .sessionDate(LocalDate.now())
-        .sessionNumber(1)
-        .specialNote("specialNote1")
-        .workouts(Collections.singletonList(
-            WorkoutDto.builder()
-                .workoutTypeId(workoutType.getId())
-                .workoutTypeName(workoutType.getName())
-                .targetMuscle(workoutType.getTargetMuscle())
-                .remarks(workoutType.getRemarks())
-                .build()))
-        .build();
-
-    WorkoutEntity workout = WorkoutEntity.builder()
-        .workoutTypeName(workoutType.getName())
-        .targetMuscle(workoutType.getTargetMuscle())
-        .remarks(workoutType.getRemarks())
-        .build();
-
-    WorkoutSessionEntity newWorkoutSession = WorkoutSessionEntity.builder()
-        .id(10001L)
-        .sessionDate(createRequestDto.getSessionDate())
-        .sessionNumber(createRequestDto.getSessionNumber())
-        .specialNote(createRequestDto.getSpecialNote())
-        .ptContract(ptContract)
-        .workouts(Collections.singletonList(workout))
-        .workoutMedia(new ArrayList<>())
-        .build();
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
 
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
+    when(workoutSessionRepository.findByPtContract_TrainerAndSessionNumber(trainer, 1))
+        .thenReturn(Optional.empty());
     when(workoutTypeRepository.findById(workoutType.getId()))
         .thenReturn(Optional.of(workoutType));
 
     ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
-    when(workoutRepository.save(workoutCaptor.capture())).thenReturn(workout);
-
     ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
         .forClass(WorkoutSessionEntity.class);
-    when(workoutSessionRepository.save(workoutSessionCaptor.capture()))
-        .thenReturn(newWorkoutSession);
 
-    WorkoutSessionResponseDto responseDto = workoutSessionService
+    when(workoutRepository.save(workoutCaptor.capture())).thenReturn(workout);
+    when(workoutSessionRepository.save(workoutSessionCaptor.capture())).thenReturn(workoutSession);
+
+    WorkoutSessionResponseDto sessionResponseDto = workoutSessionService
         .createWorkoutSession(createRequestDto);
 
-    assertNotNull(responseDto);
-    assertEquals(newWorkoutSession.getId(), responseDto.getId());
-    assertEquals(newWorkoutSession.getSessionDate(), responseDto.getSessionDate());
-    assertEquals(newWorkoutSession.getSessionNumber(), responseDto.getSessionNumber());
-    assertEquals(newWorkoutSession.getSpecialNote(), responseDto.getSpecialNote());
-    assertEquals(newWorkoutSession.getWorkouts().size(), responseDto.getWorkouts().size());
+    assertNotNull(sessionResponseDto);
+    assertEquals(workoutSession.getId(), sessionResponseDto.getSessionId());
+    assertEquals(workoutSession.getSessionDate(), sessionResponseDto.getSessionDate());
+    assertEquals(workoutSession.getSessionNumber(), sessionResponseDto.getSessionNumber());
 
     verify(ptContractRepository, times(1))
         .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndSessionNumber(trainer, 1);
     verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
     verify(workoutRepository, times(1)).save(workoutCaptor.capture());
     verify(workoutSessionRepository, times(1)).save(workoutSessionCaptor.capture());
-  }
 
-  @Test
-  @DisplayName("운동 일지 생성 실패 - 트레이너를 찾지 못할 때 예외 발생")
-  void testCreateWorkoutSessionFailTrainerNotFound() {
-    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
-        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
-    SecurityContextHolder.getContext().setAuthentication(authentication);
+    WorkoutEntity capturedWorkout = workoutCaptor.getValue();
+    assertEquals(workoutType.getName(), capturedWorkout.getWorkoutTypeName());
+    assertEquals(workoutType.getTargetMuscle(), capturedWorkout.getTargetMuscle());
+    assertEquals(workoutType.getRemarks(), capturedWorkout.getRemarks());
+    assertEquals(20, capturedWorkout.getWeight());
+    assertEquals(10, capturedWorkout.getRep());
+    assertEquals(3, capturedWorkout.getSets());
+    assertEquals(0, capturedWorkout.getTime());
+    assertEquals(0, capturedWorkout.getSpeed());
 
-    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.empty());
-
-    workoutDto = WorkoutDto.builder().workoutTypeId(workoutType.getId()).build();
-
-    createRequestDto = WorkoutSessionCreateRequestDto.builder()
-        .traineeId(trainer.getId()).workouts(List.of(workoutDto)).build();
-
-    assertThrows(UserNotFoundException.class,
-        () -> workoutSessionService.createWorkoutSession(createRequestDto));
-
-    verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
-    verifyNoInteractions(ptContractRepository, workoutTypeRepository, workoutRepository,
-        workoutSessionRepository);
+    WorkoutSessionEntity capturedWorkoutSession = workoutSessionCaptor.getValue();
+    assertEquals(LocalDate.now(), capturedWorkoutSession.getSessionDate());
+    assertEquals(1, capturedWorkoutSession.getSessionNumber());
+    assertEquals("specialNote", capturedWorkoutSession.getSpecialNote());
+    assertEquals(1, capturedWorkoutSession.getWorkouts().size());
   }
 
   @Test
@@ -247,23 +236,65 @@ class WorkoutSessionServiceTest {
     Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
     SecurityContextHolder.getContext().setAuthentication(authentication);
-
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.empty());
-
-    workoutDto = WorkoutDto.builder().workoutTypeId(workoutType.getId()).build();
-
-    createRequestDto = WorkoutSessionCreateRequestDto.builder()
-        .traineeId(trainee.getId()).workouts(List.of(workoutDto)).build();
 
     assertThrows(PtContractNotFoundException.class,
         () -> workoutSessionService.createWorkoutSession(createRequestDto));
 
-    verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
-    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainer.getId(),
-        trainee.getId());
-    verifyNoInteractions(workoutTypeRepository, workoutRepository, workoutSessionRepository);
+    verify(ptContractRepository, times(1))
+        .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
+    verify(workoutSessionRepository, times(0))
+        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber());
+    verify(workoutTypeRepository, times(0)).findById(workoutType.getId());
+
+    ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+    verify(workoutRepository, times(0)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(0)).save(workoutSessionCaptor.capture());
+
+    List<WorkoutEntity> capturedWorkouts = workoutCaptor.getAllValues();
+    List<WorkoutSessionEntity> capturedWorkoutSessions = workoutSessionCaptor.getAllValues();
+    assertTrue(capturedWorkouts.isEmpty());
+    assertTrue(capturedWorkoutSessions.isEmpty());
+  }
+
+  @Test
+  @DisplayName("운동 일지 생성 실패 - 세션 번호에 대한 일지가 이미 존재할 때 예외 발생")
+  void testCreateWorkoutSessionFailureSessionAlreadyExists() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+    when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
+        .thenReturn(Optional.of(ptContract));
+    when(workoutSessionRepository
+        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber()))
+        .thenReturn(Optional.of(workoutSession));
+
+    assertThrows(WorkoutSessionAlreadyExistException.class,
+        () -> workoutSessionService.createWorkoutSession(createRequestDto));
+
+    verify(ptContractRepository, times(1))
+        .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber());
+    verify(workoutTypeRepository, times(0)).findById(workoutType.getId());
+
+    ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+    verify(workoutRepository, times(0)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(0)).save(workoutSessionCaptor.capture());
+
+    List<WorkoutEntity> capturedWorkouts = workoutCaptor.getAllValues();
+    List<WorkoutSessionEntity> capturedWorkoutSessions = workoutSessionCaptor.getAllValues();
+    assertTrue(capturedWorkouts.isEmpty());
+    assertTrue(capturedWorkoutSessions.isEmpty());
   }
 
   @Test
@@ -274,23 +305,178 @@ class WorkoutSessionServiceTest {
     SecurityContextHolder.getContext().setAuthentication(authentication);
 
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
+
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
-    when(workoutTypeRepository.findById(workoutType.getId())).thenReturn(Optional.empty());
-
-    workoutDto = WorkoutDto.builder().workoutTypeId(workoutType.getId()).build();
-
-    createRequestDto = WorkoutSessionCreateRequestDto.builder()
-        .traineeId(trainee.getId()).workouts(List.of(workoutDto)).build();
+    when(workoutSessionRepository
+        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber()))
+        .thenReturn(Optional.empty());
+    when(workoutTypeRepository.findById(workoutType.getId()))
+        .thenReturn(Optional.empty());
 
     assertThrows(WorkoutTypeNotFoundException.class,
         () -> workoutSessionService.createWorkoutSession(createRequestDto));
 
-    verify(trainerRepository, times(1)).findByEmail("trainer@gmail.com");
     verify(ptContractRepository, times(1))
         .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber());
     verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
-    verifyNoInteractions(workoutRepository, workoutSessionRepository);
+
+    ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+    verify(workoutRepository, times(0)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(0)).save(workoutSessionCaptor.capture());
+
+    List<WorkoutEntity> capturedWorkouts = workoutCaptor.getAllValues();
+    List<WorkoutSessionEntity> capturedWorkoutSessions = workoutSessionCaptor.getAllValues();
+    assertTrue(capturedWorkouts.isEmpty());
+    assertTrue(capturedWorkoutSessions.isEmpty());
+  }
+
+  @Test
+  @DisplayName("운동 일지 수정 성공")
+  void testUpdateWorkoutSessionSuccess() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.of(workoutSession));
+    when(workoutTypeRepository.findById(workoutType.getId()))
+        .thenReturn(Optional.of(workoutType));
+    when(workoutRepository.findById(workout.getId()))
+        .thenReturn(Optional.of(workout));
+
+    ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+
+    when(workoutRepository.save(workoutCaptor.capture())).thenReturn(workout);
+    when(workoutSessionRepository.save(workoutSessionCaptor.capture())).thenReturn(workoutSession);
+
+    WorkoutSessionResponseDto response = workoutSessionService
+        .updateWorkoutSession(updateRequestDto);
+
+    assertNotNull(response);
+    assertEquals(workoutSession.getId(), response.getSessionId());
+    assertEquals(workoutSession.getSessionDate(), response.getSessionDate());
+    assertEquals(workoutSession.getSessionNumber(), response.getSessionNumber());
+
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndId(trainer, workoutSession.getId());
+    verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
+    verify(workoutRepository, times(1)).findById(workout.getId());
+    verify(workoutRepository, times(1)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(1)).save(workoutSessionCaptor.capture());
+
+    WorkoutEntity capturedWorkout = workoutCaptor.getValue();
+    assertEquals(workout.getId(), capturedWorkout.getId());
+    assertEquals(workoutType.getName(), capturedWorkout.getWorkoutTypeName());
+    assertEquals(workoutType.getTargetMuscle(), capturedWorkout.getTargetMuscle());
+    assertEquals(workoutType.getRemarks(), capturedWorkout.getRemarks());
+    assertEquals(25, capturedWorkout.getWeight());
+    assertEquals(10, capturedWorkout.getRep());
+    assertEquals(3, capturedWorkout.getSets());
+    assertEquals(0, capturedWorkout.getTime());
+    assertEquals(0, capturedWorkout.getSpeed());
+
+    WorkoutSessionEntity capturedWorkoutSession = workoutSessionCaptor.getValue();
+    assertEquals(LocalDate.now(), capturedWorkoutSession.getSessionDate());
+    assertEquals(1, capturedWorkoutSession.getSessionNumber());
+    assertEquals("updateSpecialNote", capturedWorkoutSession.getSpecialNote());
+    assertEquals(1, capturedWorkoutSession.getWorkouts().size());
+  }
+
+  @Test
+  @DisplayName("운동 일지 수정 실패 - 운동 일지가 존재하지 않을 때 예외 발생")
+  void testUpdateWorkoutSessionFailWorkoutSessionNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.empty());
+
+    assertThrows(WorkoutSessionNotFoundException.class,
+        () -> workoutSessionService.updateWorkoutSession(updateRequestDto));
+
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndId(trainer, workoutSession.getId());
+    verify(workoutTypeRepository, times(0)).findById(workoutType.getId());
+    verify(workoutRepository, times(0)).findById(workout.getId());
+
+    ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+    verify(workoutRepository, times(0)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(0)).save(workoutSessionCaptor.capture());
+
+    assertTrue(workoutCaptor.getAllValues().isEmpty());
+    assertTrue(workoutSessionCaptor.getAllValues().isEmpty());
+  }
+
+  @Test
+  @DisplayName("운동 일지 수정 실패 - 운동 종류가 존재하지 않을 때 예외 발생")
+  void testUpdateWorkoutSessionFailWorkoutTypeNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.of(workoutSession));
+    when(workoutTypeRepository.findById(workoutType.getId()))
+        .thenReturn(Optional.empty());
+
+    assertThrows(WorkoutTypeNotFoundException.class,
+        () -> workoutSessionService.updateWorkoutSession(updateRequestDto));
+
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndId(trainer, workoutSession.getId());
+    verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
+    verify(workoutRepository, times(0)).findById(workout.getId());
+
+    ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+    verify(workoutRepository, times(0)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(0)).save(workoutSessionCaptor.capture());
+
+    assertTrue(workoutCaptor.getAllValues().isEmpty());
+    assertTrue(workoutSessionCaptor.getAllValues().isEmpty());
+  }
+
+  @Test
+  @DisplayName("운동 일지 수정 실패 - 운동 기록(workout)이 존재하지 않을 때 예외 발생")
+  void testUpdateWorkoutSessionFailWorkoutNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.of(workoutSession));
+    when(workoutTypeRepository.findById(workoutType.getId()))
+        .thenReturn(Optional.of(workoutType));
+    when(workoutRepository.findById(workout.getId()))
+        .thenReturn(Optional.empty());
+
+    assertThrows(WorkoutNotFoundException.class,
+        () -> workoutSessionService.updateWorkoutSession(updateRequestDto));
+
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndId(trainer, workoutSession.getId());
+    verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
+    verify(workoutRepository, times(1)).findById(workout.getId());
+
+    ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
+    verify(workoutRepository, times(0)).save(workoutCaptor.capture());
+    verify(workoutSessionRepository, times(0)).save(workoutSessionCaptor.capture());
+
+    assertTrue(workoutCaptor.getAllValues().isEmpty());
+    assertTrue(workoutSessionCaptor.getAllValues().isEmpty());
   }
 
   @Test
@@ -306,7 +492,7 @@ class WorkoutSessionServiceTest {
         .getWorkoutSessions(trainee.getId(), pageable);
 
     assertEquals(1, result.getTotalElements());
-    assertEquals(workoutSession.getId(), result.getContent().get(0).getId());
+    assertEquals(workoutSession.getId(), result.getContent().get(0).getSessionId());
 
     verify(workoutSessionRepository, times(1))
         .findByPtContract_Trainee_IdOrderBySessionDateDesc(trainee.getId(), pageable);
@@ -343,7 +529,7 @@ class WorkoutSessionServiceTest {
         workoutSession.getId());
 
     assertNotNull(responseDto);
-    assertEquals(workoutSession.getId(), responseDto.getId());
+    assertEquals(workoutSession.getId(), responseDto.getSessionId());
     assertEquals(workoutSession.getSessionDate(), responseDto.getSessionDate());
     assertEquals(workoutSession.getSessionNumber(), responseDto.getSessionNumber());
 
@@ -363,7 +549,7 @@ class WorkoutSessionServiceTest {
         workoutSession.getId());
 
     assertNotNull(response);
-    assertEquals(workoutSession.getId(), response.getId());
+    assertEquals(workoutSession.getId(), response.getSessionId());
     assertEquals(workoutSession.getSessionDate(), response.getSessionDate());
     assertEquals(workoutSession.getSessionNumber(), response.getSessionNumber());
 

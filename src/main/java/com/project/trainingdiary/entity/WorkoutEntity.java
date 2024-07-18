@@ -2,7 +2,8 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.dto.request.WorkoutDto;
+import com.project.trainingdiary.dto.request.WorkoutCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutUpdateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -12,7 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @ToString
 @NoArgsConstructor
@@ -34,12 +35,28 @@ public class WorkoutEntity extends BaseEntity {
   private int time;
   private int speed;
 
-  public static WorkoutEntity toEntity(WorkoutDto dto, WorkoutTypeEntity entity) {
+  public static WorkoutEntity toEntity(WorkoutCreateRequestDto dto, WorkoutTypeEntity workoutType) {
 
     return WorkoutEntity.builder()
-        .workoutTypeName(entity.getName())
-        .targetMuscle(entity.getTargetMuscle())
-        .remarks(entity.getRemarks())
+        .workoutTypeName(workoutType.getName())
+        .targetMuscle(workoutType.getTargetMuscle())
+        .remarks(workoutType.getRemarks())
+        .weight(dto.getWeight())
+        .rep(dto.getRep())
+        .sets(dto.getSets())
+        .time(dto.getTime())
+        .speed(dto.getSpeed())
+        .build();
+
+  }
+
+  public static WorkoutEntity updateEntity(WorkoutUpdateRequestDto dto,
+      WorkoutTypeEntity workoutType, WorkoutEntity workout) {
+
+    return workout.toBuilder()
+        .workoutTypeName(workoutType.getName())
+        .targetMuscle(workoutType.getTargetMuscle())
+        .remarks(workoutType.getRemarks())
         .weight(dto.getWeight())
         .rep(dto.getRep())
         .sets(dto.getSets())

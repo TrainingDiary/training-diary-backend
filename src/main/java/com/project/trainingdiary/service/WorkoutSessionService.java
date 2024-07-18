@@ -5,6 +5,7 @@ import static com.project.trainingdiary.model.WorkoutMediaType.VIDEO;
 
 import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutSessionUpdateRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutVideoRequestDto;
 import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
@@ -22,7 +23,9 @@ import com.project.trainingdiary.exception.impl.InvalidUserRoleTypeException;
 import com.project.trainingdiary.exception.impl.MediaCountExceededException;
 import com.project.trainingdiary.exception.impl.PtContractNotFoundException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.exception.impl.WorkoutNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionAccessDeniedException;
+import com.project.trainingdiary.exception.impl.WorkoutSessionAlreadyExistException;
 import com.project.trainingdiary.exception.impl.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
 import com.project.trainingdiary.repository.TraineeRepository;
@@ -88,11 +91,18 @@ public class WorkoutSessionService {
         .findByTrainerIdAndTraineeId(trainer.getId(), dto.getTraineeId())
         .orElseThrow(PtContractNotFoundException::new);
 
+    // 세션 넘버에 대한 일지가 이미 존재하는지 확인
+    workoutSessionRepository.findByPtContract_TrainerAndSessionNumber(trainer,
+            dto.getSessionNumber())
+        .ifPresent(exist -> {
+          throw new WorkoutSessionAlreadyExistException(dto.getSessionNumber());
+        });
+
     // 운동 일지에서 운동 상세 내용(workout)은 운동 엔티티에 저장
-    List<WorkoutEntity> workouts = dto.getWorkouts().stream().map(details -> {
-      WorkoutTypeEntity workoutType = workoutTypeRepository.findById(details.getWorkoutTypeId())
-          .orElseThrow(() -> new WorkoutTypeNotFoundException(details.getWorkoutTypeId()));
-      WorkoutEntity workout = WorkoutEntity.toEntity(details, workoutType);
+    List<WorkoutEntity> workouts = dto.getWorkouts().stream().map(workoutDto -> {
+      WorkoutTypeEntity workoutType = workoutTypeRepository.findById(workoutDto.getWorkoutTypeId())
+          .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutDto.getWorkoutTypeId()));
+      WorkoutEntity workout = WorkoutEntity.toEntity(workoutDto, workoutType);
       workoutRepository.save(workout);
       return workout;
     }).toList();
@@ -100,6 +110,34 @@ public class WorkoutSessionService {
     //  운동 일지 엔티티 저장
     WorkoutSessionEntity workoutSession = workoutSessionRepository
         .save(WorkoutSessionEntity.toEntity(dto, workouts, ptContract));
+
+    return WorkoutSessionResponseDto.fromEntity(workoutSession);
+  }
+
+  /**
+   * 트레이너의 운동 일지 수정
+   */
+  public WorkoutSessionResponseDto updateWorkoutSession(WorkoutSessionUpdateRequestDto dto) {
+    // 현재 로그인 되어있는 트레이너 본인의 엔티티
+    TrainerEntity trainer = getTrainer();
+
+    // 일지가 존재하는지 확인
+    WorkoutSessionEntity workoutSession = workoutSessionRepository
+        .findByPtContract_TrainerAndId(trainer, dto.getSessionId())
+        .orElseThrow(() -> new WorkoutSessionNotFoundException(dto.getSessionId()));
+
+    List<WorkoutEntity> updateWorkouts = dto.getWorkouts().stream().map(workoutDto -> {
+      WorkoutTypeEntity workoutType = workoutTypeRepository.findById(workoutDto.getWorkoutTypeId())
+          .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutDto.getWorkoutTypeId()));
+      WorkoutEntity workout = workoutRepository.findById(workoutDto.getWorkoutId())
+          .orElseThrow(() -> new WorkoutNotFoundException(workoutDto.getWorkoutId()));
+      WorkoutEntity updateWorkout = WorkoutEntity.updateEntity(workoutDto, workoutType, workout);
+      workoutRepository.save(updateWorkout);
+      return updateWorkout;
+    }).toList();
+
+    workoutSession = workoutSessionRepository
+        .save(WorkoutSessionEntity.updateEntity(dto, updateWorkouts, workoutSession));
 
     return WorkoutSessionResponseDto.fromEntity(workoutSession);
   }

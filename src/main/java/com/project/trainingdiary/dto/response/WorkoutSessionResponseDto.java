@@ -3,7 +3,6 @@ package com.project.trainingdiary.dto.response;
 import static com.project.trainingdiary.model.WorkoutMediaType.IMAGE;
 import static com.project.trainingdiary.model.WorkoutMediaType.VIDEO;
 
-import com.project.trainingdiary.dto.request.WorkoutDto;
 import com.project.trainingdiary.entity.WorkoutMediaEntity;
 import com.project.trainingdiary.entity.WorkoutSessionEntity;
 import java.time.LocalDate;
@@ -22,31 +21,37 @@ import lombok.Setter;
 @Builder
 public class WorkoutSessionResponseDto {
 
-  private Long id;
+  private Long sessionId;
   private LocalDate sessionDate;
   private int sessionNumber;
   private String specialNote;
-  private List<WorkoutDto> workouts;
+  private List<WorkoutResponseDto> workouts;
   private List<String> photoUrls;
   private List<String> videoUrls;
 
   public static WorkoutSessionResponseDto fromEntity(WorkoutSessionEntity entity) {
 
-    List<WorkoutDto> workoutDtos = entity.getWorkouts().stream()
-        .map(WorkoutDto::fromEntity).toList();
+    List<WorkoutResponseDto> workoutDtos = entity.getWorkouts().stream()
+        .map(WorkoutResponseDto::fromEntity).toList();
 
-    List<String> photoUrls = entity.getWorkoutMedia().stream()
-        .filter(media -> media.getMediaType() == IMAGE)
-        .map(WorkoutMediaEntity::getOriginalUrl)
-        .toList();
+    List<WorkoutMediaEntity> workoutMedia = entity.getWorkoutMedia();
+    List<String> photoUrls = new ArrayList<>();
+    List<String> videoUrls = new ArrayList<>();
 
-    List<String> videoUrls = entity.getWorkoutMedia().stream()
-        .filter(media -> media.getMediaType() == VIDEO)
-        .map(WorkoutMediaEntity::getOriginalUrl)
-        .toList();
+    if (workoutMedia != null && !workoutMedia.isEmpty()) {
+      photoUrls = workoutMedia.stream()
+          .filter(media -> media.getMediaType().equals(IMAGE))
+          .map(WorkoutMediaEntity::getOriginalUrl)
+          .toList();
+
+      videoUrls = workoutMedia.stream()
+          .filter(media -> media.getMediaType().equals(VIDEO))
+          .map(WorkoutMediaEntity::getOriginalUrl)
+          .toList();
+    }
 
     return WorkoutSessionResponseDto.builder()
-        .id(entity.getId())
+        .sessionId(entity.getId())
         .sessionDate(entity.getSessionDate())
         .sessionNumber(entity.getSessionNumber())
         .specialNote(entity.getSpecialNote())

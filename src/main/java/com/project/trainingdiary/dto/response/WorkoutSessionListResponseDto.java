@@ -15,14 +15,14 @@ import lombok.Setter;
 @Builder
 public class WorkoutSessionListResponseDto {
 
-  private Long id;
+  private Long sessionId;
   private LocalDate sessionDate;
   private int sessionNumber;
 
   public static WorkoutSessionListResponseDto fromEntity(WorkoutSessionEntity entity) {
 
     return WorkoutSessionListResponseDto.builder()
-        .id(entity.getId())
+        .sessionId(entity.getId())
         .sessionDate(entity.getSessionDate())
         .sessionNumber(entity.getSessionNumber())
         .build();
