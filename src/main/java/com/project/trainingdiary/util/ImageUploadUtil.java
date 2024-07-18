@@ -20,7 +20,7 @@ import lombok.Getter;
 import org.imgscalr.Scalr;
 import org.springframework.web.multipart.MultipartFile;
 
-public class ImageUtil {
+public class ImageUploadUtil {
 
 
   private static final int THUMBNAIL_WIDTH = 150;
