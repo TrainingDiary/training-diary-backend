@@ -98,7 +98,7 @@ public class ScheduleTraineeService {
 
     // PtContract의 사용을 먼저 취소하고, schedule cancel을 해야함. cancel을 먼저하면 ptContract가 null로 변함
     PtContractEntity ptContract = schedule.getPtContract();
-    ptContract.unuseSession();
+    ptContract.restoreSession();
     ptContractRepository.save(ptContract);
 
     schedule.cancel();

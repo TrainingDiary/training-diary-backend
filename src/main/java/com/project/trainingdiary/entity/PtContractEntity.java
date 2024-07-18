@@ -59,7 +59,7 @@ public class PtContractEntity extends BaseEntity {
     this.usedSession += 1;
   }
 
-  public void unuseSession() {
+  public void restoreSession() {
     this.usedSession -= 1;
   }
 
