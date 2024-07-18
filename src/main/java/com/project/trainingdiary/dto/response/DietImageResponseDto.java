@@ -11,6 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class DietImageResponseDto {
+
   private List<String> originalUrl;
   private List<String> thumbnailUrl;
 }
