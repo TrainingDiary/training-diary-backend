@@ -52,7 +52,7 @@ public class ImageUtil {
       ImageIO.write(thumbnailImage, extension, byteArrayOutputStream);
       try (InputStream inputStream = new ByteArrayInputStream(
           byteArrayOutputStream.toByteArray())) {
-        String thumbnailKey = "thumb_" + originalKey;
+        String thumbnailKey = "thumb_" + originalKey.substring(originalKey.lastIndexOf("/") + 1);
         S3Resource s3Resource = s3Operations.upload(bucket, thumbnailKey, inputStream,
             ObjectMetadata.builder().contentType(getMediaType(extension)).build());
         return s3Resource.getURL().toExternalForm();
