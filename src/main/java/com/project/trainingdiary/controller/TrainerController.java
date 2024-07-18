@@ -30,7 +30,10 @@ public class TrainerController {
 
   private final TrainerService trainerService;
 
-  @Operation(summary = "트레이니 정보 조회", description = "트레이너가 트레이니 정보를 조회합니다.")
+  @Operation(
+      summary = "트레이니 정보 조회",
+      description = "트레이너가 트레이니 정보를 조회합니다."
+  )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "조회 성공"),
   })
@@ -43,7 +46,10 @@ public class TrainerController {
     return ResponseEntity.ok(traineeInfo);
   }
 
-  @Operation(summary = "트레이니 정보 수정", description = "트레이너가 트레이니 정보를 수정합니다.")
+  @Operation(
+      summary = "트레이니 정보 수정",
+      description = "트레이너가 트레이니 정보를 수정합니다."
+  )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "수정 성공"),
   })
@@ -56,7 +62,10 @@ public class TrainerController {
     return ResponseEntity.ok(editTraineeInfo);
   }
 
-  @Operation(summary = "트레이니 인바디 정보 추가", description = "트레이너가 트레이니의 인바디 정보를 추가합니다.")
+  @Operation(
+      summary = "트레이니 인바디 정보 추가",
+      description = "트레이너가 트레이니의 인바디 정보를 추가합니다."
+  )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "추가 성공"),
   })
