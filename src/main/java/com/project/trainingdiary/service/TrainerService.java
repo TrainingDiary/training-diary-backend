@@ -40,19 +40,9 @@ public class TrainerService {
   public TraineeInfoResponseDto getTraineeInfo(Long id) {
     TrainerEntity trainer = getAuthenticatedTrainer();
     TraineeEntity trainee = getTraineeById(id);
+    PtContractEntity ptContract = getPtContract(trainer, trainee);
 
-    checkContract(trainer, trainee);
-
-    int totalSessions = ptContractRepository.findByTraineeId(trainee.getId()).stream()
-        .mapToInt(PtContractEntity::getTotalSession)
-        .sum();
-    int usedSessions = ptContractRepository.findByTraineeId(trainee.getId()).stream()
-        .mapToInt(PtContractEntity::getUsedSession)
-        .sum();
-
-    int remainingSessions = totalSessions - usedSessions;
-
-    return TraineeInfoResponseDto.fromEntity(trainee, remainingSessions);
+    return TraineeInfoResponseDto.fromEntity(trainee, ptContract.getRemainingSession());
   }
 
   /**
@@ -82,12 +72,13 @@ public class TrainerService {
   public EditTraineeInfoResponseDto editTraineeInfo(EditTraineeInfoRequestDto dto) {
     TrainerEntity trainer = getAuthenticatedTrainer();
     TraineeEntity trainee = getTraineeById(dto.getTraineeId());
-
-    checkContract(trainer, trainee);
+    PtContractEntity ptContract = getPtContract(trainer, trainee);
 
     updateTraineeInfo(trainee, dto);
 
-    return EditTraineeInfoResponseDto.fromEntity(trainee);
+    updateRemainingSession(ptContract, dto);
+
+    return EditTraineeInfoResponseDto.fromEntity(trainee, ptContract);
   }
 
   /**
@@ -118,6 +109,11 @@ public class TrainerService {
         .orElseThrow(TrainerNotFoundException::new);
   }
 
+  private PtContractEntity getPtContract(TrainerEntity trainer, TraineeEntity trainee) {
+    return ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId())
+        .orElseThrow(PtContractNotExistException::new);
+  }
+
   /**
    * 트레이너와 트레이니 간의 계약을 확인합니다.
    *
@@ -144,5 +140,11 @@ public class TrainerService {
     trainee.setTargetType(dto.getTargetType());
     trainee.setTargetValue(dto.getTargetValue());
     trainee.setTargetReward(dto.getTargetReward());
+  }
+
+  private void updateRemainingSession(PtContractEntity ptContract, EditTraineeInfoRequestDto dto) {
+    int remainingSession = dto.getRemainingSession();
+    int addition = remainingSession - ptContract.getRemainingSession();
+    ptContract.addSession(addition);
   }
 }

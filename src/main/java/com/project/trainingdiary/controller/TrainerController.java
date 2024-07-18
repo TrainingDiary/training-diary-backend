@@ -48,7 +48,7 @@ public class TrainerController {
       @ApiResponse(responseCode = "200", description = "수정 성공"),
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @PutMapping("/trainees/")
+  @PutMapping("/trainees")
   public ResponseEntity<EditTraineeInfoResponseDto> editTraineeInfo(
       @RequestBody @Valid EditTraineeInfoRequestDto dto
   ) {
@@ -61,7 +61,7 @@ public class TrainerController {
       @ApiResponse(responseCode = "200", description = "추가 성공"),
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @PostMapping("/trainees/")
+  @PostMapping("/trainees")
   public ResponseEntity<AddInBodyInfoResponseDto> addInBodyRecord(
       @RequestBody @Valid AddInBodyInfoRequestDto dto
   ) {
