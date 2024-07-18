@@ -14,4 +14,5 @@ public class DietImageResponseDto {
 
   private List<String> originalUrl;
   private List<String> thumbnailUrl;
+  private String content;
 }
