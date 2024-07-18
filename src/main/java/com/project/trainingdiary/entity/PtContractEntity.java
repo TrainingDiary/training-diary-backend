@@ -84,9 +84,7 @@ public class PtContractEntity extends BaseEntity {
         .trainerName(trainer.getName())
         .traineeId(trainee.getId())
         .traineeName(trainee.getName())
-        .usedSession(usedSession)
-        .totalSession(totalSession)
-        .remainingSession(totalSession - usedSession)
+        .remainingSession(getRemainingSession())
         .totalSessionUpdatedAt(totalSessionUpdatedAt)
         .build();
   }
