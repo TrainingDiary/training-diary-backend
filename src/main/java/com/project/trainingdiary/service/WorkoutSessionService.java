@@ -92,8 +92,8 @@ public class WorkoutSessionService {
         .orElseThrow(PtContractNotFoundException::new);
 
     // 세션 넘버에 대한 일지가 이미 존재하는지 확인
-    workoutSessionRepository.findByPtContract_TrainerAndSessionNumber(trainer,
-            dto.getSessionNumber())
+    workoutSessionRepository
+        .findByPtContract_TrainerAndSessionNumber(trainer, dto.getSessionNumber())
         .ifPresent(exist -> {
           throw new WorkoutSessionAlreadyExistException(dto.getSessionNumber());
         });
@@ -239,13 +239,16 @@ public class WorkoutSessionService {
     BufferedImage thumbnailImage = Scalr
         .resize(originalImage, Method.QUALITY, Mode.AUTOMATIC, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
 
+    String extension = getExtension(file.getOriginalFilename());
+
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-      ImageIO.write(thumbnailImage, "jpg", byteArrayOutputStream);
+      ImageIO.write(thumbnailImage, extension, byteArrayOutputStream);
       try (InputStream inputStream = new ByteArrayInputStream(
           byteArrayOutputStream.toByteArray())) {
         String thumbnailKey = "thumb_" + originalKey;
+        String contentType = "image/" + extension;
         S3Resource s3Resource = s3Operations.upload(bucket, thumbnailKey, inputStream,
-            ObjectMetadata.builder().contentType(MediaType.IMAGE_JPEG_VALUE).build());
+            ObjectMetadata.builder().contentType(contentType).build());
         return s3Resource.getURL().toExternalForm();
       }
     }
