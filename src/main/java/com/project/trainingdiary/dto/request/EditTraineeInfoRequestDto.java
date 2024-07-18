@@ -34,7 +34,8 @@ public class EditTraineeInfoRequestDto {
   @Positive(message = "remainingSessions 값은 양수이어야 합니다.")
   private int remainingSessions;
 
-  @Schema(example = "TARGET_WEIGHT", allowableValues = {"TARGET_WEIGHT", "TARGET_BODY_FAT_PERCENTAGE", "TARGET_SKELETAL_MUSCLE_MASS"})
+  @Schema(example = "TARGET_WEIGHT", allowableValues = {"TARGET_WEIGHT",
+      "TARGET_BODY_FAT_PERCENTAGE", "TARGET_SKELETAL_MUSCLE_MASS"})
   @NotNull(message = "targetType 값은 null이 될 수 없습니다.")
   private TargetType targetType;
 
