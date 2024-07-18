@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -132,6 +133,7 @@ class WorkoutSessionServiceTest {
   private WorkoutTypeEntity workoutType;
   private WorkoutEntity workout;
   private WorkoutSessionEntity workoutSession;
+  private WorkoutMediaEntity workoutMedia;
   private WorkoutSessionCreateRequestDto createRequestDto;
   private WorkoutSessionUpdateRequestDto updateRequestDto;
 
@@ -161,7 +163,7 @@ class WorkoutSessionServiceTest {
         .build();
 
     updateRequestDto = WorkoutSessionUpdateRequestDto.builder()
-        .sessionId(workoutSession.getId()).sessionDate(LocalDate.now()).sessionNumber(1)
+        .sessionId(workoutSession.getId()).sessionDate(LocalDate.now())
         .specialNote("updateSpecialNote").workouts(Collections.singletonList(
             WorkoutUpdateRequestDto.builder()
                 .workoutId(workout.getId()).workoutTypeId(workoutType.getId())
@@ -802,6 +804,7 @@ class WorkoutSessionServiceTest {
         .thenReturn(Optional.of(workoutSession));
     when(video.getContentType()).thenReturn("video/mp4");
     InputStream inputStream = new ByteArrayInputStream("video".getBytes());
+    when(video.getOriginalFilename()).thenReturn("test-video.mp4");
     when(video.getInputStream()).thenReturn(inputStream);
 
     WorkoutVideoRequestDto videoRequestDto = WorkoutVideoRequestDto.builder()
