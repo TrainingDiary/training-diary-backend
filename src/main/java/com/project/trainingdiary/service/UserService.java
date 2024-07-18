@@ -140,7 +140,8 @@ public class UserService implements UserDetailsService {
    * @throws UserEmailDuplicateException 유저 이메일이 중복되면 예외 발생
    */
   private void validateEmailNotExists(String email) {
-    if (traineeRepository.findByEmail(email).isPresent() || trainerRepository.findByEmail(email).isPresent()) {
+    if (traineeRepository.findByEmail(email).isPresent() || trainerRepository.findByEmail(email)
+        .isPresent()) {
       throw new UserEmailDuplicateException();
     }
   }
