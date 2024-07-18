@@ -26,11 +26,14 @@ public class VerificationEntity extends BaseEntity {
 
   private LocalDateTime expiredAt;
 
+  private boolean isVerified;
+
   public static VerificationEntity of(String email, String verificationCode) {
     return VerificationEntity.builder()
         .email(email)
         .verificationCode(verificationCode)
         .expiredAt(LocalDateTime.now().plusMinutes(10))
+        .isVerified(false)
         .build();
   }
 }
