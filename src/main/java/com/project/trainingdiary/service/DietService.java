@@ -11,6 +11,7 @@ import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.util.ImageUtil;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -55,6 +56,7 @@ public class DietService {
     return DietImageResponseDto.builder()
         .originalUrl(originalUrls)
         .thumbnailUrl(thumbnailUrls)
+        .content(dto.getContent())
         .build();
   }
 
@@ -62,5 +64,16 @@ public class DietService {
     return traineeRepository
         .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
         .orElseThrow(TraineeNotExistException::new);
+  }
+
+  public List<DietImageResponseDto> getDiets() {
+    List<DietEntity> diets = dietRepository.findAll();
+    return diets.stream()
+        .map(diet -> DietImageResponseDto.builder()
+            .originalUrl(Arrays.stream(diet.getOriginalUrl().split(",")).toList())
+            .thumbnailUrl(Arrays.stream(diet.getThumbnailUrl().split(",")).toList())
+            .content(diet.getContent())
+            .build())
+        .toList();
   }
 }
