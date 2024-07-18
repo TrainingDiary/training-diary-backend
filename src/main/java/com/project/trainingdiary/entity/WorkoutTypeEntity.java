@@ -67,7 +67,6 @@ public class WorkoutTypeEntity extends BaseEntity {
   ) {
 
     return entity.toBuilder()
-        .id(dto.getWorkoutTypeId())
         .name(dto.getName())
         .targetMuscle(dto.getTargetMuscle())
         .remarks(dto.getRemarks())
