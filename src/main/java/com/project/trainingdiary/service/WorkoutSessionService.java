@@ -136,6 +136,39 @@ public class WorkoutSessionService {
   }
 
   /**
+   * 트레이너의 운동 일지 삭제
+   */
+  public void deleteWorkoutSession(Long workoutSessionId) {
+    // 현재 로그인 되어있는 트레이너 본인의 엔티티
+    TrainerEntity trainer = getTrainer();
+
+    WorkoutSessionEntity workoutSession = workoutSessionRepository
+        .findByPtContract_TrainerAndId(trainer, workoutSessionId)
+        .orElseThrow(() -> new WorkoutSessionNotFoundException(workoutSessionId));
+
+    List<WorkoutEntity> workouts = workoutSession.getWorkouts();
+    workoutRepository.deleteAll(workouts);
+
+    List<WorkoutMediaEntity> workoutMedias = workoutSession.getWorkoutMedia();
+    for (WorkoutMediaEntity workoutMedia : workoutMedias) {
+      s3Operations.deleteObject(bucket, extractKey(workoutMedia.getOriginalUrl()));
+      if (workoutMedia.getThumbnailUrl() != null) {
+        s3Operations.deleteObject(bucket, extractKey(workoutMedia.getThumbnailUrl()));
+      }
+    }
+    workoutMediaRepository.deleteAll(workoutMedias);
+
+    workoutSessionRepository.delete(workoutSession);
+  }
+
+  /**
+   * s3 URL 추출
+   */
+  private String extractKey(String url) {
+    return url.substring(url.lastIndexOf("/") + 1);
+  }
+
+  /**
    * 운동 일지 목록 조회
    */
   public Page<WorkoutSessionListResponseDto> getWorkoutSessions(Long traineeId, Pageable pageable) {
