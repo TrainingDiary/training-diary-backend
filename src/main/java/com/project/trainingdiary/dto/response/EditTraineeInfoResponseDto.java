@@ -1,5 +1,6 @@
 package com.project.trainingdiary.dto.response;
 
+import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.model.GenderType;
 import com.project.trainingdiary.model.TargetType;
@@ -20,7 +21,8 @@ public class EditTraineeInfoResponseDto {
   private double targetValue;
   private String targetReward;
 
-  public static EditTraineeInfoResponseDto fromEntity(TraineeEntity trainee) {
+  public static EditTraineeInfoResponseDto fromEntity(TraineeEntity trainee,
+      PtContractEntity ptContract) {
     return EditTraineeInfoResponseDto.builder()
         .traineeId(trainee.getId())
         .birthDate(trainee.getBirthDate())
@@ -29,6 +31,7 @@ public class EditTraineeInfoResponseDto {
         .targetType(trainee.getTargetType())
         .targetValue(trainee.getTargetValue())
         .targetReward(trainee.getTargetReward())
+        .remainingSession(ptContract.getRemainingSession())
         .build();
   }
 }

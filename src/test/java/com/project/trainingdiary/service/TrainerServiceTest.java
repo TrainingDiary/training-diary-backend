@@ -190,11 +190,20 @@ public class TrainerServiceTest {
     dto.setTargetType(TargetType.TARGET_BODY_FAT_PERCENTAGE);
     dto.setTargetValue(70);
     dto.setTargetReward("Reward");
+    dto.setRemainingSession(20);
 
     when(authentication.getName()).thenReturn(trainerEmail);
     when(trainerRepository.findByEmail(trainerEmail)).thenReturn(Optional.of(trainer));
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
-    when(ptContractRepository.existsByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(true);
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(
+        Optional.of(
+            PtContractEntity.builder()
+                .trainer(trainer)
+                .trainee(trainee)
+                .totalSession(10)
+                .build()
+        )
+    );
 
     // when
     EditTraineeInfoResponseDto responseDto = trainerService.editTraineeInfo(dto);
@@ -206,10 +215,11 @@ public class TrainerServiceTest {
     assertEquals(dto.getTargetType(), responseDto.getTargetType());
     assertEquals(dto.getTargetValue(), responseDto.getTargetValue());
     assertEquals(dto.getTargetReward(), responseDto.getTargetReward());
+    assertEquals(dto.getRemainingSession(), responseDto.getRemainingSession());
 
     verify(trainerRepository, times(1)).findByEmail(trainerEmail);
     verify(traineeRepository, times(1)).findById(traineeId);
-    verify(ptContractRepository, times(1)).existsByTrainerIdAndTraineeId(trainerId, traineeId);
+    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainerId, traineeId);
   }
 
   @Test
@@ -377,8 +387,8 @@ public class TrainerServiceTest {
     when(authentication.getName()).thenReturn(trainerEmail);
     when(trainerRepository.findByEmail(trainerEmail)).thenReturn(Optional.of(trainer));
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
-    when(ptContractRepository.existsByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(
-        false);
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(
+        Optional.empty());
 
     // when / then
     assertThrows(PtContractNotExistException.class, () -> trainerService.editTraineeInfo(dto));
