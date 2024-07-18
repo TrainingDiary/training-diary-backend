@@ -40,19 +40,9 @@ public class TrainerService {
   public TraineeInfoResponseDto getTraineeInfo(Long id) {
     TrainerEntity trainer = getAuthenticatedTrainer();
     TraineeEntity trainee = getTraineeById(id);
+    PtContractEntity ptContract = getPtContract(trainer, trainee);
 
-    checkContract(trainer, trainee);
-
-    int totalSessions = ptContractRepository.findByTraineeId(trainee.getId()).stream()
-        .mapToInt(PtContractEntity::getTotalSession)
-        .sum();
-    int usedSessions = ptContractRepository.findByTraineeId(trainee.getId()).stream()
-        .mapToInt(PtContractEntity::getUsedSession)
-        .sum();
-
-    int remainingSession = totalSessions - usedSessions;
-
-    return TraineeInfoResponseDto.fromEntity(trainee, remainingSession);
+    return TraineeInfoResponseDto.fromEntity(trainee, ptContract.getRemainingSession());
   }
 
   /**

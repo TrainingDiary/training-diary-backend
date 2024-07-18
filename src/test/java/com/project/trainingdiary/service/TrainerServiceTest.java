@@ -134,8 +134,7 @@ public class TrainerServiceTest {
     when(authentication.getName()).thenReturn(trainerEmail);
     when(trainerRepository.findByEmail(trainerEmail)).thenReturn(Optional.of(trainer));
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
-    when(ptContractRepository.existsByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(true);
-    when(ptContractRepository.findByTraineeId(trainee.getId())).thenReturn(Optional.of(contract));
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(Optional.of(contract));
 
     // when
     TraineeInfoResponseDto responseDto = trainerService.getTraineeInfo(traineeId);
@@ -145,7 +144,7 @@ public class TrainerServiceTest {
     assertEquals(traineeId, responseDto.getTraineeId());
     verify(trainerRepository, times(1)).findByEmail(trainerEmail);
     verify(traineeRepository, times(1)).findById(traineeId);
-    verify(ptContractRepository, times(1)).existsByTrainerIdAndTraineeId(trainerId, traineeId);
+    verify(ptContractRepository, times(1)).findByTrainerIdAndTraineeId(trainerId, traineeId);
   }
 
   @Test
@@ -333,8 +332,8 @@ public class TrainerServiceTest {
     when(authentication.getName()).thenReturn(trainerEmail);
     when(trainerRepository.findByEmail(trainerEmail)).thenReturn(Optional.of(trainer));
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.of(trainee));
-    when(ptContractRepository.existsByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(
-        false);
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainerId, traineeId)).thenReturn(
+        Optional.empty());
 
     // when / then
     assertThrows(PtContractNotExistException.class, () -> trainerService.getTraineeInfo(traineeId));
