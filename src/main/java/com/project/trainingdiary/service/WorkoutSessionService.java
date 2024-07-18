@@ -35,21 +35,16 @@ import com.project.trainingdiary.repository.WorkoutRepository;
 import com.project.trainingdiary.repository.WorkoutSessionRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
+import com.project.trainingdiary.util.ImageUploadUtil;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
-import javax.imageio.ImageIO;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.imgscalr.Scalr;
-import org.imgscalr.Scalr.Method;
-import org.imgscalr.Scalr.Mode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -73,8 +68,6 @@ public class WorkoutSessionService {
   private final S3Operations s3Operations;
 
   private static final int MAX_MEDIA_COUNT = 10;
-  private static final int THUMBNAIL_WIDTH = 150;
-  private static final int THUMBNAIL_HEIGHT = 150;
 
   @Value("${spring.cloud.aws.s3.bucket}")
   private String bucket;
@@ -92,8 +85,8 @@ public class WorkoutSessionService {
         .orElseThrow(PtContractNotFoundException::new);
 
     // 세션 넘버에 대한 일지가 이미 존재하는지 확인
-    workoutSessionRepository.findByPtContract_TrainerAndSessionNumber(trainer,
-            dto.getSessionNumber())
+    workoutSessionRepository
+        .findByPtContract_TrainerAndSessionNumber(trainer, dto.getSessionNumber())
         .ifPresent(exist -> {
           throw new WorkoutSessionAlreadyExistException(dto.getSessionNumber());
         });
@@ -180,6 +173,7 @@ public class WorkoutSessionService {
    * 운동 일지 - 이미지 업로드
    */
   public WorkoutImageResponseDto uploadWorkoutImage(WorkoutImageRequestDto dto) throws IOException {
+    // 현재 로그인 되어있는 트레이너 본인의 엔티티
     TrainerEntity trainer = getTrainer();
 
     // 이미지를 업로드할 운동 일지가 존재하는지 확인
@@ -188,7 +182,7 @@ public class WorkoutSessionService {
         .orElseThrow(() -> new WorkoutSessionNotFoundException(dto.getSessionId()));
 
     int existingImageCount = (int) workoutSession.getWorkoutMedia().stream()
-        .filter(media -> media.getMediaType() == IMAGE).count();
+        .filter(media -> media.getMediaType().equals(IMAGE)).count();
     int newImageCount = dto.getImages().size();
 
     // 현재 운동 일지에 존재하는 이미지와 새로 받은 이미지의 합이 10을 넘으면 예외 발생 - 이미지는 최대 10개까지 업로드 가능
@@ -196,91 +190,37 @@ public class WorkoutSessionService {
       throw new MediaCountExceededException();
     }
 
-    // 이미지 타입 확인
+    // 이미지 업로드 및 썸네일 생성
     for (MultipartFile file : dto.getImages()) {
-      if (!isValidImageType(file)) {
-        throw new InvalidFileTypeException();
-      }
-
-      // 확장자 추출
-      String extension = getExtension(file.getOriginalFilename());
-      // key (이미지 이름) 설정 후 업로드
-      String originalKey = UUID.randomUUID() + "." + extension;
-      S3Resource s3Resource;
-      try (InputStream inputStream = file.getInputStream()) {
-        s3Resource = s3Operations.upload(bucket, originalKey, inputStream,
-            ObjectMetadata.builder().contentType(file.getContentType()).build());
-      }
-      String originalUrl = s3Resource.getURL().toExternalForm();
-
-      // 썸네일 생성 후 업로드
-      String thumbnailUrl = createAndUploadThumbnail(file, originalKey);
-
+      ImageUploadUtil.UploadResult uploadResult = ImageUploadUtil
+          .uploadImageAndThumbnail(s3Operations, bucket, file);
       WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder()
-          .originalUrl(originalUrl).thumbnailUrl(thumbnailUrl).mediaType(IMAGE).build();
-
+          .originalUrl(uploadResult.getOriginalUrl())
+          .thumbnailUrl(uploadResult.getThumbnailUrl())
+          .mediaType(IMAGE)
+          .build();
       workoutMediaRepository.save(workoutMedia);
       workoutSession.getWorkoutMedia().add(workoutMedia);
     }
     workoutSessionRepository.save(workoutSession);
 
     List<WorkoutMediaEntity> imageUrlList = workoutSession.getWorkoutMedia().stream()
-        .filter(media -> media.getMediaType() == IMAGE).toList();
+        .filter(media -> media.getMediaType().equals(IMAGE)).collect(Collectors.toList());
 
     return WorkoutImageResponseDto.fromEntity(imageUrlList, dto.getSessionId());
   }
 
   /**
-   * 썸네일 이미지 생성 및 업로드
-   */
-  private String createAndUploadThumbnail(MultipartFile file, String originalKey)
-      throws IOException {
-    BufferedImage originalImage = ImageIO.read(file.getInputStream());
-    BufferedImage thumbnailImage = Scalr
-        .resize(originalImage, Method.QUALITY, Mode.AUTOMATIC, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
-
-    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-      ImageIO.write(thumbnailImage, "jpg", byteArrayOutputStream);
-      try (InputStream inputStream = new ByteArrayInputStream(
-          byteArrayOutputStream.toByteArray())) {
-        String thumbnailKey = "thumb_" + originalKey;
-        S3Resource s3Resource = s3Operations.upload(bucket, thumbnailKey, inputStream,
-            ObjectMetadata.builder().contentType(MediaType.IMAGE_JPEG_VALUE).build());
-        return s3Resource.getURL().toExternalForm();
-      }
-    }
-  }
-
-  /**
-   * 이미지 확인 - jpeg, png 가능
-   */
-  private boolean isValidImageType(MultipartFile file) {
-    return MediaType.IMAGE_JPEG.toString().equals(file.getContentType()) ||
-        MediaType.IMAGE_PNG.toString().equals(file.getContentType());
-  }
-
-  /**
-   * 확장자 추출
-   */
-  private String getExtension(String filename) {
-    if (filename == null) {
-      return "";
-    }
-    int dotIndex = filename.lastIndexOf('.');
-    return (dotIndex == -1) ? "" : filename.substring(dotIndex + 1);
-  }
-
-
-  /**
    * 운동 일지 - 동영상 업로드
    */
   public WorkoutVideoResponseDto uploadWorkoutVideo(WorkoutVideoRequestDto dto) throws IOException {
+    // 현재 로그인 되어있는 트레이너 본인의 엔티티
     TrainerEntity trainer = getTrainer();
     MultipartFile video = dto.getVideo();
 
     // 동영상을 업로드할 운동 일지가 존재하는지 확인
-    WorkoutSessionEntity workoutSession = workoutSessionRepository.findByPtContract_TrainerAndId(
-            trainer, dto.getSessionId())
+    WorkoutSessionEntity workoutSession = workoutSessionRepository
+        .findByPtContract_TrainerAndId(trainer, dto.getSessionId())
         .orElseThrow(() -> new WorkoutSessionNotFoundException(dto.getSessionId()));
 
     int existingVideoCount = (int) workoutSession.getWorkoutMedia().stream()
@@ -297,7 +237,7 @@ public class WorkoutSessionService {
     }
 
     // 확장자 추출
-    String extension = getExtension(video.getOriginalFilename());
+    String extension = ImageUploadUtil.getExtension(ImageUploadUtil.checkFileNameExist(video));
     // key (동영상 이름) 설정 후 업로드
     String originalKey = UUID.randomUUID() + "." + extension;
     S3Resource s3Resource;

@@ -28,6 +28,7 @@ import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,11 @@ public class TrainerServiceTest {
   public void setUp() {
     SecurityContextHolder.setContext(securityContext);
     when(securityContext.getAuthentication()).thenReturn(authentication);
+  }
+
+  @AfterEach
+  public void cleanup() {
+    SecurityContextHolder.clearContext();
   }
 
   @Test

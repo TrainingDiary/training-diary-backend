@@ -66,8 +66,6 @@ public class ScheduleOpenCloseService {
    * 열린 일정을 닫기
    */
   public void closeSchedules(List<Long> scheduleIds) {
-    // TODO: trainee는 일정을 닫을 수 없음
-
     List<ScheduleEntity> schedules = scheduleRepository.findAllById(scheduleIds);
 
     if (scheduleIds.size() != schedules.size()) {
@@ -104,12 +102,12 @@ public class ScheduleOpenCloseService {
       throw new PtContractNotEnoughSession();
     }
 
-    // 존재하지 않는 스케쥴은 생성하기
+    // 존재하지 않는 일정은 생성하기
     List<ScheduleEntity> newSchedules = createNewSchedules(
         requestedStartTimes, existingStartTimes, ptContract
     );
 
-    // 이미 존재하는 스케쥴은 기존 스케쥴을 사용해서 업데이트
+    // 이미 존재하는 일정은 기존 일정을 사용해서 업데이트
     List<ScheduleEntity> existingSchedules = updateExistingSchedules(
         existingStartTimes, ptContract
     );
