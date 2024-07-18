@@ -46,7 +46,7 @@ public class PtContractEntity extends BaseEntity {
   @JoinColumn(name = "trainee_id")
   private TraineeEntity trainee;
 
-  public int getRemainSession() {
+  public int getRemainingSession() {
     return this.totalSession - this.usedSession;
   }
 
@@ -86,7 +86,7 @@ public class PtContractEntity extends BaseEntity {
         .traineeName(trainee.getName())
         .usedSession(usedSession)
         .totalSession(totalSession)
-        .remainSession(totalSession - usedSession)
+        .remainingSession(totalSession - usedSession)
         .totalSessionUpdatedAt(totalSessionUpdatedAt)
         .build();
   }

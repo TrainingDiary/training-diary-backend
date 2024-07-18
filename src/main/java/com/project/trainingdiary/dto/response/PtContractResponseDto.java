@@ -14,7 +14,7 @@ public class PtContractResponseDto {
   private LocalDateTime totalSessionUpdatedAt;
   private int totalSession;
   private int usedSession;
-  private int remainSession;
+  private int remainingSession;
   private Long trainerId;
   private String trainerName;
   private Long traineeId;

@@ -141,7 +141,7 @@ public class TrainerServiceTest {
     TraineeInfoResponseDto responseDto = trainerService.getTraineeInfo(traineeId);
 
     // then
-    assertEquals(5, responseDto.getRemainingSessions());
+    assertEquals(5, responseDto.getRemainingSession());
     assertEquals(traineeId, responseDto.getTraineeId());
     verify(trainerRepository, times(1)).findByEmail(trainerEmail);
     verify(traineeRepository, times(1)).findById(traineeId);

@@ -25,7 +25,7 @@ public class TraineeInfoResponseDto {
   private GenderType gender;
   private double height;
   private LocalDate birthDate;
-  private int remainingSessions;
+  private int remainingSession;
 
   private List<WeightHistoryDto> weightHistory;
   private List<BodyFatHistoryDto> bodyFatHistory;
@@ -34,7 +34,7 @@ public class TraineeInfoResponseDto {
   private double targetValue;
   private String targetReward;
 
-  public static TraineeInfoResponseDto fromEntity(TraineeEntity trainee, int remainingSessions) {
+  public static TraineeInfoResponseDto fromEntity(TraineeEntity trainee, int remainingSession) {
     return TraineeInfoResponseDto.builder()
         .traineeId(trainee.getId())
         .name(trainee.getName())
@@ -42,7 +42,7 @@ public class TraineeInfoResponseDto {
         .birthDate(trainee.getBirthDate())
         .gender(trainee.getGender())
         .height(trainee.getHeight())
-        .remainingSessions(remainingSessions)
+        .remainingSession(remainingSession)
         .weightHistory(trainee.getInBodyRecords().stream()
             .map(WeightHistoryDto::fromEntity)
             .collect(Collectors.toList()))

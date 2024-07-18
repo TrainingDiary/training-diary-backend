@@ -420,7 +420,7 @@ class ScheduleOpenCloseServiceTest {
     assertEquals(3, captorSchedule.getAllValues().get(0).size());
     assertEquals(0, captorSchedule.getAllValues().get(1).size());
     assertEquals(3, captorPtContract.getValue().getUsedSession());
-    assertEquals(7, response.getRemainSession());
+    assertEquals(7, response.getRemainingSession());
   }
 
   @Test
@@ -480,7 +480,7 @@ class ScheduleOpenCloseServiceTest {
     assertEquals(2, captorSchedule.getAllValues().get(0).size());
     assertEquals(1, captorSchedule.getAllValues().get(1).size());
     assertEquals(3, captorPtContract.getValue().getUsedSession());
-    assertEquals(7, response.getRemainSession());
+    assertEquals(7, response.getRemainingSession());
   }
 
   @Test

@@ -15,7 +15,7 @@ public class EditTraineeInfoResponseDto {
   private LocalDate birthDate;
   private GenderType gender;
   private double height;
-  private int remainingSessions;
+  private int remainingSession;
   private TargetType targetType;
   private double targetValue;
   private String targetReward;

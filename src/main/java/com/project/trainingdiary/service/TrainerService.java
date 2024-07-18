@@ -50,9 +50,9 @@ public class TrainerService {
         .mapToInt(PtContractEntity::getUsedSession)
         .sum();
 
-    int remainingSessions = totalSessions - usedSessions;
+    int remainingSession = totalSessions - usedSessions;
 
-    return TraineeInfoResponseDto.fromEntity(trainee, remainingSessions);
+    return TraineeInfoResponseDto.fromEntity(trainee, remainingSession);
   }
 
   /**

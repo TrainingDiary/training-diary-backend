@@ -10,5 +10,5 @@ import lombok.Setter;
 public class RegisterScheduleResponseDto {
 
   private int reservedSession;
-  private int remainSession;
+  private int remainingSession;
 }

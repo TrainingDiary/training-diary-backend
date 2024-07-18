@@ -98,7 +98,7 @@ public class ScheduleOpenCloseService {
     existingStartTimes.retainAll(requestedStartTimes); // 요청한 것 중 존재하는 시간만 남김
 
     // 남은 PT 횟수가 부족하면 에러를 냄
-    if (requestedStartTimes.size() > ptContract.getRemainSession()) {
+    if (requestedStartTimes.size() > ptContract.getRemainingSession()) {
       throw new PtContractNotEnoughSession();
     }
 
@@ -118,7 +118,7 @@ public class ScheduleOpenCloseService {
 
     return new RegisterScheduleResponseDto(
         newSchedules.size() + existingSchedules.size(),
-        ptContract.getRemainSession()
+        ptContract.getRemainingSession()
     );
   }
 
