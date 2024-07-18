@@ -21,6 +21,6 @@ public class WorkoutSessionCreateRequestDto {
   private int sessionNumber;
   private String specialNote;
 
-  private List<WorkoutDto> workouts;
+  private List<WorkoutCreateRequestDto> workouts;
 
 }
