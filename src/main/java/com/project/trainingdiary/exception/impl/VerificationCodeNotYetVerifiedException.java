@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class VerificationCodeNotYetVerifiedException extends GlobalException {
 
   public VerificationCodeNotYetVerifiedException() {
-    super(HttpStatus.valueOf(473), "인증 코드가 아직 검증되지 않았습니다.");
+    super(HttpStatus.BAD_REQUEST, "인증 코드가 아직 검증되지 않았습니다.");
   }
 }
