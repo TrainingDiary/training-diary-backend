@@ -136,8 +136,8 @@ public class WorkoutSessionService {
       return updateWorkout;
     }).toList();
 
-    workoutSession = workoutSessionRepository.save(
-        WorkoutSessionEntity.updateEntity(dto, updateWorkouts, workoutSession));
+    workoutSession = workoutSessionRepository
+        .save(WorkoutSessionEntity.updateEntity(dto, updateWorkouts, workoutSession));
 
     return WorkoutSessionResponseDto.fromEntity(workoutSession);
   }
