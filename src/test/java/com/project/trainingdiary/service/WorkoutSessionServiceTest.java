@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -133,7 +132,6 @@ class WorkoutSessionServiceTest {
   private WorkoutTypeEntity workoutType;
   private WorkoutEntity workout;
   private WorkoutSessionEntity workoutSession;
-  private WorkoutMediaEntity workoutMedia;
   private WorkoutSessionCreateRequestDto createRequestDto;
   private WorkoutSessionUpdateRequestDto updateRequestDto;
 
