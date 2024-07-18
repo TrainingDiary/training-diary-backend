@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "6 - PT 계약")
+@Tag(name = "6 - PT Contract API", description = "PT 계약을 위한 API")
 @RestController
 @AllArgsConstructor
 @RequestMapping("api/pt-contracts")

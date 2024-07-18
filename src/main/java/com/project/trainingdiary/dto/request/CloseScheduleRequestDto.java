@@ -1,5 +1,6 @@
 package com.project.trainingdiary.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -16,5 +17,6 @@ import lombok.Setter;
 public class CloseScheduleRequestDto {
 
   @NotNull(message = "scheduleIds를 입력해주세요")
+  @Schema(type = "array", example = "[1]")
   public List<Long> scheduleIds;
 }

@@ -336,7 +336,7 @@ class ScheduleOpenCloseServiceTest {
   }
 
   @Test
-  @DisplayName("일정 닫기 - 실패(스케쥴 아이디 목록 중에 없는 스케쥴이 있음)")
+  @DisplayName("일정 닫기 - 실패(닫으려는 일정 id 목록 중에 없는 일정이 있음)")
   void closeScheduleFail_ScheduleNotFound() {
     //given
     List<Long> scheduleIds = List.of(1L, 2L, 3L);
@@ -358,7 +358,7 @@ class ScheduleOpenCloseServiceTest {
   }
 
   @Test
-  @DisplayName("일정 닫기 - 실패(스케쥴이 OPEN 상태가 아님)")
+  @DisplayName("일정 닫기 - 실패(일정이 OPEN 상태가 아님)")
   void closeScheduleFail_ScheduleNotOpen() {
     //given
     List<Long> scheduleIds = List.of(1L, 2L, 3L);

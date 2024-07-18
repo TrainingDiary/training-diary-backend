@@ -10,9 +10,8 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
 import com.project.trainingdiary.exception.impl.PasswordMismatchedException;
-import com.project.trainingdiary.exception.impl.TraineeEmailDuplicateException;
-import com.project.trainingdiary.exception.impl.TrainerEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.TrainerNotFoundException;
+import com.project.trainingdiary.exception.impl.UserEmailDuplicateException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
 import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
@@ -138,15 +137,12 @@ public class UserService implements UserDetailsService {
    * 이 메서드는 제공된 이메일이 트레이니 또는 트레이너로 존재하는지를 확인하고, 중복된 경우 적절한 예외를 발생시킵니다.
    *
    * @param email 확인할 이메일
-   * @throws TraineeEmailDuplicateException 트레이니 이메일이 중복되면 예외 발생
-   * @throws TrainerEmailDuplicateException 트레이너 이메일이 중복되면 예외 발생
+   * @throws UserEmailDuplicateException 유저 이메일이 중복되면 예외 발생
    */
   private void validateEmailNotExists(String email) {
-    if (traineeRepository.findByEmail(email).isPresent()) {
-      throw new TraineeEmailDuplicateException();
-    }
-    if (trainerRepository.findByEmail(email).isPresent()) {
-      throw new TrainerEmailDuplicateException();
+    if (traineeRepository.findByEmail(email).isPresent() || trainerRepository.findByEmail(email)
+        .isPresent()) {
+      throw new UserEmailDuplicateException();
     }
   }
 

@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class PtContractNotEnoughSession extends GlobalException {
 
   public PtContractNotEnoughSession() {
-    super(HttpStatus.BAD_REQUEST, "PT 횟수가 부족합니다.");
+    super(HttpStatus.NOT_ACCEPTABLE, "PT 횟수가 부족합니다.");
   }
 }

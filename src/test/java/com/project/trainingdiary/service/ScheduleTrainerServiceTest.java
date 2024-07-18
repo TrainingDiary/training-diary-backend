@@ -474,7 +474,7 @@ class ScheduleTrainerServiceTest {
   }
 
   @Test
-  @DisplayName("트레이너의 일정 취소 - 실패(스케쥴이 없음)")
+  @DisplayName("트레이너의 일정 취소 - 실패(일정이 없음)")
   void cancelScheduleByTrainerFail_NoSchedule() {
     //given
     setupTrainerAuth();
