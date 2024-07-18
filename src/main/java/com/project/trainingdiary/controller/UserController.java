@@ -7,6 +7,11 @@ import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.MemberInfoResponseDto;
 import com.project.trainingdiary.dto.response.SignInResponseDto;
 import com.project.trainingdiary.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "사용자 관리", description = "사용자 관리를 위한 API")
 @RestController
 @RequestMapping("api/users")
 @RequiredArgsConstructor
@@ -25,6 +31,11 @@ public class UserController {
 
   private final UserService userService;
 
+  @Operation(summary = "이메일 중복 확인 및 인증 코드 발송", description = "이메일 중복 여부를 확인하고 인증 코드를 발송합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "409", description = "이미 등록된 이메일입니다.", content = @Content)
+  })
   @PostMapping("/check-duplicate-and-send-verification")
   public ResponseEntity<Void> checkDuplicateAndSendVerification(
       @RequestBody @Valid SendVerificationAndCheckDuplicateRequestDto dto
@@ -33,6 +44,12 @@ public class UserController {
     return ResponseEntity.ok().build();
   }
 
+  @Operation(summary = "인증 코드 확인", description = "사용자 이메일로 전송된 인증 코드를 확인합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "471", description = "잘못된 인증 코드입니다.", content = @Content),
+      @ApiResponse(responseCode = "472", description = "인증 코드가 만료되었습니다.", content = @Content)
+  })
   @PostMapping("/check-verification-code")
   public ResponseEntity<Void> verifyCode(
       @RequestBody @Valid VerifyCodeRequestDto dto
@@ -41,6 +58,12 @@ public class UserController {
     return ResponseEntity.ok().build();
   }
 
+  @Operation(summary = "회원 가입", description = "새로운 사용자를 등록합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "409", description = "이미 등록된 이메일입니다.", content = @Content),
+      @ApiResponse(responseCode = "473", description = "인증 코드가 아직 검증되지 않았습니다.", content = @Content),
+  })
   @PostMapping("/sign-up")
   public ResponseEntity<Void> signUp(
       @RequestBody @Valid SignUpRequestDto dto, HttpServletResponse response
@@ -49,6 +72,13 @@ public class UserController {
     return ResponseEntity.ok().build();
   }
 
+  @Operation(summary = "로그인", description = "사용자를 인증하고 토큰을 반환합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없습니다.", content = @Content),
+      @ApiResponse(responseCode = "474", description = "비밀번호가 일치하지 않습니다.", content = @Content),
+      @ApiResponse(responseCode = "475", description = "잘못된 자격 증명입니다.", content = @Content)
+  })
   @PostMapping("/sign-in")
   public ResponseEntity<SignInResponseDto> signIn(
       @RequestBody @Valid SignInRequestDto dto, HttpServletResponse response
@@ -57,6 +87,10 @@ public class UserController {
     return ResponseEntity.ok(signInResponse);
   }
 
+  @Operation(summary = "로그아웃", description = "사용자를 로그아웃합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공")
+  })
   @PostMapping("/sign-out")
   public ResponseEntity<Void> signOut(
       HttpServletRequest request, HttpServletResponse response
@@ -65,6 +99,11 @@ public class UserController {
     return ResponseEntity.ok().build();
   }
 
+  @Operation(summary = "사용자 정보 조회", description = "인증된 사용자의 정보를 조회합니다.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없습니다.", content = @Content)
+  })
   @GetMapping("/info")
   public ResponseEntity<MemberInfoResponseDto> userInfo() {
     MemberInfoResponseDto user = userService.memberInfo();
