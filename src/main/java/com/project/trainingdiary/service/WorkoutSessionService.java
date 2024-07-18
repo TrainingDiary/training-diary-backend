@@ -35,7 +35,7 @@ import com.project.trainingdiary.repository.WorkoutRepository;
 import com.project.trainingdiary.repository.WorkoutSessionRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
-import com.project.trainingdiary.util.ImageUtil;
+import com.project.trainingdiary.util.ImageUploadUtil;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
@@ -192,7 +192,7 @@ public class WorkoutSessionService {
 
     // 이미지 업로드 및 썸네일 생성
     for (MultipartFile file : dto.getImages()) {
-      ImageUtil.UploadResult uploadResult = ImageUtil
+      ImageUploadUtil.UploadResult uploadResult = ImageUploadUtil
           .uploadImageAndThumbnail(s3Operations, bucket, file);
       WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder()
           .originalUrl(uploadResult.getOriginalUrl())
@@ -237,7 +237,7 @@ public class WorkoutSessionService {
     }
 
     // 확장자 추출
-    String extension = ImageUtil.getExtension(ImageUtil.checkFileNameExist(video));
+    String extension = ImageUploadUtil.getExtension(ImageUploadUtil.checkFileNameExist(video));
     // key (동영상 이름) 설정 후 업로드
     String originalKey = UUID.randomUUID() + "." + extension;
     S3Resource s3Resource;
