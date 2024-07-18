@@ -161,7 +161,7 @@ class WorkoutSessionServiceTest {
         .build();
 
     updateRequestDto = WorkoutSessionUpdateRequestDto.builder()
-        .sessionId(workoutSession.getId()).sessionDate(LocalDate.now()).sessionNumber(1)
+        .sessionId(workoutSession.getId()).sessionDate(LocalDate.now())
         .specialNote("updateSpecialNote").workouts(Collections.singletonList(
             WorkoutUpdateRequestDto.builder()
                 .workoutId(workout.getId()).workoutTypeId(workoutType.getId())
@@ -802,6 +802,7 @@ class WorkoutSessionServiceTest {
         .thenReturn(Optional.of(workoutSession));
     when(video.getContentType()).thenReturn("video/mp4");
     InputStream inputStream = new ByteArrayInputStream("video".getBytes());
+    when(video.getOriginalFilename()).thenReturn("test-video.mp4");
     when(video.getInputStream()).thenReturn(inputStream);
 
     WorkoutVideoRequestDto videoRequestDto = WorkoutVideoRequestDto.builder()
