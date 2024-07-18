@@ -532,7 +532,7 @@ class WorkoutSessionServiceTest {
   }
 
   @Test
-  @DisplayName("운동 일지 삭제 실패 - 운동 일지가 찾을 수 없을 때 예외 발생")
+  @DisplayName("운동 일지 삭제 실패 - 운동 일지를 찾을 수 없을 때 예외 발생")
   void testDeleteWorkoutSessionFailSessionNotFound() {
     Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
