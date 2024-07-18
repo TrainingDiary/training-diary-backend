@@ -2,12 +2,17 @@ package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutSessionUpdateRequestDto;
 import com.project.trainingdiary.dto.request.WorkoutVideoRequestDto;
+import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
+import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
 import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
+import com.project.trainingdiary.dto.response.WorkoutVideoResponseDto;
 import com.project.trainingdiary.service.WorkoutSessionService;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -36,8 +41,15 @@ public class WorkoutSessionController {
     return ResponseEntity.ok(workoutSessionService.createWorkoutSession(dto));
   }
 
+  @PutMapping
+  public ResponseEntity<WorkoutSessionResponseDto> updateWorkoutSession(
+      @RequestBody WorkoutSessionUpdateRequestDto dto
+  ) {
+    return ResponseEntity.ok(workoutSessionService.updateWorkoutSession(dto));
+  }
+
   @GetMapping("/trainees/{id}")
-  public ResponseEntity<?> getWorkoutSessions(
+  public ResponseEntity<Page<WorkoutSessionListResponseDto>> getWorkoutSessions(
       @PathVariable Long id,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "10") int size
@@ -47,14 +59,14 @@ public class WorkoutSessionController {
   }
 
   @GetMapping("/{id}")
-  public ResponseEntity<?> getWorkoutSessionDetails(
+  public ResponseEntity<WorkoutSessionResponseDto> getWorkoutSessionDetails(
       @PathVariable Long id
   ) {
     return ResponseEntity.ok(workoutSessionService.getWorkoutSessionDetails(id));
   }
 
   @PutMapping("/photos")
-  public ResponseEntity<?> uploadWorkoutImage(
+  public ResponseEntity<WorkoutImageResponseDto> uploadWorkoutImage(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("images") List<MultipartFile> images
   ) throws IOException {
@@ -64,7 +76,7 @@ public class WorkoutSessionController {
   }
 
   @PutMapping("/videos")
-  public ResponseEntity<?> uploadWorkoutVideo(
+  public ResponseEntity<WorkoutVideoResponseDto> uploadWorkoutVideo(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("video") MultipartFile video
   ) throws IOException {

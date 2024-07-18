@@ -4,6 +4,7 @@ import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.WorkoutSessionUpdateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -64,6 +65,19 @@ public class WorkoutSessionEntity extends BaseEntity {
         .ptContract(ptContract)
         .build();
 
+  }
+
+  public static WorkoutSessionEntity updateEntity(
+      WorkoutSessionUpdateRequestDto dto,
+      List<WorkoutEntity> workouts,
+      WorkoutSessionEntity workoutSession
+  ) {
+    return workoutSession.toBuilder()
+        .sessionDate(dto.getSessionDate())
+        .sessionNumber(dto.getSessionNumber())
+        .specialNote(dto.getSpecialNote())
+        .workouts(workouts)
+        .build();
   }
 
 }
