@@ -8,6 +8,7 @@ import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
 import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.ApplyScheduleResponseDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
 import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
@@ -127,11 +128,12 @@ public class ScheduleController {
   })
   @PreAuthorize("hasRole('TRAINEE')")
   @PostMapping("/trainees/apply")
-  public ResponseEntity<Void> applySchedule(
+  public ResponseEntity<ApplyScheduleResponseDto> applySchedule(
       @RequestBody @Valid ApplyScheduleRequestDto dto
   ) {
-    scheduleTraineeService.applySchedule(dto, LocalDateTime.now());
-    return ResponseEntity.ok().build();
+    ApplyScheduleResponseDto response = scheduleTraineeService.applySchedule(dto,
+        LocalDateTime.now());
+    return ResponseEntity.ok(response);
   }
 
   @Operation(
