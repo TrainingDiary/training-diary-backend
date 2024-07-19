@@ -310,7 +310,7 @@ public class DietServiceTest {
     lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
     SecurityContextHolder.setContext(securityContext);
 
-    assertThrows(UserNotFoundException.class,
+    assertThrows(TraineeNotExistException.class,
         () -> dietService.getDiets(999L, PageRequest.of(0, 10)));
   }
 }

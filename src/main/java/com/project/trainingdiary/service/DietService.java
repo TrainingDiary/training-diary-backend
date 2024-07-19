@@ -8,7 +8,9 @@ import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.TraineeNotExistException;
+import com.project.trainingdiary.exception.impl.TrainerNotFoundException;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.repository.DietRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -73,35 +75,50 @@ public class DietService {
    * @throws UserNotFoundException       인증된 사용자가 트레이니 또는 트레이너가 아닐 경우 예외 발생
    */
   public Page<DietImageResponseDto> getDiets(Long id, Pageable pageable) {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String userEmail = authentication.getName();
+    UserRoleType role = getMyRole();
 
-    TraineeEntity trainee = traineeRepository.findByEmail(userEmail).orElse(null);
-    TrainerEntity trainer = trainerRepository.findByEmail(userEmail).orElse(null);
-
-    if (trainee != null && trainee.getId().equals(id)) {
-      return getDietsForTrainee(trainee, pageable);
-    } else if (trainer != null) {
-      TraineeEntity traineeToView = getTraineeById(id);
-      if (hasContractWithTrainee(trainer, traineeToView)) {
-        return getDietsForTrainee(traineeToView, pageable);
-      } else {
-        throw new PtContractNotExistException();
-      }
+    if (role.equals(UserRoleType.TRAINEE)) {
+      return getDietsForTrainee(id, pageable);
     } else {
-      throw new UserNotFoundException();
+      return getDietsForTraineeByTrainer(id, pageable);
     }
+  }
+
+  /**
+   * 트레이너가 특정 트레이니의 식단 목록을 조회합니다.
+   *
+   * @param id       조회할 트레이니의 ID
+   * @param pageable 페이지 요청 정보
+   * @return 트레이니의 식단 페이지
+   */
+  private Page<DietImageResponseDto> getDietsForTraineeByTrainer(Long id, Pageable pageable) {
+    TrainerEntity trainer = getAuthenticatedTrainer();
+    TraineeEntity trainee = getTraineeById(id);
+    hasContractWithTrainee(trainer, trainee);
+
+    Page<DietEntity> dietPage = dietRepository.findByTraineeId(id, pageable);
+
+    return dietPage.map(diet -> DietImageResponseDto.builder()
+        .dietId(diet.getId())
+        .thumbnailUrl(diet.getThumbnailUrl())
+        .build());
   }
 
   /**
    * 트레이니의 식단 목록을 조회합니다.
    *
-   * @param trainee  트레이니 엔티티
+   * @param id       트레이니의 ID
    * @param pageable 페이지 요청 정보
    * @return 트레이니의 식단 페이지
    */
-  private Page<DietImageResponseDto> getDietsForTrainee(TraineeEntity trainee, Pageable pageable) {
-    Page<DietEntity> dietPage = dietRepository.findByTraineeId(trainee.getId(), pageable);
+  private Page<DietImageResponseDto> getDietsForTrainee(Long id, Pageable pageable) {
+    TraineeEntity trainee = getAuthenticatedTrainee();
+
+    if (!trainee.getId().equals(id)) {
+      throw new UserNotFoundException();
+    }
+
+    Page<DietEntity> dietPage = dietRepository.findByTraineeId(id, pageable);
 
     return dietPage.map(diet -> DietImageResponseDto.builder()
         .dietId(diet.getId())
@@ -114,11 +131,11 @@ public class DietService {
    *
    * @param trainer 트레이너 엔티티
    * @param trainee 트레이니 엔티티
-   * @return 계약 여부
+   * @throws PtContractNotExistException 트레이너와 트레이니 사이에 계약이 없을 경우 예외 발생
    */
-  private boolean hasContractWithTrainee(TrainerEntity trainer, TraineeEntity trainee) {
-    return ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId())
-        .isPresent();
+  private void hasContractWithTrainee(TrainerEntity trainer, TraineeEntity trainee) {
+    ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId())
+        .orElseThrow(PtContractNotExistException::new);
   }
 
   /**
@@ -138,6 +155,22 @@ public class DietService {
   }
 
   /**
+   * 인증된 트레이너를 조회합니다.
+   *
+   * @return 인증된 트레이너 엔티티
+   * @throws TrainerNotFoundException 인증된 트레이너가 존재하지 않을 경우 예외 발생
+   */
+  private TrainerEntity getAuthenticatedTrainer() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || authentication.getName() == null) {
+      throw new TrainerNotFoundException();
+    }
+    String email = authentication.getName();
+    return trainerRepository.findByEmail(email)
+        .orElseThrow(TrainerNotFoundException::new);
+  }
+
+  /**
    * 트레이니 ID로 트레이니를 조회합니다.
    *
    * @param id 트레이니의 ID
@@ -147,5 +180,19 @@ public class DietService {
   private TraineeEntity getTraineeById(Long id) {
     return traineeRepository.findById(id)
         .orElseThrow(TraineeNotExistException::new);
+  }
+
+  /**
+   * 현재 인증된 사용자의 역할을 반환합니다.
+   *
+   * @return 인증된 사용자의 역할
+   */
+  private UserRoleType getMyRole() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRAINER"))) {
+      return UserRoleType.TRAINER;
+    } else {
+      return UserRoleType.TRAINEE;
+    }
   }
 }
