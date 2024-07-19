@@ -12,6 +12,7 @@ import lombok.Setter;
 @Builder
 public class DietImageResponseDto {
 
+  private Long dietId;
   private List<String> originalUrl;
   private List<String> thumbnailUrl;
   private String content;
