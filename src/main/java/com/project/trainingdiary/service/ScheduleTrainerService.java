@@ -69,9 +69,6 @@ public class ScheduleTrainerService {
 
     schedule.acceptReserveApplied();
     scheduleRepository.save(schedule);
-
-    ptContract.useSession();
-    ptContractRepository.save(ptContract);
   }
 
   /**
