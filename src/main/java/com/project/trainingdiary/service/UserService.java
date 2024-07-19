@@ -31,6 +31,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -155,7 +157,9 @@ public class UserService implements UserDetailsService {
    */
   private void sendVerificationCode(String email) {
     String verificationCode = VerificationCodeGeneratorUtil.generateVerificationCode();
-    emailProvider.sendVerificationEmail(email, verificationCode);
+    String expirationTime = VerificationCodeGeneratorUtil.generateExpirationTime();
+
+    emailProvider.sendVerificationEmail(email, verificationCode, expirationTime);
     verificationRepository.save(VerificationEntity.of(email, verificationCode));
   }
 
