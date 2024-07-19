@@ -11,9 +11,11 @@ import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.util.ImageUtil;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,26 +56,26 @@ public class DietService {
     dietRepository.save(diet);
 
     return DietImageResponseDto.builder()
+        .dietId(diet.getId())
         .originalUrl(originalUrls)
         .thumbnailUrl(thumbnailUrls)
         .content(dto.getContent())
         .build();
   }
 
+  public Page<DietImageResponseDto> getDiets(Pageable pageable) {
+    Page<DietEntity> dietPage = dietRepository.findAll(pageable);
+
+    return dietPage.map(diet -> DietImageResponseDto.builder()
+        .dietId(diet.getId())
+        .thumbnailUrl(Collections.singletonList(diet.getThumbnailUrl().split(",")[0]))
+        .content(diet.getContent())
+        .build());
+  }
+
   private TraineeEntity getTrainee() {
     return traineeRepository
         .findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
         .orElseThrow(TraineeNotExistException::new);
-  }
-
-  public List<DietImageResponseDto> getDiets() {
-    List<DietEntity> diets = dietRepository.findAll();
-    return diets.stream()
-        .map(diet -> DietImageResponseDto.builder()
-            .originalUrl(Arrays.stream(diet.getOriginalUrl().split(",")).toList())
-            .thumbnailUrl(Arrays.stream(diet.getThumbnailUrl().split(",")).toList())
-            .content(diet.getContent())
-            .build())
-        .toList();
   }
 }

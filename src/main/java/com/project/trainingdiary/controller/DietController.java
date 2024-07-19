@@ -10,11 +10,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -48,11 +52,15 @@ public class DietController {
     return ResponseEntity.ok(response);
   }
 
-  @PreAuthorize("hasRole('TRAINEE')")
+  @PreAuthorize("hasRole('TRAINER')")
   @GetMapping
-  public ResponseEntity<List<DietImageResponseDto>> getDiets() {
-    List<DietImageResponseDto> diets = dietService.getDiets();
+  public ResponseEntity<Page<DietImageResponseDto>> getDiets(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "12") int size
+  ) {
+    Pageable pageable = PageRequest.of(page, size);
+    Page<DietImageResponseDto> diets = dietService.getDiets(pageable);
+
     return ResponseEntity.ok(diets);
   }
-
 }
