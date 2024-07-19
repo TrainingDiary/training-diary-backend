@@ -5,6 +5,7 @@ import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
 import com.project.trainingdiary.dto.response.ApplyScheduleResponseDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
@@ -17,7 +18,9 @@ import com.project.trainingdiary.exception.impl.ScheduleStartWithin1Day;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
 import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.model.NotificationType;
 import com.project.trainingdiary.model.ScheduleStatus;
+import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
@@ -42,6 +45,7 @@ public class ScheduleTraineeService {
   private final ScheduleRepository scheduleRepository;
   private final PtContractRepository ptContractRepository;
   private final TraineeRepository traineeRepository;
+  private final NotificationRepository notificationRepository;
 
   /**
    * 일정 예약 신청
@@ -76,6 +80,17 @@ public class ScheduleTraineeService {
 
     schedule.apply(ptContract);
     scheduleRepository.save(schedule);
+
+    // 알림 저장하기
+    NotificationEntity notification = NotificationEntity.of(
+        NotificationType.RESERVE_APPLIED,
+        true,
+        false,
+        schedule.getTrainer(),
+        trainee,
+        schedule.getStartAt().toString()
+    );
+    notificationRepository.save(notification);
 
     return new ApplyScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
