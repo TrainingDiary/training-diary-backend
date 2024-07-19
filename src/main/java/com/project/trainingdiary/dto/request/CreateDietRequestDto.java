@@ -10,5 +10,5 @@ import org.springframework.web.multipart.MultipartFile;
 public class CreateDietRequestDto {
 
   private String content;
-  List<MultipartFile> images;
+  private MultipartFile image;
 }
