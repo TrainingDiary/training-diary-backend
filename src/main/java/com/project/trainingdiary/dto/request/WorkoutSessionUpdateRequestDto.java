@@ -18,7 +18,6 @@ public class WorkoutSessionUpdateRequestDto {
   private Long sessionId;
 
   private LocalDate sessionDate;
-  private int sessionNumber;
   private String specialNote;
 
   private List<WorkoutUpdateRequestDto> workouts;

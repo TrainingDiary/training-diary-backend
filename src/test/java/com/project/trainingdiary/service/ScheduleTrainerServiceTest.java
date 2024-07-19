@@ -28,7 +28,6 @@ import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.UserRoleType;
-import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
@@ -64,9 +63,6 @@ class ScheduleTrainerServiceTest {
 
   @Mock
   private TrainerRepository trainerRepository;
-
-  @Mock
-  private TraineeRepository traineeRepository;
 
   @Mock
   private PtContractRepository ptContractRepository;

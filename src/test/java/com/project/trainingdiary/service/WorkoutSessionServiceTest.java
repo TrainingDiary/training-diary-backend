@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -479,6 +480,88 @@ class WorkoutSessionServiceTest {
     assertTrue(workoutSessionCaptor.getAllValues().isEmpty());
   }
 
+
+  @Test
+  @DisplayName("운동 일지 삭제 성공")
+  void testDeleteWorkoutSessionSuccess() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder().id(1000000L)
+        .originalUrl("https://bucket.s3.amazonaws.com/media1")
+        .thumbnailUrl("https://bucket.s3.amazonaws.com/thumb1").build();
+
+    workoutSession = WorkoutSessionEntity.builder().id(10000L).sessionDate(LocalDate.now())
+        .sessionNumber(1).ptContract(ptContract).workouts(Collections.singletonList(workout))
+        .workoutMedia(Collections.singletonList(workoutMedia)).build();
+
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.of(workoutSession));
+
+    doNothing().when(s3Operations).deleteObject(bucket, "media1");
+    doNothing().when(s3Operations).deleteObject(bucket, "thumb1");
+
+    workoutSessionService.deleteWorkoutSession(workoutSession.getId());
+
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndId(trainer, workoutSession.getId());
+
+    ArgumentCaptor<List<WorkoutEntity>> workoutCaptor = ArgumentCaptor.forClass(List.class);
+    verify(workoutRepository).deleteAll(workoutCaptor.capture());
+    List<WorkoutEntity> capturedWorkouts = workoutCaptor.getValue();
+    assertNotNull(capturedWorkouts);
+    assertEquals(1, capturedWorkouts.size());
+    assertEquals(workout.getId(), capturedWorkouts.get(0).getId());
+
+    ArgumentCaptor<List<WorkoutMediaEntity>> workoutMediaCaptor =
+        ArgumentCaptor.forClass(List.class);
+    verify(workoutMediaRepository).deleteAll(workoutMediaCaptor.capture());
+    List<WorkoutMediaEntity> capturedWorkoutMedias = workoutMediaCaptor.getValue();
+    assertNotNull(capturedWorkoutMedias);
+    assertEquals(1, capturedWorkoutMedias.size());
+    assertEquals(workoutMedia.getOriginalUrl(), capturedWorkoutMedias.get(0).getOriginalUrl());
+    assertEquals(workoutMedia.getThumbnailUrl(), capturedWorkoutMedias.get(0).getThumbnailUrl());
+
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor =
+        ArgumentCaptor.forClass(WorkoutSessionEntity.class);
+    verify(workoutSessionRepository).delete(workoutSessionCaptor.capture());
+    WorkoutSessionEntity capturedWorkoutSession = workoutSessionCaptor.getValue();
+    assertNotNull(capturedWorkoutSession);
+    assertEquals(workoutSession.getId(), capturedWorkoutSession.getId());
+  }
+
+  @Test
+  @DisplayName("운동 일지 삭제 실패 - 운동 일지를 찾을 수 없을 때 예외 발생")
+  void testDeleteWorkoutSessionFailSessionNotFound() {
+    Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
+        Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
+        .thenReturn(Optional.empty());
+
+    assertThrows(WorkoutSessionNotFoundException.class,
+        () -> workoutSessionService.deleteWorkoutSession(workoutSession.getId()));
+
+    verify(workoutSessionRepository, times(1))
+        .findByPtContract_TrainerAndId(trainer, workoutSession.getId());
+
+    ArgumentCaptor<List<WorkoutEntity>> workoutCaptor = ArgumentCaptor.forClass(List.class);
+    verify(workoutRepository, times(0)).deleteAll(workoutCaptor.capture());
+    assertTrue(workoutCaptor.getAllValues().isEmpty());
+
+    ArgumentCaptor<List<WorkoutMediaEntity>> workoutMediaCaptor =
+        ArgumentCaptor.forClass(List.class);
+    verify(workoutMediaRepository, times(0)).deleteAll(workoutMediaCaptor.capture());
+    assertTrue(workoutMediaCaptor.getAllValues().isEmpty());
+
+    ArgumentCaptor<WorkoutSessionEntity> workoutSessionCaptor =
+        ArgumentCaptor.forClass(WorkoutSessionEntity.class);
+    verify(workoutSessionRepository, times(0)).delete(workoutSessionCaptor.capture());
+    assertTrue(workoutSessionCaptor.getAllValues().isEmpty());
+  }
+
   @Test
   @DisplayName("운동 일지 목록 조회 성공")
   void testGetWorkoutSessionsSuccess() {
@@ -667,7 +750,7 @@ class WorkoutSessionServiceTest {
         .forClass(WorkoutMediaEntity.class);
     verify(workoutMediaRepository, times(1)).save(mediaCaptor.capture());
     WorkoutMediaEntity savedMedia = mediaCaptor.getValue();
-    assertEquals("IMAGE", savedMedia.getMediaType().name());
+    assertEquals(IMAGE.toString(), savedMedia.getMediaType().name());
 
     List<String> capturedBuckets = bucketCaptor.getAllValues();
     List<String> capturedKeys = keyCaptor.getAllValues();

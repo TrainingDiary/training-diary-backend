@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,6 +47,14 @@ public class WorkoutSessionController {
       @RequestBody WorkoutSessionUpdateRequestDto dto
   ) {
     return ResponseEntity.ok(workoutSessionService.updateWorkoutSession(dto));
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteWorkoutSession(
+      @PathVariable Long id
+  ) {
+    workoutSessionService.deleteWorkoutSession(id);
+    return ResponseEntity.ok().build();
   }
 
   @GetMapping("/trainees/{id}")

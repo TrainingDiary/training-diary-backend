@@ -74,7 +74,6 @@ public class WorkoutSessionEntity extends BaseEntity {
   ) {
     return workoutSession.toBuilder()
         .sessionDate(dto.getSessionDate())
-        .sessionNumber(dto.getSessionNumber())
         .specialNote(dto.getSpecialNote())
         .workouts(workouts)
         .build();

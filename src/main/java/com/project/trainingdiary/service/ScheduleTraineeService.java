@@ -2,6 +2,7 @@ package com.project.trainingdiary.service;
 
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
+import com.project.trainingdiary.dto.response.ApplyScheduleResponseDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
@@ -45,7 +46,9 @@ public class ScheduleTraineeService {
   /**
    * 일정 예약 신청
    */
-  public void applySchedule(ApplyScheduleRequestDto dto, LocalDateTime currentTime) {
+  @Transactional
+  public ApplyScheduleResponseDto applySchedule(ApplyScheduleRequestDto dto,
+      LocalDateTime currentTime) {
     TraineeEntity trainee = getTrainee();
 
     ScheduleEntity schedule = scheduleRepository.findById(dto.getScheduleId())
@@ -68,8 +71,13 @@ public class ScheduleTraineeService {
         trainee.getId()
     );
 
+    ptContract.useSession();
+    ptContractRepository.save(ptContract);
+
     schedule.apply(ptContract);
     scheduleRepository.save(schedule);
+
+    return new ApplyScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
 
   /**
