@@ -16,10 +16,10 @@ public class WorkoutUpdateRequestDto {
   private Long workoutId;
   private Long workoutTypeId;
 
-  private int weight;
-  private int rep;
-  private int sets;
-  private int time;
-  private int speed;
+  private Integer weight;
+  private Integer rep;
+  private Integer sets;
+  private Integer time;
+  private Integer speed;
 
 }

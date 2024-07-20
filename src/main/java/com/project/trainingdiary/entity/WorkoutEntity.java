@@ -29,13 +29,16 @@ public class WorkoutEntity extends BaseEntity {
   private String targetMuscle;
   private String remarks;
 
-  private int weight;
-  private int rep;
-  private int sets;
-  private int time;
-  private int speed;
+  private Integer weight;
+  private Integer rep;
+  private Integer sets;
+  private Integer time;
+  private Integer speed;
 
-  public static WorkoutEntity toEntity(WorkoutCreateRequestDto dto, WorkoutTypeEntity workoutType) {
+  public static WorkoutEntity toEntity(
+      WorkoutCreateRequestDto dto,
+      WorkoutTypeEntity workoutType
+  ) {
 
     return WorkoutEntity.builder()
         .workoutTypeName(workoutType.getName())
@@ -50,8 +53,10 @@ public class WorkoutEntity extends BaseEntity {
 
   }
 
-  public static WorkoutEntity updateEntity(WorkoutUpdateRequestDto dto,
-      WorkoutTypeEntity workoutType, WorkoutEntity workout) {
+  public static WorkoutEntity updateEntity(
+      WorkoutUpdateRequestDto dto,
+      WorkoutTypeEntity workoutType, WorkoutEntity workout
+  ) {
 
     return workout.toBuilder()
         .workoutTypeName(workoutType.getName())
