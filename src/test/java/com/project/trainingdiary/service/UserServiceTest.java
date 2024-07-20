@@ -143,12 +143,14 @@ public class UserServiceTest {
     when(traineeRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.empty());
     when(trainerRepository.findByEmail(sendDto.getEmail())).thenReturn(Optional.empty());
 
-    doNothing().when(emailProvider).sendVerificationEmail(eq(sendDto.getEmail()), anyString());
+    doNothing().when(emailProvider)
+        .sendVerificationEmail(eq(sendDto.getEmail()), anyString(), anyString());
 
     userService.checkDuplicateEmailAndSendVerification(sendDto);
 
     verify(verificationRepository, times(1)).save(verificationEntityCaptor.capture());
-    verify(emailProvider, times(1)).sendVerificationEmail(eq(sendDto.getEmail()), anyString());
+    verify(emailProvider, times(1)).sendVerificationEmail(eq(sendDto.getEmail()), anyString(),
+        anyString());
 
     VerificationEntity capturedVerificationEntity = verificationEntityCaptor.getValue();
     assertNotNull(capturedVerificationEntity.getVerificationCode());
