@@ -11,6 +11,7 @@ import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
 import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
@@ -22,11 +23,13 @@ import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
 import com.project.trainingdiary.exception.impl.ScheduleStartWithin1Day;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
+import com.project.trainingdiary.model.NotificationType;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
@@ -69,6 +72,9 @@ class ScheduleTraineeServiceTest {
 
   @Mock
   private PtContractRepository ptContractRepository;
+
+  @Mock
+  private NotificationRepository notificationRepository;
 
   @InjectMocks
   private ScheduleTraineeService scheduleTraineeService;
@@ -248,13 +254,18 @@ class ScheduleTraineeServiceTest {
     ArgumentCaptor<ScheduleEntity> captorSchedule = ArgumentCaptor.forClass(ScheduleEntity.class);
     ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
         PtContractEntity.class);
+    ArgumentCaptor<NotificationEntity> captorNotificationRepository = ArgumentCaptor.forClass(
+        NotificationEntity.class);
     scheduleTraineeService.applySchedule(dto, currentTime);
 
     //then
     verify(scheduleRepository).save(captorSchedule.capture());
     verify(ptContractRepository).save(captorPtContract.capture());
+    verify(notificationRepository).save(captorNotificationRepository.capture());
     assertEquals(ScheduleStatus.RESERVE_APPLIED, captorSchedule.getValue().getScheduleStatus());
     assertEquals(11, captorPtContract.getValue().getUsedSession());
+    assertEquals(NotificationType.RESERVE_APPLIED,
+        captorNotificationRepository.getValue().getNotificationType());
   }
 
   @Test
