@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class InvalidUserRoleTypeException extends GlobalException {
 
   public InvalidUserRoleTypeException() {
-    super(HttpStatus.FORBIDDEN, "유효하지 않은 role 입니다.");
+    super(HttpStatus.NOT_FOUND, "해당 일지를 찾을 수 없습니다.");
   }
 }
