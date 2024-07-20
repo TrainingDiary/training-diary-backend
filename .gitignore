@@ -38,3 +38,4 @@ out/
 
 # Config
 application-dev.yml
+/config/
