@@ -24,6 +24,7 @@ import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
+import com.project.trainingdiary.util.NotificationMessageMaker;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -88,7 +89,8 @@ public class ScheduleTraineeService {
         false,
         schedule.getTrainer(),
         trainee,
-        schedule.getStartAt().toString()
+        NotificationMessageMaker.reserveApplied(trainee.getName(), schedule.getStartAt()),
+        schedule.getStartAt().toLocalDate()
     );
     notificationRepository.save(notification);
 

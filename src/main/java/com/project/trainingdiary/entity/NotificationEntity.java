@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -37,6 +38,8 @@ public class NotificationEntity extends BaseEntity {
   // NotificationType 별로 넣어놓을 노트를 지정. 예약 관련이면 날짜와 시간을 넣는 식
   private String note;
 
+  private LocalDate eventDate;
+
   private boolean toTrainer;
 
   private boolean toTrainee;
@@ -55,7 +58,8 @@ public class NotificationEntity extends BaseEntity {
       boolean toTrainee,
       TrainerEntity trainer,
       TraineeEntity trainee,
-      String note
+      String note,
+      LocalDate eventDate
   ) {
     return NotificationEntity.builder()
         .notificationType(notificationType)
@@ -64,6 +68,7 @@ public class NotificationEntity extends BaseEntity {
         .trainer(trainer)
         .trainee(trainee)
         .note(note)
+        .eventDate(eventDate)
         .build();
   }
 }
