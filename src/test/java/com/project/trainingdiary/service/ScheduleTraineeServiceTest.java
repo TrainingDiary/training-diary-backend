@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.project.trainingdiary.component.FcmPushNotification;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
 import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
@@ -75,6 +76,9 @@ class ScheduleTraineeServiceTest {
 
   @Mock
   private NotificationRepository notificationRepository;
+
+  @Mock
+  private FcmPushNotification fcmPushNotification;
 
   @InjectMocks
   private ScheduleTraineeService scheduleTraineeService;
@@ -254,18 +258,19 @@ class ScheduleTraineeServiceTest {
     ArgumentCaptor<ScheduleEntity> captorSchedule = ArgumentCaptor.forClass(ScheduleEntity.class);
     ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
         PtContractEntity.class);
-    ArgumentCaptor<NotificationEntity> captorNotificationRepository = ArgumentCaptor.forClass(
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(
         NotificationEntity.class);
     scheduleTraineeService.applySchedule(dto, currentTime);
 
     //then
     verify(scheduleRepository).save(captorSchedule.capture());
     verify(ptContractRepository).save(captorPtContract.capture());
-    verify(notificationRepository).save(captorNotificationRepository.capture());
+    verify(notificationRepository).save(captorNotification.capture());
+    verify(fcmPushNotification).sendPushNotification(captorNotification.getValue());
     assertEquals(ScheduleStatus.RESERVE_APPLIED, captorSchedule.getValue().getScheduleStatus());
     assertEquals(11, captorPtContract.getValue().getUsedSession());
     assertEquals(NotificationType.RESERVE_APPLIED,
-        captorNotificationRepository.getValue().getNotificationType());
+        captorNotification.getValue().getNotificationType());
   }
 
   @Test
