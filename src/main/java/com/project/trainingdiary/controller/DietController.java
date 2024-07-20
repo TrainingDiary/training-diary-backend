@@ -1,6 +1,7 @@
 package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.CreateDietRequestDto;
+import com.project.trainingdiary.dto.response.DietDetailsInfoResponseDto;
 import com.project.trainingdiary.dto.response.DietImageResponseDto;
 import com.project.trainingdiary.service.DietService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -54,8 +55,14 @@ public class DietController {
     return ResponseEntity.ok().build();
   }
 
-  @Operation(summary = "식단 목록 조회", description = "트레이니의 식단 목록을 페이징하여 조회합니다.")
+  @Operation(
+      summary = "식단 목록 조회",
+      description = "트레이니의 식단 목록을 페이징하여 조회합니다."
+  )
   @GetMapping("{id}")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+  })
   public ResponseEntity<Page<DietImageResponseDto>> getTraineeDiets(
       @PathVariable Long id,
       @RequestParam(defaultValue = "0") int page,
@@ -66,5 +73,20 @@ public class DietController {
     Page<DietImageResponseDto> diets = dietService.getDiets(id, pageable);
 
     return ResponseEntity.ok(diets);
+  }
+
+  @Operation(
+      summary = "식단 상세",
+      description = "식단의 상세을 표시합니다."
+  )
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+  })
+  @GetMapping("{id}/details")
+  public ResponseEntity<DietDetailsInfoResponseDto> getDietDetails(
+      @PathVariable Long id
+  ) {
+    DietDetailsInfoResponseDto diet = dietService.getDietDetails(id);
+    return ResponseEntity.ok(diet);
   }
 }
