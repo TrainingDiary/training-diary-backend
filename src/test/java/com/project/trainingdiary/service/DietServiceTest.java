@@ -16,14 +16,18 @@ import com.project.trainingdiary.dto.request.CreateDietRequestDto;
 import com.project.trainingdiary.dto.response.DietImageResponseDto;
 import com.project.trainingdiary.entity.DietEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
+import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
+import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.TraineeNotExistException;
+import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.repository.DietRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
+import com.project.trainingdiary.repository.TrainerRepository;
+import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.util.ImageUtil;
-import io.awspring.cloud.s3.S3Operations;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -32,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.AfterEach;
@@ -46,6 +49,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -65,19 +72,30 @@ public class DietServiceTest {
   private TraineeRepository traineeRepository;
 
   @Mock
-  private ImageUtil imageUtil;
+  private TrainerRepository trainerRepository;
 
   @Mock
-  private S3Operations s3Operations;
+  private PtContractRepository ptContractRepository;
+
+  @Mock
+  private ImageUtil imageUtil;
+
 
   @InjectMocks
   private DietService dietService;
 
   private TraineeEntity trainee;
+  private TrainerEntity trainer;
 
   @BeforeEach
   public void setUp() {
     setupTrainee();
+    setupTrainer();
+  }
+
+  @AfterEach
+  public void tearDown() {
+    SecurityContextHolder.clearContext();
   }
 
   private void setupTrainee() {
@@ -86,6 +104,15 @@ public class DietServiceTest {
         .email("trainee@example.com")
         .name("김트레이니")
         .role(UserRoleType.TRAINEE)
+        .build();
+  }
+
+  private void setupTrainer() {
+    trainer = TrainerEntity.builder()
+        .id(20L)
+        .email("trainer@example.com")
+        .name("김트레이너")
+        .role(UserRoleType.TRAINER)
         .build();
   }
 
@@ -108,6 +135,24 @@ public class DietServiceTest {
         .thenReturn(Optional.of(trainee));
   }
 
+  private void setupTrainerAuth() {
+    GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_TRAINER");
+    Collection authorities = Collections.singleton(authority);
+
+    Authentication authentication = mock(Authentication.class);
+    lenient().when(authentication.getAuthorities()).thenReturn(authorities);
+
+    UserDetails userDetails = UserPrincipal.create(trainer);
+    lenient().when(authentication.getPrincipal()).thenReturn(userDetails);
+    lenient().when(authentication.getName()).thenReturn(trainer.getEmail());
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
+    lenient().when(trainerRepository.findByEmail(trainer.getEmail()))
+        .thenReturn(Optional.of(trainer));
+  }
 
   @AfterEach
   void cleanup() {
@@ -126,7 +171,7 @@ public class DietServiceTest {
 
     CreateDietRequestDto dto = CreateDietRequestDto.builder()
         .content("Test content")
-        .images(List.of(mockFile))
+        .image(mockFile)
         .build();
 
     assertThrows(InvalidFileTypeException.class,
@@ -168,7 +213,7 @@ public class DietServiceTest {
 
     CreateDietRequestDto dto = CreateDietRequestDto.builder()
         .content("Test content")
-        .images(List.of(mockFile))
+        .image(mockFile)
         .build();
 
     when(imageUtil.isValidImageType(mockFile)).thenReturn(true);
@@ -181,7 +226,7 @@ public class DietServiceTest {
         "https://test-bucket.s3.amazonaws.com/original.jpg", "jpg"))
         .thenReturn("https://test-bucket.s3.amazonaws.com/thumb_original.jpg");
 
-    DietImageResponseDto response = dietService.createDiet(dto);
+    dietService.createDiet(dto);
 
     ArgumentCaptor<DietEntity> dietCaptor = ArgumentCaptor.forClass(DietEntity.class);
     verify(dietRepository, times(1)).save(dietCaptor.capture());
@@ -193,13 +238,9 @@ public class DietServiceTest {
     assertEquals("https://test-bucket.s3.amazonaws.com/thumb_original.jpg",
         savedDiet.getThumbnailUrl());
 
-    assertNotNull(response);
-    assertEquals(1, response.getOriginalUrl().size());
-    assertEquals(1, response.getThumbnailUrl().size());
-    assertTrue(
-        response.getOriginalUrl().contains("https://test-bucket.s3.amazonaws.com/original.jpg"));
-    assertTrue(response.getThumbnailUrl()
-        .contains("https://test-bucket.s3.amazonaws.com/thumb_original.jpg"));
+    verify(imageUtil, times(1)).uploadImageToS3(mockFile);
+    verify(imageUtil, times(1)).createAndUploadThumbnail(mockFile,
+        "https://test-bucket.s3.amazonaws.com/original.jpg", "jpg");
   }
 
   @Test
@@ -208,15 +249,68 @@ public class DietServiceTest {
     setupTraineeAuth();
 
     when(traineeRepository.findByEmail("trainee@example.com")).thenReturn(Optional.empty());
-
     MockMultipartFile image = new MockMultipartFile("image", "image.jpg", "image/jpeg",
         "image content".getBytes());
 
     CreateDietRequestDto dto = CreateDietRequestDto.builder()
         .content("Test content")
-        .images(List.of(image))
+        .image(image)
         .build();
 
     assertThrows(TraineeNotExistException.class, () -> dietService.createDiet(dto));
+  }
+
+  @Test
+  @DisplayName("트레이니가 자신의 식단을 조회할 수 있음")
+  void testGetDietsForTrainee() {
+    setupTraineeAuth();
+    Pageable pageable = PageRequest.of(0, 10);
+    DietEntity diet = new DietEntity();
+    diet.setId(1L);
+    diet.setTrainee(trainee);
+    diet.setContent("Test content");
+    diet.setThumbnailUrl("https://test-bucket.s3.amazonaws.com/thumb_original.jpg");
+    Page<DietEntity> dietPage = new PageImpl<>(Collections.singletonList(diet), pageable, 1);
+    when(dietRepository.findByTraineeId(trainee.getId(), pageable)).thenReturn(dietPage);
+
+    Page<DietImageResponseDto> response = dietService.getDiets(trainee.getId(), pageable);
+
+    assertNotNull(response);
+    assertEquals(1, response.getTotalElements());
+    DietImageResponseDto responseDto = response.getContent().get(0);
+    assertEquals(diet.getId(), responseDto.getDietId());
+    assertTrue(responseDto.getThumbnailUrl()
+        .contains("https://test-bucket.s3.amazonaws.com/thumb_original.jpg"));
+  }
+
+  @Test
+  @DisplayName("트레이너가 트레이니의 식단을 조회할 수 없음 - 계약이 없는 경우")
+  void testGetDietsForTrainerWithoutContract() {
+    setupTrainerAuth();
+
+    TraineeEntity traineeToView = new TraineeEntity();
+    traineeToView.setId(1L);
+    when(traineeRepository.findById(1L)).thenReturn(Optional.of(traineeToView));
+
+    Pageable pageable = PageRequest.of(0, 10);
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), traineeToView.getId()))
+        .thenReturn(Optional.empty());
+
+    assertThrows(PtContractNotExistException.class,
+        () -> dietService.getDiets(traineeToView.getId(), pageable));
+  }
+
+  @Test
+  @DisplayName("사용자를 찾을 수 없음 - 예외 발생")
+  void testGetDietsUserNotFound() {
+    Authentication authentication = mock(Authentication.class);
+    lenient().when(authentication.getName()).thenReturn("unknown @example.com");
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
+    assertThrows(TraineeNotExistException.class,
+        () -> dietService.getDiets(999L, PageRequest.of(0, 10)));
   }
 }
