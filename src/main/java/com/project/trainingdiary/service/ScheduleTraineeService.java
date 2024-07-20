@@ -1,5 +1,6 @@
 package com.project.trainingdiary.service;
 
+import com.project.trainingdiary.component.FcmPushNotification;
 import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
 import com.project.trainingdiary.dto.response.ApplyScheduleResponseDto;
@@ -47,6 +48,7 @@ public class ScheduleTraineeService {
   private final PtContractRepository ptContractRepository;
   private final TraineeRepository traineeRepository;
   private final NotificationRepository notificationRepository;
+  private final FcmPushNotification fcmPushNotification;
 
   /**
    * 일정 예약 신청
@@ -93,6 +95,7 @@ public class ScheduleTraineeService {
         schedule.getStartAt().toLocalDate()
     );
     notificationRepository.save(notification);
+    fcmPushNotification.sendPushNotification(notification);
 
     return new ApplyScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
