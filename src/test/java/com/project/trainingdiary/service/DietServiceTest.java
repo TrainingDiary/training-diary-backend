@@ -13,14 +13,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.CreateDietRequestDto;
+import com.project.trainingdiary.dto.response.DietDetailsInfoResponseDto;
 import com.project.trainingdiary.dto.response.DietImageResponseDto;
 import com.project.trainingdiary.entity.DietEntity;
+import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.impl.DietNotExistException;
 import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.TraineeNotExistException;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.UserRoleType;
 import com.project.trainingdiary.repository.DietRepository;
@@ -312,5 +314,119 @@ public class DietServiceTest {
 
     assertThrows(TraineeNotExistException.class,
         () -> dietService.getDiets(999L, PageRequest.of(0, 10)));
+  }
+
+  @Test
+  @DisplayName("트레이니가 자신의 식단 상세 정보를 조회할 수 있음")
+  void testGetDietDetailsForTraineeSuccess() {
+    setupTraineeAuth();
+
+    DietEntity diet = new DietEntity();
+    diet.setId(1L);
+    diet.setTrainee(trainee);
+    diet.setContent("Test content");
+    diet.setOriginalUrl("https://test-bucket.s3.amazonaws.com/original.jpg");
+
+    when(dietRepository.findByTraineeIdAndId(trainee.getId(), diet.getId())).thenReturn(
+        Optional.of(diet));
+
+    DietDetailsInfoResponseDto response = dietService.getDietDetails(diet.getId());
+
+    assertNotNull(response);
+    assertEquals(diet.getId(), response.getId());
+    assertEquals(diet.getContent(), response.getContent());
+    assertEquals(diet.getOriginalUrl(), response.getImageUrl());
+  }
+
+  @Test
+  @DisplayName("트레이니가 자신의 식단 상세 정보를 조회할 수 없음 - 식단 존재하지 않음")
+  void testGetDietDetailsForTraineeFailDietNotExist() {
+    setupTraineeAuth();
+
+    when(dietRepository.findByTraineeIdAndId(trainee.getId(), 1L)).thenReturn(Optional.empty());
+
+    assertThrows(DietNotExistException.class, () -> dietService.getDietDetails(1L));
+  }
+
+  @Test
+  @DisplayName("트레이니가 다른 트레이니의 식단 상세 정보를 조회할 수 없음")
+  void testGetDietDetailsForTraineeFailOtherTrainee() {
+    setupTraineeAuth();
+
+    TraineeEntity otherTrainee = TraineeEntity.builder()
+        .id(20L)
+        .email("othertrainee@example.com")
+        .name("다른 트레이니")
+        .role(UserRoleType.TRAINEE)
+        .build();
+
+    DietEntity diet = new DietEntity();
+    diet.setId(1L);
+    diet.setTrainee(otherTrainee);
+    diet.setContent("Other trainee's content");
+    diet.setOriginalUrl("https://test-bucket.s3.amazonaws.com/other.jpg");
+
+    when(dietRepository.findByTraineeIdAndId(otherTrainee.getId(), diet.getId())).thenReturn(
+        Optional.of(diet));
+
+    assertThrows(DietNotExistException.class, () -> dietService.getDietDetails(diet.getId()));
+  }
+
+  @Test
+  @DisplayName("트레이너가 트레이니의 식단 상세 정보를 조회할 수 있음")
+  void testGetDietDetailsForTrainerSuccess() {
+    setupTrainerAuth();
+
+    TraineeEntity traineeToView = new TraineeEntity();
+    traineeToView.setId(1L);
+
+    DietEntity diet = new DietEntity();
+    diet.setId(1L);
+    diet.setTrainee(traineeToView);
+    diet.setContent("Test content");
+    diet.setOriginalUrl("https://test-bucket.s3.amazonaws.com/original.jpg");
+
+    when(dietRepository.findById(diet.getId())).thenReturn(Optional.of(diet));
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), traineeToView.getId()))
+        .thenReturn(Optional.of(new PtContractEntity()));
+
+    DietDetailsInfoResponseDto response = dietService.getDietDetails(diet.getId());
+
+    assertNotNull(response);
+    assertEquals(diet.getId(), response.getId());
+    assertEquals(diet.getContent(), response.getContent());
+    assertEquals(diet.getOriginalUrl(), response.getImageUrl());
+  }
+
+  @Test
+  @DisplayName("트레이너가 트레이니의 식단 상세 정보를 조회할 수 없음 - 계약이 없는 경우")
+  void testGetDietDetailsForTrainerFailNoContract() {
+    setupTrainerAuth();
+
+    TraineeEntity traineeToView = new TraineeEntity();
+    traineeToView.setId(1L);
+
+    DietEntity diet = new DietEntity();
+    diet.setId(1L);
+    diet.setTrainee(traineeToView);
+
+    when(dietRepository.findById(diet.getId())).thenReturn(Optional.of(diet));
+    when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), traineeToView.getId()))
+        .thenReturn(Optional.empty());
+
+    assertThrows(PtContractNotExistException.class, () -> dietService.getDietDetails(diet.getId()));
+  }
+
+  @Test
+  @DisplayName("식단 상세 정보 조회 실패 - 사용자가 트레이니 또는 트레이너가 아닌 경우")
+  void testGetDietDetailsFailUserNotFound() {
+    Authentication authentication = mock(Authentication.class);
+    lenient().when(authentication.getName()).thenReturn("unknown@example.com");
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
+    assertThrows(TraineeNotExistException.class, () -> dietService.getDietDetails(1L));
   }
 }

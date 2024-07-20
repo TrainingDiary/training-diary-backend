@@ -1,10 +1,12 @@
 package com.project.trainingdiary.service;
 
 import com.project.trainingdiary.dto.request.CreateDietRequestDto;
+import com.project.trainingdiary.dto.response.DietDetailsInfoResponseDto;
 import com.project.trainingdiary.dto.response.DietImageResponseDto;
 import com.project.trainingdiary.entity.DietEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.impl.DietNotExistException;
 import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
 import com.project.trainingdiary.exception.impl.PtContractNotExistException;
 import com.project.trainingdiary.exception.impl.TraineeNotExistException;
@@ -18,6 +20,7 @@ import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.util.ImageUtil;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -28,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DietService {
 
   private final DietRepository dietRepository;
@@ -115,7 +119,7 @@ public class DietService {
     TraineeEntity trainee = getAuthenticatedTrainee();
 
     if (!trainee.getId().equals(id)) {
-      throw new UserNotFoundException();
+      throw new DietNotExistException();
     }
 
     Page<DietEntity> dietPage = dietRepository.findByTraineeId(id, pageable);
@@ -124,6 +128,57 @@ public class DietService {
         .dietId(diet.getId())
         .thumbnailUrl(diet.getThumbnailUrl())
         .build());
+  }
+
+  /**
+   * 특정 식단의 상세 정보를 조회합니다.
+   *
+   * @param id 식단 ID
+   * @return 식단 상세 정보 DTO
+   * @throws DietNotExistException 식단이 존재하지 않을 경우 예외 발생
+   */
+  public DietDetailsInfoResponseDto getDietDetails(Long id) {
+    UserRoleType role = getMyRole();
+
+    if (role.equals(UserRoleType.TRAINEE)) {
+      return getDietDetailsInfoForTrainee(id);
+    } else {
+      return getDietDetailsInfoForTrainer(id);
+    }
+  }
+
+  /**
+   * 트레이니가 자신의 특정 식단의 상세 정보를 조회합니다.
+   *
+   * @param id 식단 ID
+   * @return 식단 상세 정보 DTO
+   * @throws DietNotExistException 식단이 존재하지 않을 경우 예외 발생
+   */
+  private DietDetailsInfoResponseDto getDietDetailsInfoForTrainee(Long id) {
+    TraineeEntity trainee = getAuthenticatedTrainee();
+
+    DietEntity diet = dietRepository.findByTraineeIdAndId(trainee.getId(), id)
+        .orElseThrow(DietNotExistException::new);
+
+    return DietDetailsInfoResponseDto.of(diet);
+  }
+
+  /**
+   * 트레이너가 특정 트레이니의 식단 상세 정보를 조회합니다.
+   *
+   * @param id 식단 ID
+   * @return 식단 상세 정보 DTO
+   * @throws DietNotExistException 식단이 존재하지 않을 경우 예외 발생
+   */
+  private DietDetailsInfoResponseDto getDietDetailsInfoForTrainer(Long id) {
+    TrainerEntity trainer = getAuthenticatedTrainer();
+
+    DietEntity diet = dietRepository.findById(id)
+        .orElseThrow(DietNotExistException::new);
+
+    hasContractWithTrainee(trainer, diet.getTrainee());
+
+    return DietDetailsInfoResponseDto.of(diet);
   }
 
   /**
