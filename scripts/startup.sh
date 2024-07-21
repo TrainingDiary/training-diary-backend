@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Firebase config
+export GOOGLE_APPLICATION_CREDENTIALS="/home/ec2-user/build/config/training-diary-firebase-adminsdk.json"
+
 # Run jar
 DEPLOY_PATH="/home/ec2-user"
 DEPLOY_LOG_PATH="/home/ec2-user/deploy.log"

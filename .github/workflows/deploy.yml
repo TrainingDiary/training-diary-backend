@@ -1,4 +1,4 @@
-name: training-diary
+name: Training Diary Server Build & Deploy
 
 on:
   push:
@@ -10,6 +10,7 @@ env:
   CODE_DEPLOY_DEPLOYMENT_GROUP_NAME: training-diary-v1-group
   APPLICATION_YML: ./src/main/resources/application.yml
   SPRING_PROFILE: ec2
+  FIREBASE_JSON: training-diary-firebase-adminsdk.json
 
 jobs:
   build:
@@ -36,6 +37,8 @@ jobs:
       - name: Download configuration files from S3
         run: |
           aws s3 cp --region ap-northeast-2 s3://${{ secrets.S3_BUCKET_NAME }}/application-${{ env.SPRING_PROFILE }}.yml ./src/main/resources/
+          mkdir -p ./config
+          aws s3 cp --region ap-northeast-2 s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.FIREBASE_JSON }} ./config/
 
       - name: Change spring profile to ${{ env.SPRING_PROFILE }}
         uses: microsoft/variable-substitution@v1
@@ -49,13 +52,13 @@ jobs:
         shell: bash
 
       - name: Build
-        run: ./gradlew build -x test
+        run: ./gradlew build
         shell: bash
 
       - name: Archive to a zip file
         run: |
           mv build/libs/*.jar .
-          zip -r ./$GITHUB_SHA ./*.jar scripts/ appspec.yml
+          zip -r ./$GITHUB_SHA ./*.jar scripts/ config/ appspec.yml
         shell: bash
 
       - name: Upload to S3
