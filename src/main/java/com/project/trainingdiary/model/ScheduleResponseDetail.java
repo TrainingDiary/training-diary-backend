@@ -11,7 +11,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-@JsonInclude(Include.NON_NULL)
 public class ScheduleResponseDetail {
 
   private Long scheduleId;
