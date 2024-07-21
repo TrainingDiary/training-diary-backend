@@ -12,14 +12,14 @@ import lombok.Setter;
 @Builder
 public class NotificationResponseDto {
 
-  private Long id;
+  private Long notificationId;
   private String note;
   private LocalDate eventDate;
   private LocalDateTime createdAt;
 
   public static NotificationResponseDto fromEntity(NotificationEntity entity) {
     return NotificationResponseDto.builder()
-        .id(entity.getId())
+        .notificationId(entity.getId())
         .note(entity.getNote())
         .eventDate(entity.getEventDate())
         .createdAt(entity.getCreatedAt())
