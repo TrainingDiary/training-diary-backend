@@ -182,6 +182,26 @@ public class DietService {
   }
 
   /**
+   * 트레이니의 식단을 삭제합니다.
+   *
+   * @param id 식단 ID
+   * @throws DietNotExistException 식단이 존재하지 않을 위해 예외 발생
+   */
+  @Transactional
+  public void deleteDiet(Long id) {
+
+    TraineeEntity trainee = getAuthenticatedTrainee();
+
+    DietEntity diet = dietRepository.findByTraineeIdAndId(trainee.getId(), id)
+        .orElseThrow(DietNotExistException::new);
+
+    imageUtil.deleteFileFromS3(diet.getOriginalUrl());
+    imageUtil.deleteFileFromS3(diet.getThumbnailUrl());
+
+    dietRepository.delete(diet);
+  }
+
+  /**
    * 트레이너가 트레이니와 계약을 맺고 있는지 확인합니다.
    *
    * @param trainer 트레이너 엔티티

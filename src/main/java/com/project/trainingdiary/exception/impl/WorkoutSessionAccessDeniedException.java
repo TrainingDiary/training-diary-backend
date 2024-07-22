@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class WorkoutSessionAccessDeniedException extends GlobalException {
 
   public WorkoutSessionAccessDeniedException() {
-    super(HttpStatus.FORBIDDEN, "해당 일지에 대해 접근 권한이 없습니다.");
+    super(HttpStatus.NOT_FOUND, "해당 일지를 열람할 수 없습니다.");
   }
 }
