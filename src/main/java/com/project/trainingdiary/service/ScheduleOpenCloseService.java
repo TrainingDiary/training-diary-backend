@@ -6,7 +6,7 @@ import com.project.trainingdiary.dto.response.schedule.RegisterScheduleResponseD
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSession;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleAlreadyExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleInvalidException;
@@ -99,7 +99,7 @@ public class ScheduleOpenCloseService {
 
     // 남은 PT 횟수가 부족하면 에러를 냄
     if (requestedStartTimes.size() > ptContract.getRemainingSession()) {
-      throw new PtContractNotEnoughSession();
+      throw new PtContractNotEnoughSessionException();
     }
 
     // 존재하지 않는 일정은 생성하기

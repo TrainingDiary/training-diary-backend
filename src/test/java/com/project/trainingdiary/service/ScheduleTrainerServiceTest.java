@@ -18,11 +18,11 @@ import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSession;
+import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLong;
-import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveApplied;
-import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReserved;
+import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.UserPrincipal;
@@ -262,7 +262,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveApplied.class,
+        ScheduleStatusNotReserveAppliedException.class,
         () -> scheduleTrainerService.acceptSchedule(dto)
     );
   }
@@ -318,7 +318,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        UsedSessionExceededTotalSession.class,
+        UsedSessionExceededTotalSessionException.class,
         () -> scheduleTrainerService.acceptSchedule(dto)
     );
   }
@@ -400,7 +400,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveApplied.class,
+        ScheduleStatusNotReserveAppliedException.class,
         () -> scheduleTrainerService.rejectSchedule(dto)
     );
   }
@@ -513,7 +513,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveAppliedOrReserved.class,
+        ScheduleStatusNotReserveAppliedOrReservedException.class,
         () -> scheduleTrainerService.cancelSchedule(dto)
     );
   }
@@ -542,7 +542,7 @@ class ScheduleTrainerServiceTest {
     setupTrainerAuth();
 
     assertThrows(
-        ScheduleRangeTooLong.class,
+        ScheduleRangeTooLongException.class,
         () -> scheduleTrainerService.getScheduleList(
             LocalDate.of(2024, 1, 1),
             LocalDate.of(2024, 9, 1)

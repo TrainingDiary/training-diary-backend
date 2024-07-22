@@ -10,11 +10,11 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSession;
+import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLong;
-import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveApplied;
-import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReserved;
+import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -54,7 +54,7 @@ public class ScheduleTrainerService {
 
     // 예약 상태가 RESERVE_APPLIED인지 확인
     if (!schedule.getScheduleStatusType().equals(ScheduleStatusType.RESERVE_APPLIED)) {
-      throw new ScheduleStatusNotReserveApplied();
+      throw new ScheduleStatusNotReserveAppliedException();
     }
 
     PtContractEntity ptContract = schedule.getPtContract();
@@ -64,7 +64,7 @@ public class ScheduleTrainerService {
     }
     // 전체 세션의 갯수와 사용한 세션의 갯수를 비교해 더 사용할 수 있는지 확인
     if (ptContract.getTotalSession() <= ptContract.getUsedSession()) {
-      throw new UsedSessionExceededTotalSession();
+      throw new UsedSessionExceededTotalSessionException();
     }
 
     schedule.acceptReserveApplied();
@@ -83,7 +83,7 @@ public class ScheduleTrainerService {
 
     // 예약 상태가 RESERVE_APPLIED인지 확인
     if (!schedule.getScheduleStatusType().equals(ScheduleStatusType.RESERVE_APPLIED)) {
-      throw new ScheduleStatusNotReserveApplied();
+      throw new ScheduleStatusNotReserveAppliedException();
     }
 
     PtContractEntity ptContract = schedule.getPtContract();
@@ -115,7 +115,7 @@ public class ScheduleTrainerService {
         .orElseThrow(ScheduleNotFoundException::new);
 
     if (schedule.getScheduleStatusType().equals(ScheduleStatusType.OPEN)) {
-      throw new ScheduleStatusNotReserveAppliedOrReserved();
+      throw new ScheduleStatusNotReserveAppliedOrReservedException();
     }
 
     // PtContract의 사용을 먼저 취소하고, schedule cancel을 해야함. cancel을 먼저하면 ptContract가 null로 변함
@@ -140,7 +140,7 @@ public class ScheduleTrainerService {
     LocalDateTime endDateTime = LocalDateTime.of(endDate, END_TIME);
 
     if (Duration.between(startDateTime, endDateTime).toDays() > MAX_QUERY_DAYS) {
-      throw new ScheduleRangeTooLong();
+      throw new ScheduleRangeTooLongException();
     }
 
     return scheduleRepository.getScheduleListByTrainer(trainer.getId(), startDateTime, endDateTime);

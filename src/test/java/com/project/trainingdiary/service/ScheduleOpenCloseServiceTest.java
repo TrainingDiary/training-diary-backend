@@ -17,7 +17,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSession;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleAlreadyExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
@@ -585,7 +585,7 @@ class ScheduleOpenCloseServiceTest {
 
     //then
     assertThrows(
-        PtContractNotEnoughSession.class,
+        PtContractNotEnoughSessionException.class,
         () -> scheduleOpenCloseService.registerSchedule(dto)
     );
   }
