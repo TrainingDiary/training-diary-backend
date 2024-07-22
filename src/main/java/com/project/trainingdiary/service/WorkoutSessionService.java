@@ -35,7 +35,7 @@ import com.project.trainingdiary.repository.WorkoutRepository;
 import com.project.trainingdiary.repository.WorkoutSessionRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
-import com.project.trainingdiary.util.ImageUploadUtil;
+import com.project.trainingdiary.util.WorkoutImageUtil;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
@@ -51,6 +51,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -205,6 +206,7 @@ public class WorkoutSessionService {
   /**
    * 운동 일지 - 이미지 업로드
    */
+  @Transactional
   public WorkoutImageResponseDto uploadWorkoutImage(WorkoutImageRequestDto dto) throws IOException {
     // 현재 로그인 되어있는 트레이너 본인의 엔티티
     TrainerEntity trainer = getTrainer();
@@ -225,7 +227,7 @@ public class WorkoutSessionService {
 
     // 이미지 업로드 및 썸네일 생성
     for (MultipartFile file : dto.getImages()) {
-      ImageUploadUtil.UploadResult uploadResult = ImageUploadUtil
+      WorkoutImageUtil.UploadResult uploadResult = WorkoutImageUtil
           .uploadImageAndThumbnail(s3Operations, bucket, file);
       WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder()
           .originalUrl(uploadResult.getOriginalUrl())
@@ -246,6 +248,7 @@ public class WorkoutSessionService {
   /**
    * 운동 일지 - 동영상 업로드
    */
+  @Transactional
   public WorkoutVideoResponseDto uploadWorkoutVideo(WorkoutVideoRequestDto dto) throws IOException {
     // 현재 로그인 되어있는 트레이너 본인의 엔티티
     TrainerEntity trainer = getTrainer();
@@ -270,7 +273,7 @@ public class WorkoutSessionService {
     }
 
     // 확장자 추출
-    String extension = ImageUploadUtil.getExtension(ImageUploadUtil.checkFileNameExist(video));
+    String extension = WorkoutImageUtil.getExtension(WorkoutImageUtil.checkFileNameExist(video));
     // key (동영상 이름) 설정 후 업로드
     String originalKey = UUID.randomUUID() + "." + extension;
     S3Resource s3Resource;
