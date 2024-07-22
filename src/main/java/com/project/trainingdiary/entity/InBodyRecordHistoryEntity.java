@@ -14,17 +14,17 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity(name = "in_body_record_history")
-@Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
+@Entity(name = "in_body_record_history")
 public class InBodyRecordHistoryEntity extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = IDENTITY)
-  private long id;
+  private Long id;
 
   private double weight;
   private double bodyFatPercentage;
