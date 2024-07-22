@@ -1,4 +1,4 @@
-package com.project.trainingdiary.dto.response;
+package com.project.trainingdiary.dto.response.schedule;
 
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import java.time.LocalDate;
