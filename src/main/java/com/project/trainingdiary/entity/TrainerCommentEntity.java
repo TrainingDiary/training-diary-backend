@@ -3,38 +3,36 @@ package com.project.trainingdiary.entity;
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(name = "diet")
-public class DietEntity extends BaseEntity {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity(name = "trainer_comment")
+public class TrainerCommentEntity extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = IDENTITY)
   private Long id;
 
-  private String content;
+  private String comment;
 
-  @Column(length = 2000)
-  private String originalUrl;
-
-  @Column(length = 2000)
-  private String thumbnailUrl;
+  @ManyToOne
+  @JoinColumn(name = "trainer_id")
+  private TrainerEntity trainer;
 
   @ManyToOne(fetch = LAZY)
-  @JoinColumn(name = "trainee_id")
-  private TraineeEntity trainee;
-
-  @OneToMany(mappedBy = "diet", fetch = LAZY)
-  private List<TrainerCommentEntity> comments;
+  @JoinColumn(name = "diet_id")
+  private DietEntity diet;
 }
