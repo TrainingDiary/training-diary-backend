@@ -1,18 +1,18 @@
 package com.project.trainingdiary.service;
 
-import com.project.trainingdiary.dto.request.AddPtContractSessionRequestDto;
-import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
-import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
-import com.project.trainingdiary.dto.response.CreatePtContractResponseDto;
-import com.project.trainingdiary.dto.response.PtContractResponseDto;
+import com.project.trainingdiary.dto.request.ptcontract.AddPtContractSessionRequestDto;
+import com.project.trainingdiary.dto.request.ptcontract.CreatePtContractRequestDto;
+import com.project.trainingdiary.dto.request.ptcontract.TerminatePtContractRequestDto;
+import com.project.trainingdiary.dto.response.ptcontract.CreatePtContractResponseDto;
+import com.project.trainingdiary.dto.response.ptcontract.PtContractResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.impl.PtContractAlreadyExistException;
-import com.project.trainingdiary.exception.impl.PtContractNotExistException;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.PtContractSort;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;

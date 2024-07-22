@@ -1,20 +1,20 @@
 package com.project.trainingdiary.service;
 
-import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
-import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
-import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
+import com.project.trainingdiary.dto.request.schedule.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.RegisterScheduleRequestDto;
+import com.project.trainingdiary.dto.response.schedule.RegisterScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.impl.PtContractNotEnoughSession;
-import com.project.trainingdiary.exception.impl.PtContractNotExistException;
-import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
-import com.project.trainingdiary.exception.impl.ScheduleInvalidException;
-import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSession;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.schedule.ScheduleAlreadyExistException;
+import com.project.trainingdiary.exception.schedule.ScheduleInvalidException;
+import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
-import com.project.trainingdiary.model.ScheduleStatus;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
@@ -73,7 +73,7 @@ public class ScheduleOpenCloseService {
     }
 
     long notOpenSchedule = schedules.stream()
-        .filter(s -> !s.getScheduleStatus().equals(ScheduleStatus.OPEN))
+        .filter(s -> !s.getScheduleStatusType().equals(ScheduleStatusType.OPEN))
         .count();
     if (notOpenSchedule > 0) {
       throw new ScheduleStatusNotOpenException();
@@ -152,7 +152,7 @@ public class ScheduleOpenCloseService {
             .orElseThrow(ScheduleNotFoundException::new)
         )
         .peek(schedule -> {
-          if (schedule.getScheduleStatus() != ScheduleStatus.OPEN) {
+          if (schedule.getScheduleStatusType() != ScheduleStatusType.OPEN) {
             throw new ScheduleStatusNotOpenException();
           }
           schedule.apply(ptContract);

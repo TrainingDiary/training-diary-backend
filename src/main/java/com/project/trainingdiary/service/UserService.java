@@ -1,24 +1,24 @@
 package com.project.trainingdiary.service;
 
-import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
-import com.project.trainingdiary.dto.request.SignInRequestDto;
-import com.project.trainingdiary.dto.request.SignUpRequestDto;
-import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
-import com.project.trainingdiary.dto.response.MemberInfoResponseDto;
-import com.project.trainingdiary.dto.response.SignInResponseDto;
+import com.project.trainingdiary.dto.request.user.SendVerificationAndCheckDuplicateRequestDto;
+import com.project.trainingdiary.dto.request.user.SignInRequestDto;
+import com.project.trainingdiary.dto.request.user.SignUpRequestDto;
+import com.project.trainingdiary.dto.request.user.VerifyCodeRequestDto;
+import com.project.trainingdiary.dto.response.user.MemberInfoResponseDto;
+import com.project.trainingdiary.dto.response.user.SignInResponseDto;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
-import com.project.trainingdiary.exception.impl.PasswordMismatchedException;
-import com.project.trainingdiary.exception.impl.TrainerNotFoundException;
-import com.project.trainingdiary.exception.impl.UserEmailDuplicateException;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
-import com.project.trainingdiary.exception.impl.VerificationCodeExpiredException;
-import com.project.trainingdiary.exception.impl.VerificationCodeNotMatchedException;
-import com.project.trainingdiary.exception.impl.VerificationCodeNotYetVerifiedException;
-import com.project.trainingdiary.exception.impl.WrongPasswordException;
+import com.project.trainingdiary.exception.user.PasswordMismatchedException;
+import com.project.trainingdiary.exception.user.TrainerNotFoundException;
+import com.project.trainingdiary.exception.user.UserEmailDuplicateException;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.exception.user.VerificationCodeExpiredException;
+import com.project.trainingdiary.exception.user.VerificationCodeNotMatchedException;
+import com.project.trainingdiary.exception.user.VerificationCodeNotYetVerifiedException;
+import com.project.trainingdiary.exception.user.WrongPasswordException;
 import com.project.trainingdiary.model.UserPrincipal;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.provider.CookieProvider;
 import com.project.trainingdiary.provider.EmailProvider;
 import com.project.trainingdiary.provider.TokenProvider;
@@ -380,7 +380,6 @@ public class UserService implements UserDetailsService {
               .email(trainer.getEmail())
               .name(trainer.getName())
               .role(trainer.getRole())
-              .unreadNotification(trainer.isUnreadNotification())
               .build())
           .orElseThrow(TrainerNotFoundException::new);
     }
@@ -390,7 +389,6 @@ public class UserService implements UserDetailsService {
             .email(trainee.getEmail())
             .name(trainee.getName())
             .role(trainee.getRole())
-            .unreadNotification(trainee.isUnreadNotification())
             .build())
         .orElseThrow(TrainerNotFoundException::new);
   }

@@ -1,10 +1,10 @@
 package com.project.trainingdiary.service;
 
-import com.project.trainingdiary.dto.response.NotificationResponseDto;
+import com.project.trainingdiary.dto.response.notification.NotificationResponseDto;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;

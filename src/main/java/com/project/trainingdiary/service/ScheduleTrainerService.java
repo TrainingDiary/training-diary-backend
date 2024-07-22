@@ -1,22 +1,22 @@
 package com.project.trainingdiary.service;
 
-import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
-import com.project.trainingdiary.dto.request.CancelScheduleByTrainerRequestDto;
-import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
-import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
-import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.dto.request.schedule.AcceptScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTrainerRequestDto;
+import com.project.trainingdiary.dto.request.schedule.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTrainerResponseDto;
+import com.project.trainingdiary.dto.response.schedule.RejectScheduleResponseDto;
+import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.impl.PtContractNotExistException;
-import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
-import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
-import com.project.trainingdiary.model.ScheduleStatus;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSession;
+import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLong;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveApplied;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReserved;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
@@ -53,7 +53,7 @@ public class ScheduleTrainerService {
         .orElseThrow(ScheduleNotFoundException::new);
 
     // 예약 상태가 RESERVE_APPLIED인지 확인
-    if (!schedule.getScheduleStatus().equals(ScheduleStatus.RESERVE_APPLIED)) {
+    if (!schedule.getScheduleStatusType().equals(ScheduleStatusType.RESERVE_APPLIED)) {
       throw new ScheduleStatusNotReserveApplied();
     }
 
@@ -82,7 +82,7 @@ public class ScheduleTrainerService {
         .orElseThrow(ScheduleNotFoundException::new);
 
     // 예약 상태가 RESERVE_APPLIED인지 확인
-    if (!schedule.getScheduleStatus().equals(ScheduleStatus.RESERVE_APPLIED)) {
+    if (!schedule.getScheduleStatusType().equals(ScheduleStatusType.RESERVE_APPLIED)) {
       throw new ScheduleStatusNotReserveApplied();
     }
 
@@ -98,7 +98,7 @@ public class ScheduleTrainerService {
     ptContract.restoreSession();
     ptContractRepository.save(ptContract);
 
-    return new RejectScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
+    return new RejectScheduleResponseDto(schedule.getId(), schedule.getScheduleStatusType());
   }
 
   /**
@@ -114,7 +114,7 @@ public class ScheduleTrainerService {
         .filter(s -> s.getTrainer().equals(trainer))
         .orElseThrow(ScheduleNotFoundException::new);
 
-    if (schedule.getScheduleStatus().equals(ScheduleStatus.OPEN)) {
+    if (schedule.getScheduleStatusType().equals(ScheduleStatusType.OPEN)) {
       throw new ScheduleStatusNotReserveAppliedOrReserved();
     }
 
@@ -126,7 +126,8 @@ public class ScheduleTrainerService {
     schedule.cancel();
     scheduleRepository.save(schedule);
 
-    return new CancelScheduleByTrainerResponseDto(schedule.getId(), schedule.getScheduleStatus());
+    return new CancelScheduleByTrainerResponseDto(schedule.getId(),
+        schedule.getScheduleStatusType());
   }
 
   /**

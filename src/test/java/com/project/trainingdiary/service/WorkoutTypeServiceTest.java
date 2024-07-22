@@ -1,6 +1,6 @@
 package com.project.trainingdiary.service;
 
-import static com.project.trainingdiary.model.UserRoleType.TRAINER;
+import static com.project.trainingdiary.model.type.UserRoleType.TRAINER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -9,13 +9,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.trainingdiary.dto.request.WorkoutTypeCreateRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
-import com.project.trainingdiary.dto.response.WorkoutTypeResponseDto;
+import com.project.trainingdiary.dto.request.workout.type.WorkoutTypeCreateRequestDto;
+import com.project.trainingdiary.dto.request.workout.type.WorkoutTypeUpdateRequestDto;
+import com.project.trainingdiary.dto.response.workout.type.WorkoutTypeResponseDto;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.WorkoutTypeEntity;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
-import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.exception.workout.WorkoutTypeNotFoundException;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
 import java.util.Collections;
