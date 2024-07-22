@@ -3,6 +3,7 @@ package com.project.trainingdiary.security;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +58,7 @@ public class SecurityConfig {
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedHeaders(List.of("Cache-Control", "Content-Type", "Cookie"));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-    configuration.setAllowedOrigins(List.of("*"));
+    configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
     configuration.setAllowCredentials(true);
     configuration.setMaxAge(MAX_AGE_SECS);
 
