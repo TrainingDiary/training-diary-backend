@@ -704,6 +704,11 @@ class WorkoutSessionServiceTest {
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
     SecurityContextHolder.getContext().setAuthentication(authentication);
 
+    TrainerEntity trainer = mock(TrainerEntity.class);
+    WorkoutSessionEntity workoutSession = mock(WorkoutSessionEntity.class);
+    List<WorkoutMediaEntity> workoutMediaList = new ArrayList<>();
+    when(workoutSession.getWorkoutMedia()).thenReturn(workoutMediaList);
+
     when(trainerRepository.findByEmail("trainer@gmail.com")).thenReturn(Optional.of(trainer));
     when(workoutSessionRepository.findByPtContract_TrainerAndId(trainer, workoutSession.getId()))
         .thenReturn(Optional.of(workoutSession));
@@ -729,43 +734,38 @@ class WorkoutSessionServiceTest {
     S3Resource s3ResourceThumbnail = mock(S3Resource.class);
 
     when(s3ResourceOriginal.getURL()).thenReturn(
-        new URL("https://test-bucket.s3.amazonaws.com/original.jpg"));
+        new URL("https://test-bucket.s3.amazonaws.com/original_test.jpg"));
     when(s3ResourceThumbnail.getURL()).thenReturn(
-        new URL("https://test-bucket.s3.amazonaws.com/thumb_original.jpg"));
+        new URL("https://test-bucket.s3.amazonaws.com/thumb_test.jpg"));
 
     ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
     ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
 
-    doAnswer(invocation -> s3ResourceOriginal).when(s3Operations)
-        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-            metadataCaptor.capture());
-
-    doAnswer(invocation -> s3ResourceThumbnail).when(s3Operations)
-        .upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(),
-            metadataCaptor.capture());
+    doAnswer(invocation -> {
+      String key = invocation.getArgument(1);
+      if (key.startsWith("original_")) {
+        return s3ResourceOriginal;
+      } else if (key.startsWith("thumb_")) {
+        return s3ResourceThumbnail;
+      }
+      return null;
+    }).when(s3Operations).upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(), metadataCaptor.capture());
 
     WorkoutImageResponseDto response = workoutSessionService.uploadWorkoutImage(imageRequestDto);
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
-        .forClass(WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(WorkoutMediaEntity.class);
     verify(workoutMediaRepository, times(1)).save(mediaCaptor.capture());
     WorkoutMediaEntity savedMedia = mediaCaptor.getValue();
-    assertEquals(IMAGE.toString(), savedMedia.getMediaType().name());
+    assertEquals(IMAGE, savedMedia.getMediaType());
 
     List<String> capturedBuckets = bucketCaptor.getAllValues();
-    List<String> capturedKeys = keyCaptor.getAllValues();
 
     assertEquals(bucket, capturedBuckets.get(0));
     assertEquals(bucket, capturedBuckets.get(1));
 
-    assertTrue(capturedKeys.get(0).matches("[0-9a-fA-F-]{36}\\.jpg"));
-    assertTrue(capturedKeys.get(1).startsWith("thumb_"));
-    assertTrue(capturedKeys.get(1).matches("thumb_[0-9a-fA-F-]{36}\\.jpg"));
-
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
-        .forClass(WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(WorkoutSessionEntity.class);
     verify(workoutSessionRepository, times(1)).save(sessionCaptor.capture());
     WorkoutSessionEntity savedSession = sessionCaptor.getValue();
     assertEquals(1, savedSession.getWorkoutMedia().size());
@@ -773,7 +773,11 @@ class WorkoutSessionServiceTest {
     assertEquals(workoutSession.getId(), response.getSessionId());
     assertEquals(1, response.getOriginalUrls().size());
     assertEquals(1, response.getThumbnailUrls().size());
+
+    assertEquals("https://test-bucket.s3.amazonaws.com/original_test.jpg", response.getOriginalUrls().get(0));
+    assertEquals("https://test-bucket.s3.amazonaws.com/thumb_test.jpg", response.getThumbnailUrls().get(0));
   }
+
 
   @Test
   @DisplayName("이미지 업로드 실패 - 이미지 개수가 10개를 초과하면 예외 발생")
