@@ -1,6 +1,6 @@
 package com.project.trainingdiary.provider;
 
-import com.project.trainingdiary.exception.impl.EmailSendErrorException;
+import com.project.trainingdiary.exception.user.EmailSendErrorException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
