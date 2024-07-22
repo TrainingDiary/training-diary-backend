@@ -37,9 +37,6 @@ public class TokenProvider {
    */
   @PostConstruct
   public void init() {
-    if (secretKey == null || secretKey.trim().isEmpty()) {
-      throw new IllegalArgumentException("JWT 비밀 키가 올바르게 설정되지 않았습니다.");
-    }
     this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
   }
 
