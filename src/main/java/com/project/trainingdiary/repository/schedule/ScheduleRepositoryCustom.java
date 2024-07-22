@@ -1,6 +1,6 @@
 package com.project.trainingdiary.repository.schedule;
 
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import java.time.LocalDateTime;
 import java.util.List;
 

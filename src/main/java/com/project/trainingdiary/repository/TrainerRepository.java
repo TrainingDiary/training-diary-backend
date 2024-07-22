@@ -8,6 +8,4 @@ public interface TrainerRepository extends JpaRepository<TrainerEntity, Long> {
 
   Optional<TrainerEntity> findByEmail(String email);
 
-  Optional<TrainerEntity> findById(Long id);
-
 }
