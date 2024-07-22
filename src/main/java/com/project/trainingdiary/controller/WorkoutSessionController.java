@@ -1,13 +1,13 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.WorkoutImageRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutSessionUpdateRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutVideoRequestDto;
-import com.project.trainingdiary.dto.response.WorkoutImageResponseDto;
-import com.project.trainingdiary.dto.response.WorkoutSessionListResponseDto;
-import com.project.trainingdiary.dto.response.WorkoutSessionResponseDto;
-import com.project.trainingdiary.dto.response.WorkoutVideoResponseDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutImageRequestDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutSessionUpdateRequestDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutVideoRequestDto;
+import com.project.trainingdiary.dto.response.workout.session.WorkoutImageResponseDto;
+import com.project.trainingdiary.dto.response.workout.session.WorkoutSessionListResponseDto;
+import com.project.trainingdiary.dto.response.workout.session.WorkoutSessionResponseDto;
+import com.project.trainingdiary.dto.response.workout.session.WorkoutVideoResponseDto;
 import com.project.trainingdiary.service.WorkoutSessionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

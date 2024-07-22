@@ -1,8 +1,8 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.CreateDietRequestDto;
-import com.project.trainingdiary.dto.response.DietDetailsInfoResponseDto;
-import com.project.trainingdiary.dto.response.DietImageResponseDto;
+import com.project.trainingdiary.dto.request.diet.CreateDietRequestDto;
+import com.project.trainingdiary.dto.response.diet.DietDetailsInfoResponseDto;
+import com.project.trainingdiary.dto.response.diet.DietImageResponseDto;
 import com.project.trainingdiary.service.DietService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -36,7 +36,8 @@ public class DietController {
   private final DietService dietService;
 
   @Operation(
-      summary = "식단 생성", description = "트레이니가 이미지를 업로드하고 식단 내용을 추가하여 식단을 생성합니다."
+      summary = "식단 생성",
+      description = "트레이니가 이미지를 업로드하고 식단 내용을 추가하여 식단을 생성합니다."
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
@@ -64,6 +65,7 @@ public class DietController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
   })
+  @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
   public ResponseEntity<Page<DietImageResponseDto>> getTraineeDiets(
       @PathVariable Long id,
       @RequestParam(defaultValue = "0") int page,
@@ -71,9 +73,8 @@ public class DietController {
   ) {
     Sort.Direction direction = Direction.DESC;
     Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
-    Page<DietImageResponseDto> diets = dietService.getDiets(id, pageable);
 
-    return ResponseEntity.ok(diets);
+    return ResponseEntity.ok(dietService.getDiets(id, pageable));
   }
 
   @Operation(
@@ -83,12 +84,12 @@ public class DietController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
   })
+  @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
   @GetMapping("{id}/details")
   public ResponseEntity<DietDetailsInfoResponseDto> getDietDetails(
       @PathVariable Long id
   ) {
-    DietDetailsInfoResponseDto diet = dietService.getDietDetails(id);
-    return ResponseEntity.ok(diet);
+    return ResponseEntity.ok(dietService.getDietDetails(id));
   }
 
   @Operation(

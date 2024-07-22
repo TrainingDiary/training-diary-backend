@@ -1,11 +1,11 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.SendVerificationAndCheckDuplicateRequestDto;
-import com.project.trainingdiary.dto.request.SignInRequestDto;
-import com.project.trainingdiary.dto.request.SignUpRequestDto;
-import com.project.trainingdiary.dto.request.VerifyCodeRequestDto;
-import com.project.trainingdiary.dto.response.MemberInfoResponseDto;
-import com.project.trainingdiary.dto.response.SignInResponseDto;
+import com.project.trainingdiary.dto.request.user.SendVerificationAndCheckDuplicateRequestDto;
+import com.project.trainingdiary.dto.request.user.SignInRequestDto;
+import com.project.trainingdiary.dto.request.user.SignUpRequestDto;
+import com.project.trainingdiary.dto.request.user.VerifyCodeRequestDto;
+import com.project.trainingdiary.dto.response.user.MemberInfoResponseDto;
+import com.project.trainingdiary.dto.response.user.SignInResponseDto;
 import com.project.trainingdiary.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -86,8 +86,7 @@ public class UserController {
   public ResponseEntity<SignInResponseDto> signIn(
       @RequestBody @Valid SignInRequestDto dto, HttpServletResponse response
   ) {
-    SignInResponseDto signInResponse = userService.signIn(dto, response);
-    return ResponseEntity.ok(signInResponse);
+    return ResponseEntity.ok(userService.signIn(dto, response));
   }
 
   @Operation(
@@ -114,7 +113,6 @@ public class UserController {
   })
   @GetMapping("/info")
   public ResponseEntity<MemberInfoResponseDto> userInfo() {
-    MemberInfoResponseDto user = userService.memberInfo();
-    return ResponseEntity.ok(user);
+    return ResponseEntity.ok(userService.memberInfo());
   }
 }

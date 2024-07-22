@@ -1,8 +1,8 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.WorkoutTypeCreateRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
-import com.project.trainingdiary.dto.response.WorkoutTypeResponseDto;
+import com.project.trainingdiary.dto.request.workout.type.WorkoutTypeCreateRequestDto;
+import com.project.trainingdiary.dto.request.workout.type.WorkoutTypeUpdateRequestDto;
+import com.project.trainingdiary.dto.response.workout.type.WorkoutTypeResponseDto;
 import com.project.trainingdiary.service.WorkoutTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
