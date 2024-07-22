@@ -3,7 +3,6 @@ package com.project.trainingdiary.handler;
 import com.project.trainingdiary.exception.ErrorResponse;
 import com.project.trainingdiary.exception.GlobalException;
 import jakarta.servlet.http.HttpServletRequest;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,10 +28,11 @@ public class GlobalExceptionHandler {
 
     log.error(
         "Exception, {}, {}, {}",
-        HttpStatus.INTERNAL_SERVER_ERROR,e.getMessage(), request.getRequestURI()
+        HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), request.getRequestURI()
     );
 
-    ErrorResponse response = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+    ErrorResponse response = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+        e.getMessage());
     return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 

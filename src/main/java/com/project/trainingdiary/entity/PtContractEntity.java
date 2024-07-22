@@ -3,7 +3,7 @@ package com.project.trainingdiary.entity;
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.dto.response.PtContractResponseDto;
+import com.project.trainingdiary.dto.response.ptcontract.PtContractResponseDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -18,12 +18,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@Builder
 @Getter
 @Setter
 @ToString(exclude = {"trainer", "trainee"})
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity(name = "pt_contract")
 public class PtContractEntity extends BaseEntity {
 

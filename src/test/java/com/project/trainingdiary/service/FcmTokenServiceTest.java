@@ -6,12 +6,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.trainingdiary.dto.request.RegisterFcmTokenRequestDto;
+import com.project.trainingdiary.dto.request.notification.RegisterFcmTokenRequestDto;
 import com.project.trainingdiary.entity.FcmTokenEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.model.UserPrincipal;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.FcmTokenRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;

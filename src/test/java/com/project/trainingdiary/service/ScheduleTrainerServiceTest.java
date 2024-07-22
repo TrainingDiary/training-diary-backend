@@ -8,26 +8,26 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
-import com.project.trainingdiary.dto.request.CancelScheduleByTrainerRequestDto;
-import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
-import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.dto.request.schedule.AcceptScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTrainerRequestDto;
+import com.project.trainingdiary.dto.request.schedule.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTrainerResponseDto;
+import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.impl.PtContractNotExistException;
-import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.impl.ScheduleRangeTooLong;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveApplied;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
-import com.project.trainingdiary.exception.impl.UsedSessionExceededTotalSession;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
+import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
-import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.model.UserPrincipal;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
+import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
@@ -156,15 +156,15 @@ class ScheduleTrainerServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(10, 0))
-                    .status(ScheduleStatus.RESERVED)
+                    .status(ScheduleStatusType.RESERVED)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(11, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(12, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build(),
@@ -174,15 +174,15 @@ class ScheduleTrainerServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(20, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(21, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(22, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build()
@@ -202,7 +202,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
@@ -249,7 +249,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
+                .scheduleStatusType(ScheduleStatusType.OPEN)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
@@ -262,7 +262,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveApplied.class,
+        ScheduleStatusNotReserveAppliedException.class,
         () -> scheduleTrainerService.acceptSchedule(dto)
     );
   }
@@ -280,7 +280,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
                 .ptContract(null)
                 .build()
         ));
@@ -305,7 +305,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
@@ -318,7 +318,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        UsedSessionExceededTotalSession.class,
+        UsedSessionExceededTotalSessionException.class,
         () -> scheduleTrainerService.acceptSchedule(dto)
     );
   }
@@ -336,7 +336,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
@@ -387,7 +387,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
+                .scheduleStatusType(ScheduleStatusType.OPEN)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
@@ -400,7 +400,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveApplied.class,
+        ScheduleStatusNotReserveAppliedException.class,
         () -> scheduleTrainerService.rejectSchedule(dto)
     );
   }
@@ -418,7 +418,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVE_APPLIED)
+                .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
                 .ptContract(null)
                 .build()
         ));
@@ -442,7 +442,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVED)
+                .scheduleStatusType(ScheduleStatusType.RESERVED)
                 .trainer(trainer)
                 .ptContract(
                     PtContractEntity.builder()
@@ -465,8 +465,8 @@ class ScheduleTrainerServiceTest {
     verify(scheduleRepository).save(scheduleCaptor.capture());
 
     assertEquals(4, ptContractCaptor.getValue().getUsedSession());
-    assertEquals(ScheduleStatus.OPEN, scheduleCaptor.getValue().getScheduleStatus());
-    assertEquals(ScheduleStatus.OPEN, response.getScheduleStatus());
+    assertEquals(ScheduleStatusType.OPEN, scheduleCaptor.getValue().getScheduleStatusType());
+    assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatusType());
   }
 
   @Test
@@ -499,7 +499,7 @@ class ScheduleTrainerServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
+                .scheduleStatusType(ScheduleStatusType.OPEN)
                 .trainer(trainer)
                 .ptContract(
                     PtContractEntity.builder()
@@ -513,7 +513,7 @@ class ScheduleTrainerServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveAppliedOrReserved.class,
+        ScheduleStatusNotReserveAppliedOrReservedException.class,
         () -> scheduleTrainerService.cancelSchedule(dto)
     );
   }
@@ -542,7 +542,7 @@ class ScheduleTrainerServiceTest {
     setupTrainerAuth();
 
     assertThrows(
-        ScheduleRangeTooLong.class,
+        ScheduleRangeTooLongException.class,
         () -> scheduleTrainerService.getScheduleList(
             LocalDate.of(2024, 1, 1),
             LocalDate.of(2024, 9, 1)

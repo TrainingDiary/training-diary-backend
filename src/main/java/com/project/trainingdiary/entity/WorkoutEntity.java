@@ -2,8 +2,8 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.dto.request.WorkoutCreateRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutUpdateRequestDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutCreateRequestDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutUpdateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -13,11 +13,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Builder(toBuilder = true)
 @Getter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder(toBuilder = true)
 @Entity(name = "workout")
 public class WorkoutEntity extends BaseEntity {
 

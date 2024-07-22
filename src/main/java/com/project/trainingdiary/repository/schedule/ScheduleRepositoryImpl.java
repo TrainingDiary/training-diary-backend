@@ -3,9 +3,9 @@ package com.project.trainingdiary.repository.schedule;
 import static com.project.trainingdiary.entity.QScheduleEntity.scheduleEntity;
 import static com.querydsl.core.types.dsl.Expressions.dateTemplate;
 
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
-import com.project.trainingdiary.model.ScheduleStatus;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ConstantImpl;
 import com.querydsl.core.types.dsl.DateExpression;
@@ -63,7 +63,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
             scheduleEntity.id,
             startDate(),
             startTime(),
-            scheduleEntity.scheduleStatus,
+            scheduleEntity.scheduleStatusType,
             scheduleEntity.trainer.id,
             scheduleEntity.trainer.name,
             scheduleEntity.ptContract.trainee.id,
@@ -107,14 +107,14 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
                   .traineeId(getTraineeId(tuple, includeOnlyThisTraineeId))
                   .traineeName(getTraineeName(tuple, includeOnlyThisTraineeId))
                   .startTime(LocalTime.parse(Objects.requireNonNull(tuple.get(startTime()))))
-                  .status(tuple.get(scheduleEntity.scheduleStatus))
+                  .status(tuple.get(scheduleEntity.scheduleStatusType))
                   .build()
               )
               .collect(Collectors.toList());
 
           // 해당 날짜에 예약이 존재하는지 검사
           boolean existReserved = details.stream()
-              .anyMatch(detail -> detail.getStatus() == ScheduleStatus.RESERVED);
+              .anyMatch(detail -> detail.getStatus() == ScheduleStatusType.RESERVED);
 
           return ScheduleResponseDto.builder()
               .startDate(date)

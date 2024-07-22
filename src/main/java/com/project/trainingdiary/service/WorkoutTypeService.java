@@ -1,12 +1,12 @@
 package com.project.trainingdiary.service;
 
-import com.project.trainingdiary.dto.request.WorkoutTypeCreateRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutTypeUpdateRequestDto;
-import com.project.trainingdiary.dto.response.WorkoutTypeResponseDto;
+import com.project.trainingdiary.dto.request.workout.type.WorkoutTypeCreateRequestDto;
+import com.project.trainingdiary.dto.request.workout.type.WorkoutTypeUpdateRequestDto;
+import com.project.trainingdiary.dto.response.workout.type.WorkoutTypeResponseDto;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.WorkoutTypeEntity;
-import com.project.trainingdiary.exception.impl.UserNotFoundException;
-import com.project.trainingdiary.exception.impl.WorkoutTypeNotFoundException;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.exception.workout.WorkoutTypeNotFoundException;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
 import lombok.RequiredArgsConstructor;

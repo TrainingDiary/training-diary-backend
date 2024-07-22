@@ -1,10 +1,10 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.AddInBodyInfoRequestDto;
-import com.project.trainingdiary.dto.request.EditTraineeInfoRequestDto;
-import com.project.trainingdiary.dto.response.AddInBodyInfoResponseDto;
-import com.project.trainingdiary.dto.response.EditTraineeInfoResponseDto;
-import com.project.trainingdiary.dto.response.TraineeInfoResponseDto;
+import com.project.trainingdiary.dto.request.trainer.AddInBodyInfoRequestDto;
+import com.project.trainingdiary.dto.request.trainer.EditTraineeInfoRequestDto;
+import com.project.trainingdiary.dto.response.trainer.AddInBodyInfoResponseDto;
+import com.project.trainingdiary.dto.response.trainer.EditTraineeInfoResponseDto;
+import com.project.trainingdiary.dto.response.trainer.TraineeInfoResponseDto;
 import com.project.trainingdiary.service.TrainerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,8 +42,7 @@ public class TrainerController {
   public ResponseEntity<TraineeInfoResponseDto> getTraineeInfo(
       @PathVariable Long id
   ) {
-    TraineeInfoResponseDto traineeInfo = trainerService.getTraineeInfo(id);
-    return ResponseEntity.ok(traineeInfo);
+    return ResponseEntity.ok(trainerService.getTraineeInfo(id));
   }
 
   @Operation(
@@ -58,8 +57,7 @@ public class TrainerController {
   public ResponseEntity<EditTraineeInfoResponseDto> editTraineeInfo(
       @RequestBody @Valid EditTraineeInfoRequestDto dto
   ) {
-    EditTraineeInfoResponseDto editTraineeInfo = trainerService.editTraineeInfo(dto);
-    return ResponseEntity.ok(editTraineeInfo);
+    return ResponseEntity.ok(trainerService.editTraineeInfo(dto));
   }
 
   @Operation(
@@ -74,7 +72,6 @@ public class TrainerController {
   public ResponseEntity<AddInBodyInfoResponseDto> addInBodyRecord(
       @RequestBody @Valid AddInBodyInfoRequestDto dto
   ) {
-    AddInBodyInfoResponseDto addInBodyInfo = trainerService.addInBodyRecord(dto);
-    return ResponseEntity.ok(addInBodyInfo);
+    return ResponseEntity.ok(trainerService.addInBodyRecord(dto));
   }
 }

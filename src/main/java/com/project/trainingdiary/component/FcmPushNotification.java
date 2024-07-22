@@ -38,9 +38,9 @@ public class FcmPushNotification {
 
     try {
       String response = FirebaseMessaging.getInstance().send(msg);
-      log.debug("메시지 전송 완료: " + response);
+      log.debug("메시지 전송 완료: {}", response);
     } catch (Exception e) {
-      log.error("메시지 전송 실패: " + e.getMessage());
+      log.error("메시지 전송 실패: {}", e.getMessage());
     }
   }
 }

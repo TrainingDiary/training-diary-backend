@@ -3,8 +3,8 @@ package com.project.trainingdiary.entity;
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.dto.request.WorkoutSessionCreateRequestDto;
-import com.project.trainingdiary.dto.request.WorkoutSessionUpdateRequestDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutSessionCreateRequestDto;
+import com.project.trainingdiary.dto.request.workout.session.WorkoutSessionUpdateRequestDto;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -18,13 +18,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
-@Builder(toBuilder = true)
 @Getter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder(toBuilder = true)
 @Entity(name = "workout_session")
 public class WorkoutSessionEntity extends BaseEntity {
 

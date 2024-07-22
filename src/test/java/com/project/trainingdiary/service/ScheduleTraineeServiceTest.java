@@ -8,28 +8,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.component.FcmPushNotification;
-import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
-import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
-import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.dto.request.schedule.ApplyScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTraineeRequestDto;
+import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTraineeResponseDto;
+import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.impl.PtContractNotExistException;
-import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.impl.ScheduleStartIsPast;
-import com.project.trainingdiary.exception.impl.ScheduleStartTooSoon;
-import com.project.trainingdiary.exception.impl.ScheduleStartWithin1Day;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotReserveAppliedOrReserved;
-import com.project.trainingdiary.model.NotificationType;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartIsPastException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartTooSoonException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartWithin1DayException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
-import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.model.UserPrincipal;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.model.type.NotificationType;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
+import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -188,15 +188,15 @@ class ScheduleTraineeServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(10, 0))
-                    .status(ScheduleStatus.RESERVED)
+                    .status(ScheduleStatusType.RESERVED)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(11, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(12, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build(),
@@ -206,15 +206,15 @@ class ScheduleTraineeServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(20, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(21, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(22, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build()
@@ -235,7 +235,7 @@ class ScheduleTraineeServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
+                .scheduleStatusType(ScheduleStatusType.OPEN)
                 .startAt(currentTime.plusHours(2).withMinute(0).withSecond(0).withNano(0))
                 .trainer(trainer)
                 .build()
@@ -267,7 +267,8 @@ class ScheduleTraineeServiceTest {
     verify(ptContractRepository).save(captorPtContract.capture());
     verify(notificationRepository).save(captorNotification.capture());
     verify(fcmPushNotification).sendPushNotification(captorNotification.getValue());
-    assertEquals(ScheduleStatus.RESERVE_APPLIED, captorSchedule.getValue().getScheduleStatus());
+    assertEquals(
+        ScheduleStatusType.RESERVE_APPLIED, captorSchedule.getValue().getScheduleStatusType());
     assertEquals(11, captorPtContract.getValue().getUsedSession());
     assertEquals(NotificationType.RESERVE_APPLIED,
         captorNotification.getValue().getNotificationType());
@@ -307,7 +308,7 @@ class ScheduleTraineeServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
+                .scheduleStatusType(ScheduleStatusType.OPEN)
                 .startAt(currentTime.plusHours(2).withMinute(0).withSecond(0).withNano(0))
                 .trainer(trainer)
                 .build()
@@ -337,7 +338,7 @@ class ScheduleTraineeServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.RESERVED)
+                .scheduleStatusType(ScheduleStatusType.RESERVED)
                 .startAt(currentTime.plusHours(2).withMinute(0).withSecond(0).withNano(0))
                 .trainer(trainer)
                 .build()
@@ -364,7 +365,7 @@ class ScheduleTraineeServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
+                .scheduleStatusType(ScheduleStatusType.OPEN)
                 .startAt(currentTime.minusHours(2).withMinute(0).withSecond(0).withNano(0))
                 .trainer(trainer)
                 .build()
@@ -372,7 +373,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStartIsPast.class,
+        ScheduleStartIsPastException.class,
         () -> scheduleTraineeService.applySchedule(dto, currentTime)
     );
   }
@@ -391,7 +392,7 @@ class ScheduleTraineeServiceTest {
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
-                .scheduleStatus(ScheduleStatus.OPEN)
+                .scheduleStatusType(ScheduleStatusType.OPEN)
                 .startAt(currentTime.plusHours(1).withMinute(0).withSecond(0).withNano(0))
                 .trainer(trainer)
                 .build()
@@ -399,7 +400,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStartTooSoon.class,
+        ScheduleStartTooSoonException.class,
         () -> scheduleTraineeService.applySchedule(dto, currentTime)
     );
   }
@@ -417,7 +418,7 @@ class ScheduleTraineeServiceTest {
             ScheduleEntity.builder()
                 .id(100L)
                 .startAt(LocalDateTime.of(2024, 7, 16, 9, 0, 0))
-                .scheduleStatus(ScheduleStatus.RESERVED)
+                .scheduleStatusType(ScheduleStatusType.RESERVED)
                 .trainer(trainer)
                 .ptContract(
                     PtContractEntity.builder()
@@ -444,8 +445,8 @@ class ScheduleTraineeServiceTest {
     verify(scheduleRepository).save(scheduleCaptor.capture());
 
     assertEquals(4, ptContractCaptor.getValue().getUsedSession());
-    assertEquals(ScheduleStatus.OPEN, scheduleCaptor.getValue().getScheduleStatus());
-    assertEquals(ScheduleStatus.OPEN, response.getScheduleStatus());
+    assertEquals(ScheduleStatusType.OPEN, scheduleCaptor.getValue().getScheduleStatusType());
+    assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatusType());
   }
 
   @Test
@@ -479,7 +480,7 @@ class ScheduleTraineeServiceTest {
     when(scheduleRepository.findById(100L))
         .thenReturn(Optional.of(ScheduleEntity.builder()
             .id(100L)
-            .scheduleStatus(ScheduleStatus.OPEN)
+            .scheduleStatusType(ScheduleStatusType.OPEN)
             .trainer(trainer)
             .ptContract(
                 PtContractEntity.builder()
@@ -495,7 +496,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveAppliedOrReserved.class,
+        ScheduleStatusNotReserveAppliedOrReservedException.class,
         () -> scheduleTraineeService.cancelSchedule(
             dto,
             LocalDateTime.of(2024, 7, 15, 8, 0, 0)
@@ -514,7 +515,7 @@ class ScheduleTraineeServiceTest {
         .thenReturn(Optional.of(ScheduleEntity.builder()
             .id(100L)
             .startAt(LocalDateTime.of(2024, 7, 16, 7, 0, 0)) // 내일 아침 7시 예약
-            .scheduleStatus(ScheduleStatus.RESERVED)
+            .scheduleStatusType(ScheduleStatusType.RESERVED)
             .trainer(trainer)
             .ptContract(
                 PtContractEntity.builder()
@@ -530,7 +531,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStartWithin1Day.class,
+        ScheduleStartWithin1DayException.class,
         () -> scheduleTraineeService.cancelSchedule(
             dto,
             LocalDateTime.of(2024, 7, 15, 8, 0, 0) // 전날 아침 8시에 취소하려함

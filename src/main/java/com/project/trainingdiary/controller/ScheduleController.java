@@ -1,19 +1,19 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.AcceptScheduleRequestDto;
-import com.project.trainingdiary.dto.request.ApplyScheduleRequestDto;
-import com.project.trainingdiary.dto.request.CancelScheduleByTraineeRequestDto;
-import com.project.trainingdiary.dto.request.CancelScheduleByTrainerRequestDto;
-import com.project.trainingdiary.dto.request.CloseScheduleRequestDto;
-import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
-import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
-import com.project.trainingdiary.dto.request.RejectScheduleRequestDto;
-import com.project.trainingdiary.dto.response.ApplyScheduleResponseDto;
-import com.project.trainingdiary.dto.response.CancelScheduleByTraineeResponseDto;
-import com.project.trainingdiary.dto.response.CancelScheduleByTrainerResponseDto;
-import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
-import com.project.trainingdiary.dto.response.RejectScheduleResponseDto;
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.dto.request.schedule.AcceptScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.ApplyScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTraineeRequestDto;
+import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTrainerRequestDto;
+import com.project.trainingdiary.dto.request.schedule.CloseScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.RegisterScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.RejectScheduleRequestDto;
+import com.project.trainingdiary.dto.response.schedule.ApplyScheduleResponseDto;
+import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTraineeResponseDto;
+import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTrainerResponseDto;
+import com.project.trainingdiary.dto.response.schedule.RegisterScheduleResponseDto;
+import com.project.trainingdiary.dto.response.schedule.RejectScheduleResponseDto;
+import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import com.project.trainingdiary.service.ScheduleOpenCloseService;
 import com.project.trainingdiary.service.ScheduleTraineeService;
 import com.project.trainingdiary.service.ScheduleTrainerService;
@@ -131,9 +131,7 @@ public class ScheduleController {
   public ResponseEntity<ApplyScheduleResponseDto> applySchedule(
       @RequestBody @Valid ApplyScheduleRequestDto dto
   ) {
-    ApplyScheduleResponseDto response = scheduleTraineeService.applySchedule(dto,
-        LocalDateTime.now());
-    return ResponseEntity.ok(response);
+    return ResponseEntity.ok(scheduleTraineeService.applySchedule(dto, LocalDateTime.now()));
   }
 
   @Operation(
@@ -221,8 +219,6 @@ public class ScheduleController {
   public ResponseEntity<CancelScheduleByTraineeResponseDto> cancelScheduleByTrainer(
       @RequestBody @Valid CancelScheduleByTraineeRequestDto dto
   ) {
-    return ResponseEntity.ok(scheduleTraineeService.cancelSchedule(
-        dto, LocalDateTime.now()
-    ));
+    return ResponseEntity.ok(scheduleTraineeService.cancelSchedule(dto, LocalDateTime.now()));
   }
 }

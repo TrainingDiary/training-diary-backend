@@ -12,9 +12,9 @@ import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 
-@Entity(name = "diet")
 @Getter
 @Setter
+@Entity(name = "diet")
 public class DietEntity extends BaseEntity {
 
   @Id

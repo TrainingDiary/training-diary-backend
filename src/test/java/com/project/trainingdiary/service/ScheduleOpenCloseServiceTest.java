@@ -9,24 +9,24 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.project.trainingdiary.dto.request.OpenScheduleRequestDto;
-import com.project.trainingdiary.dto.request.RegisterScheduleRequestDto;
-import com.project.trainingdiary.dto.response.RegisterScheduleResponseDto;
-import com.project.trainingdiary.dto.response.ScheduleResponseDto;
+import com.project.trainingdiary.dto.request.schedule.OpenScheduleRequestDto;
+import com.project.trainingdiary.dto.request.schedule.RegisterScheduleRequestDto;
+import com.project.trainingdiary.dto.response.schedule.RegisterScheduleResponseDto;
+import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.impl.PtContractNotEnoughSession;
-import com.project.trainingdiary.exception.impl.PtContractNotExistException;
-import com.project.trainingdiary.exception.impl.ScheduleAlreadyExistException;
-import com.project.trainingdiary.exception.impl.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.impl.ScheduleStatusNotOpenException;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.schedule.ScheduleAlreadyExistException;
+import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
-import com.project.trainingdiary.model.ScheduleStatus;
 import com.project.trainingdiary.model.UserPrincipal;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
+import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
@@ -183,15 +183,15 @@ class ScheduleOpenCloseServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(10, 0))
-                    .status(ScheduleStatus.RESERVED)
+                    .status(ScheduleStatusType.RESERVED)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(11, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(12, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build(),
@@ -201,15 +201,15 @@ class ScheduleOpenCloseServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(20, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(21, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(22, 0))
-                    .status(ScheduleStatus.OPEN)
+                    .status(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build()
@@ -320,9 +320,9 @@ class ScheduleOpenCloseServiceTest {
     when(scheduleRepository.findAllById(scheduleIds))
         .thenReturn(
             List.of(
-                ScheduleEntity.builder().id(1L).scheduleStatus(ScheduleStatus.OPEN).build(),
-                ScheduleEntity.builder().id(2L).scheduleStatus(ScheduleStatus.OPEN).build(),
-                ScheduleEntity.builder().id(3L).scheduleStatus(ScheduleStatus.OPEN).build()
+                ScheduleEntity.builder().id(1L).scheduleStatusType(ScheduleStatusType.OPEN).build(),
+                ScheduleEntity.builder().id(2L).scheduleStatusType(ScheduleStatusType.OPEN).build(),
+                ScheduleEntity.builder().id(3L).scheduleStatusType(ScheduleStatusType.OPEN).build()
             )
         );
 
@@ -345,8 +345,8 @@ class ScheduleOpenCloseServiceTest {
     when(scheduleRepository.findAllById(scheduleIds))
         .thenReturn(
             List.of(
-                ScheduleEntity.builder().id(1L).scheduleStatus(ScheduleStatus.OPEN).build(),
-                ScheduleEntity.builder().id(3L).scheduleStatus(ScheduleStatus.OPEN).build()
+                ScheduleEntity.builder().id(1L).scheduleStatusType(ScheduleStatusType.OPEN).build(),
+                ScheduleEntity.builder().id(3L).scheduleStatusType(ScheduleStatusType.OPEN).build()
             )
         );
 
@@ -367,9 +367,10 @@ class ScheduleOpenCloseServiceTest {
     when(scheduleRepository.findAllById(scheduleIds))
         .thenReturn(
             List.of(
-                ScheduleEntity.builder().id(1L).scheduleStatus(ScheduleStatus.OPEN).build(),
-                ScheduleEntity.builder().id(2L).scheduleStatus(ScheduleStatus.RESERVED).build(),
-                ScheduleEntity.builder().id(3L).scheduleStatus(ScheduleStatus.OPEN).build()
+                ScheduleEntity.builder().id(1L).scheduleStatusType(ScheduleStatusType.OPEN).build(),
+                ScheduleEntity.builder().id(2L).scheduleStatusType(ScheduleStatusType.RESERVED)
+                    .build(),
+                ScheduleEntity.builder().id(3L).scheduleStatusType(ScheduleStatusType.OPEN).build()
             )
         );
 
@@ -461,7 +462,7 @@ class ScheduleOpenCloseServiceTest {
                 ScheduleEntity.builder()
                     .id(100L)
                     .startAt(LocalDateTime.of(2024, 1, 2, 20, 0))
-                    .scheduleStatus(ScheduleStatus.OPEN)
+                    .scheduleStatusType(ScheduleStatusType.OPEN)
                     .trainer(trainer)
                     .build()
             )
@@ -521,7 +522,7 @@ class ScheduleOpenCloseServiceTest {
                 ScheduleEntity.builder()
                     .id(100L)
                     .startAt(LocalDateTime.of(2024, 1, 2, 20, 0))
-                    .scheduleStatus(ScheduleStatus.RESERVED)
+                    .scheduleStatusType(ScheduleStatusType.RESERVED)
                     .trainer(trainer)
                     .build()
             )
@@ -584,7 +585,7 @@ class ScheduleOpenCloseServiceTest {
 
     //then
     assertThrows(
-        PtContractNotEnoughSession.class,
+        PtContractNotEnoughSessionException.class,
         () -> scheduleOpenCloseService.registerSchedule(dto)
     );
   }

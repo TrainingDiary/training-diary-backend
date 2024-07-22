@@ -6,11 +6,13 @@ import java.time.format.DateTimeFormatter;
 
 public class VerificationCodeGeneratorUtil {
 
+  private static final int LENGTH_OF_CODE = 6;
+
   public static String generateVerificationCode() {
 
     StringBuilder verificationCode = new StringBuilder();
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 1; i <= LENGTH_OF_CODE; i++) {
       verificationCode.append((int) (Math.random() * 10));
     }
     return verificationCode.toString();

@@ -3,8 +3,8 @@ package com.project.trainingdiary.util;
 import static org.imgscalr.Scalr.Method.QUALITY;
 import static org.imgscalr.Scalr.Mode.AUTOMATIC;
 
-import com.project.trainingdiary.exception.impl.FileNoNameException;
-import com.project.trainingdiary.exception.impl.InvalidFileTypeException;
+import com.project.trainingdiary.exception.workout.FileNoNameException;
+import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;

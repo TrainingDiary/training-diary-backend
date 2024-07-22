@@ -1,9 +1,9 @@
 package com.project.trainingdiary.controller;
 
-import com.project.trainingdiary.dto.request.CreatePtContractRequestDto;
-import com.project.trainingdiary.dto.request.TerminatePtContractRequestDto;
-import com.project.trainingdiary.dto.response.CreatePtContractResponseDto;
-import com.project.trainingdiary.dto.response.PtContractResponseDto;
+import com.project.trainingdiary.dto.request.ptcontract.CreatePtContractRequestDto;
+import com.project.trainingdiary.dto.request.ptcontract.TerminatePtContractRequestDto;
+import com.project.trainingdiary.dto.response.ptcontract.CreatePtContractResponseDto;
+import com.project.trainingdiary.dto.response.ptcontract.PtContractResponseDto;
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.service.PtContractService;
 import io.swagger.v3.oas.annotations.Operation;
