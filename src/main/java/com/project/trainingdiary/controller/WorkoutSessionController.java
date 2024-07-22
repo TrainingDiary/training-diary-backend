@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -140,7 +141,7 @@ public class WorkoutSessionController {
       @ApiResponse(responseCode = "415", description = "사진 확장자 타입은 jpeg와 png만 가능", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @PutMapping("/photos")
+  @PutMapping(value = "/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<WorkoutImageResponseDto> uploadWorkoutImage(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("images") List<MultipartFile> images
