@@ -13,6 +13,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
@@ -68,4 +69,7 @@ public class TraineeEntity extends BaseEntity {
   private double targetValue;
 
   private String targetReward;
+
+  @OneToOne(mappedBy = "trainee")
+  private FcmTokenEntity fcmToken;
 }
