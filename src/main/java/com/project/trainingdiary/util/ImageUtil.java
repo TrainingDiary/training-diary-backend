@@ -81,4 +81,14 @@ public class ImageUtil {
     }
     return MediaType.APPLICATION_OCTET_STREAM_VALUE;
   }
+
+  /**
+   * S3에서 파일을 삭제합니다.
+   *
+   * @param fileUrl 삭제할 파일의 URL
+   */
+  public void deleteFileFromS3(String fileUrl) {
+    String fileKey = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+    s3Operations.deleteObject(bucket, fileKey);
+  }
 }

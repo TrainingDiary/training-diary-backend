@@ -429,4 +429,72 @@ public class DietServiceTest {
 
     assertThrows(TraineeNotExistException.class, () -> dietService.getDietDetails(1L));
   }
+
+  @Test
+  @DisplayName("트레이니가 자신의 식단을 성공적으로 삭제")
+  void testDeleteDietSuccess() {
+    setupTraineeAuth();
+
+    DietEntity diet = new DietEntity();
+    diet.setId(1L);
+    diet.setTrainee(trainee);
+
+    when(dietRepository.findByTraineeIdAndId(trainee.getId(), diet.getId())).thenReturn(
+        Optional.of(diet));
+
+    dietService.deleteDiet(diet.getId());
+
+    verify(dietRepository, times(1)).delete(diet);
+  }
+
+  @Test
+  @DisplayName("트레이니가 자신의 식단을 삭제할 수 없음 - 식단 존재하지 않음")
+  void testDeleteDietFailDietNotExist() {
+    setupTraineeAuth();
+
+    when(dietRepository.findByTraineeIdAndId(trainee.getId(), 1L)).thenReturn(Optional.empty());
+
+    assertThrows(DietNotExistException.class, () -> dietService.deleteDiet(1L));
+
+    verify(dietRepository, never()).delete(any());
+  }
+
+  @Test
+  @DisplayName("트레이니가 다른 트레이니의 식단을 삭제할 수 없음")
+  void testDeleteDietFailOtherTrainee() {
+    setupTraineeAuth();
+
+    TraineeEntity otherTrainee = TraineeEntity.builder()
+        .id(20L)
+        .email("othertrainee@example.com")
+        .name("다른 트레이니")
+        .role(UserRoleType.TRAINEE)
+        .build();
+
+    DietEntity diet = new DietEntity();
+    diet.setId(1L);
+    diet.setTrainee(otherTrainee);
+
+    when(dietRepository.findByTraineeIdAndId(otherTrainee.getId(), diet.getId())).thenReturn(
+        Optional.of(diet));
+
+    assertThrows(DietNotExistException.class, () -> dietService.deleteDiet(diet.getId()));
+
+    verify(dietRepository, never()).delete(any());
+  }
+
+  @Test
+  @DisplayName("식단 삭제 실패 - 인증된 사용자가 트레이니가 아닌 경우")
+  void testDeleteDietFailUserNotFound() {
+    Authentication authentication = mock(Authentication.class);
+    lenient().when(authentication.getName()).thenReturn("unknown@example.com");
+
+    SecurityContext securityContext = mock(SecurityContext.class);
+    lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+    SecurityContextHolder.setContext(securityContext);
+
+    assertThrows(TraineeNotExistException.class, () -> dietService.deleteDiet(1L));
+
+    verify(dietRepository, never()).delete(any());
+  }
 }
