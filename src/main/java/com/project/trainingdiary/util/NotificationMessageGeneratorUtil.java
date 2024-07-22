@@ -3,7 +3,7 @@ package com.project.trainingdiary.util;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class NotificationMessageMaker {
+public class NotificationMessageGeneratorUtil {
 
   public static String reserveApplied(String traineeName, LocalDateTime startAt) {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M월 d일 HH:mm");
