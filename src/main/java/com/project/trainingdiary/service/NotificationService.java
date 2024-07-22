@@ -26,11 +26,17 @@ public class NotificationService {
   public Page<NotificationResponseDto> getNotificationList(Pageable pageable) {
     switch (getMyRole()) {
       case TRAINEE -> {
-        return notificationRepository.findByTrainee_Id(getTrainee().getId(), pageable)
+        TraineeEntity trainee = getTrainee();
+        trainee.setUnreadNotification(false);
+        traineeRepository.save(trainee);
+        return notificationRepository.findByTrainee_Id(trainee.getId(), pageable)
             .map(NotificationResponseDto::fromEntity);
       }
       case TRAINER -> {
-        return notificationRepository.findByTrainer_Id(getTrainer().getId(), pageable)
+        TrainerEntity trainer = getTrainer();
+        trainer.setUnreadNotification(false);
+        trainerRepository.save(trainer);
+        return notificationRepository.findByTrainer_Id(trainer.getId(), pageable)
             .map(NotificationResponseDto::fromEntity);
       }
       default -> throw new UserNotFoundException();

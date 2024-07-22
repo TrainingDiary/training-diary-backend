@@ -1,8 +1,10 @@
 package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.response.NotificationResponseDto;
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -63,11 +66,13 @@ class NotificationServiceTest {
   }
 
   private void setupTrainee() {
-    trainee = new TraineeEntity();
-    trainee.setId(10L);
-    trainee.setEmail("trainee@example.com");
-    trainee.setName("김트레이니");
-    trainee.setRole(UserRoleType.TRAINEE);
+    trainee = TraineeEntity.builder()
+        .id(10L)
+        .email("trainee@example.com")
+        .name("김트레이니")
+        .role(UserRoleType.TRAINEE)
+        .unreadNotification(true)
+        .build();
   }
 
   private void setupTrainer() {
@@ -76,6 +81,7 @@ class NotificationServiceTest {
         .email("trainer@example.com")
         .name("이트레이너")
         .role(UserRoleType.TRAINER)
+        .unreadNotification(true)
         .build();
   }
 
@@ -134,6 +140,8 @@ class NotificationServiceTest {
         NotificationEntity.builder()
             .id(100L)
             .note("일정 예약을 수락했습니다.")
+            .toTrainee(true)
+            .toTrainer(false)
             .trainer(trainer)
             .trainee(trainee)
             .eventDate(LocalDate.of(2024, 10, 10))
@@ -145,10 +153,13 @@ class NotificationServiceTest {
     //when
     when(notificationRepository.findByTrainee_Id(trainee.getId(), pageable))
         .thenReturn(response);
+    ArgumentCaptor<TraineeEntity> captor = ArgumentCaptor.forClass(TraineeEntity.class);
     Page<NotificationResponseDto> notificationList = notificationService.getNotificationList(
         pageable);
 
     //then
+    verify(traineeRepository).save(captor.capture());
+    assertFalse(captor.getValue().isUnreadNotification());
     assertEquals(
         "일정 예약을 수락했습니다.",
         notificationList.stream().findFirst().get().getNote()
@@ -165,6 +176,8 @@ class NotificationServiceTest {
         NotificationEntity.builder()
             .id(100L)
             .note("일정 예약을 신청했습니다.")
+            .toTrainer(true)
+            .toTrainee(false)
             .trainer(trainer)
             .trainee(trainee)
             .eventDate(LocalDate.of(2024, 10, 10))
@@ -176,10 +189,13 @@ class NotificationServiceTest {
     //when
     when(notificationRepository.findByTrainer_Id(trainer.getId(), pageable))
         .thenReturn(response);
+    ArgumentCaptor<TrainerEntity> captor = ArgumentCaptor.forClass(TrainerEntity.class);
     Page<NotificationResponseDto> notificationList = notificationService.getNotificationList(
         pageable);
 
     //then
+    verify(trainerRepository).save(captor.capture());
+    assertFalse(captor.getValue().isUnreadNotification());
     assertEquals(
         "일정 예약을 신청했습니다.",
         notificationList.stream().findFirst().get().getNote()

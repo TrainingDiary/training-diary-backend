@@ -46,4 +46,6 @@ public class TrainerEntity extends BaseEntity {
 
   @OneToOne(mappedBy = "trainer")
   private FcmTokenEntity fcmToken;
+
+  private boolean unreadNotification;
 }

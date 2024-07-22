@@ -12,4 +12,5 @@ public class MemberInfoResponseDto {
   private String email;
   private String name;
   private UserRoleType role;
+  private boolean unreadNotification;
 }

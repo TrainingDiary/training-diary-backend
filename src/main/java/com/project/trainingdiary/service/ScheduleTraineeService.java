@@ -96,6 +96,7 @@ public class ScheduleTraineeService {
     );
     notificationRepository.save(notification);
     fcmPushNotification.sendPushNotification(notification);
+    schedule.getTrainer().setUnreadNotification(true);
 
     return new ApplyScheduleResponseDto(schedule.getId(), schedule.getScheduleStatus());
   }
