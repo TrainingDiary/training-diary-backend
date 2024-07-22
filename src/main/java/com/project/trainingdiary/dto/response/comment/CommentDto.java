@@ -1,7 +1,6 @@
 package com.project.trainingdiary.dto.response.comment;
 
 import com.project.trainingdiary.entity.CommentEntity;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;

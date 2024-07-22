@@ -5,7 +5,6 @@ import com.project.trainingdiary.dto.response.diet.DietDetailsInfoResponseDto;
 import com.project.trainingdiary.dto.response.diet.DietImageResponseDto;
 import com.project.trainingdiary.entity.DietEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
-import com.project.trainingdiary.entity.TrainerCommentEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.diet.DietNotExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
@@ -14,14 +13,13 @@ import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.repository.CommentRepository;
 import com.project.trainingdiary.repository.DietRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
-import com.project.trainingdiary.repository.TrainerCommentRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.util.ImageUtil;
 import java.io.IOException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -41,7 +39,7 @@ public class DietService {
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
   private final PtContractRepository ptContractRepository;
-  private final TrainerCommentRepository trainerCommentRepository;
+  private final CommentRepository commentRepository;
 
   private final ImageUtil imageUtil;
 
@@ -165,9 +163,7 @@ public class DietService {
     DietEntity diet = dietRepository.findByTraineeIdAndId(trainee.getId(), id)
         .orElseThrow(DietNotExistException::new);
 
-    List<TrainerCommentEntity> trainerCommentEntities = trainerCommentRepository.findByDietId(id);
-
-    return DietDetailsInfoResponseDto.of(diet, trainerCommentEntities);
+    return DietDetailsInfoResponseDto.of(diet, diet.getComments());
   }
 
   /**
@@ -185,9 +181,7 @@ public class DietService {
 
     hasContractWithTrainee(trainer, diet.getTrainee());
 
-    List<TrainerCommentEntity> trainerCommentEntities = trainerCommentRepository.findByDietId(id);
-
-    return DietDetailsInfoResponseDto.of(diet, trainerCommentEntities);
+    return DietDetailsInfoResponseDto.of(diet, diet.getComments());
   }
 
   /**
