@@ -155,7 +155,9 @@ public class UserService implements UserDetailsService {
    */
   private void sendVerificationCode(String email) {
     String verificationCode = VerificationCodeGeneratorUtil.generateVerificationCode();
-    emailProvider.sendVerificationEmail(email, verificationCode);
+    String expirationTime = VerificationCodeGeneratorUtil.generateExpirationTime();
+
+    emailProvider.sendVerificationEmail(email, verificationCode, expirationTime);
     verificationRepository.save(VerificationEntity.of(email, verificationCode));
   }
 
