@@ -19,11 +19,11 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.schedule.ScheduleStartIsPast;
-import com.project.trainingdiary.exception.schedule.ScheduleStartTooSoon;
-import com.project.trainingdiary.exception.schedule.ScheduleStartWithin1Day;
+import com.project.trainingdiary.exception.schedule.ScheduleStartIsPastException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartTooSoonException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartWithin1DayException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
-import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReserved;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.UserPrincipal;
@@ -373,7 +373,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStartIsPast.class,
+        ScheduleStartIsPastException.class,
         () -> scheduleTraineeService.applySchedule(dto, currentTime)
     );
   }
@@ -400,7 +400,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStartTooSoon.class,
+        ScheduleStartTooSoonException.class,
         () -> scheduleTraineeService.applySchedule(dto, currentTime)
     );
   }
@@ -496,7 +496,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStatusNotReserveAppliedOrReserved.class,
+        ScheduleStatusNotReserveAppliedOrReservedException.class,
         () -> scheduleTraineeService.cancelSchedule(
             dto,
             LocalDateTime.of(2024, 7, 15, 8, 0, 0)
@@ -531,7 +531,7 @@ class ScheduleTraineeServiceTest {
 
     //then
     assertThrows(
-        ScheduleStartWithin1Day.class,
+        ScheduleStartWithin1DayException.class,
         () -> scheduleTraineeService.cancelSchedule(
             dto,
             LocalDateTime.of(2024, 7, 15, 8, 0, 0) // 전날 아침 8시에 취소하려함
