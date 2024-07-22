@@ -9,6 +9,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,4 +34,7 @@ public class DietEntity extends BaseEntity {
   @ManyToOne(fetch = LAZY)
   @JoinColumn(name = "trainee_id")
   private TraineeEntity trainee;
+
+  @OneToMany(mappedBy = "diet", fetch = LAZY)
+  private List<TrainerCommentEntity> comments;
 }
