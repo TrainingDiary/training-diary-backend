@@ -187,12 +187,16 @@ public class DietService {
    * @param id 식단 ID
    * @throws DietNotExistException 식단이 존재하지 않을 위해 예외 발생
    */
+  @Transactional
   public void deleteDiet(Long id) {
 
     TraineeEntity trainee = getAuthenticatedTrainee();
 
     DietEntity diet = dietRepository.findByTraineeIdAndId(trainee.getId(), id)
         .orElseThrow(DietNotExistException::new);
+
+    imageUtil.deleteFileFromS3(diet.getOriginalUrl());
+    imageUtil.deleteFileFromS3(diet.getThumbnailUrl());
 
     dietRepository.delete(diet);
   }
