@@ -14,7 +14,7 @@ public class DietDetailsInfoResponseDto {
   private Long id;
   private String imageUrl;
   private String content;
-  private List<String> trainerComments;
+  private List<TrainerCommentEntity> trainerComments;
   private LocalDateTime createdDate;
 
   public static DietDetailsInfoResponseDto of(DietEntity diet,
@@ -23,7 +23,7 @@ public class DietDetailsInfoResponseDto {
         .id(diet.getId())
         .imageUrl(diet.getOriginalUrl())
         .content(diet.getContent())
-        .trainerComments(trainerComment.stream().map(TrainerCommentEntity::getComment).toList())
+        .trainerComments(trainerComment)
         .createdDate(diet.getCreatedAt())
         .build();
   }
