@@ -36,6 +36,9 @@ public class SecurityConfig {
     http
         .csrf(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
+        .cors(cors -> cors
+            .configurationSource(corsConfigurationSource())
+        )
         .authorizeHttpRequests(authz -> authz
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                 "/swagger-resources/**", "/webjars/**", "/h2-console/**", "api/users/**")
@@ -53,7 +56,7 @@ public class SecurityConfig {
 
     CorsConfiguration configuration = new CorsConfiguration();
     configuration.setAllowedHeaders(List.of("Cache-Control", "Content-Type", "Cookie"));
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
     configuration.setAllowedOrigins(List.of("*"));
     configuration.setAllowCredentials(true);
     configuration.setMaxAge(MAX_AGE_SECS);
