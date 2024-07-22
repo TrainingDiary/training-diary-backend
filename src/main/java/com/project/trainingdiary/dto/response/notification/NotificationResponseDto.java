@@ -1,4 +1,4 @@
-package com.project.trainingdiary.dto.response;
+package com.project.trainingdiary.dto.response.notification;
 
 import com.project.trainingdiary.entity.NotificationEntity;
 import java.time.LocalDate;
