@@ -1,11 +1,11 @@
-package com.project.trainingdiary.dto.response;
+package com.project.trainingdiary.dto.response.trainer;
 
-import com.project.trainingdiary.dto.traineeRecordDto.BodyFatHistoryDto;
-import com.project.trainingdiary.dto.traineeRecordDto.MuscleMassHistoryDto;
-import com.project.trainingdiary.dto.traineeRecordDto.WeightHistoryDto;
+import com.project.trainingdiary.dto.request.trainer.BodyFatHistoryDto;
+import com.project.trainingdiary.dto.request.trainer.MuscleMassHistoryDto;
+import com.project.trainingdiary.dto.request.trainer.WeightHistoryDto;
 import com.project.trainingdiary.entity.TraineeEntity;
-import com.project.trainingdiary.model.GenderType;
-import com.project.trainingdiary.model.TargetType;
+import com.project.trainingdiary.model.type.GenderType;
+import com.project.trainingdiary.model.type.TargetType;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
