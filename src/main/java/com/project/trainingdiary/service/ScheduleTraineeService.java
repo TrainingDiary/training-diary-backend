@@ -12,12 +12,12 @@ import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
-import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLong;
-import com.project.trainingdiary.exception.schedule.ScheduleStartIsPast;
-import com.project.trainingdiary.exception.schedule.ScheduleStartTooSoon;
-import com.project.trainingdiary.exception.schedule.ScheduleStartWithin1Day;
+import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartIsPastException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartTooSoonException;
+import com.project.trainingdiary.exception.schedule.ScheduleStartWithin1DayException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
-import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReserved;
+import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
@@ -66,11 +66,11 @@ public class ScheduleTraineeService {
     }
     // 과거의 일정은 신청 불가
     if (schedule.getStartAt().isBefore(currentTime)) {
-      throw new ScheduleStartIsPast();
+      throw new ScheduleStartIsPastException();
     }
     // 1시간 내로 시작하는 일정은 신청 불가
     if (schedule.getStartAt().isBefore(currentTime.plusHours(1))) {
-      throw new ScheduleStartTooSoon();
+      throw new ScheduleStartTooSoonException();
     }
 
     PtContractEntity ptContract = getPtContract(
@@ -116,13 +116,13 @@ public class ScheduleTraineeService {
         .orElseThrow(ScheduleNotFoundException::new);
 
     if (schedule.getScheduleStatusType().equals(ScheduleStatusType.OPEN)) {
-      throw new ScheduleStatusNotReserveAppliedOrReserved();
+      throw new ScheduleStatusNotReserveAppliedOrReservedException();
     }
 
     // 트레이니는 PT 시작 24시간 전이고, RESERVED로 확정된 일정은 취소할 수 없음
     if (schedule.getStartAt().minusDays(1).isBefore(now) &&
         (schedule.getScheduleStatusType().equals(ScheduleStatusType.RESERVED))) {
-      throw new ScheduleStartWithin1Day();
+      throw new ScheduleStartWithin1DayException();
     }
 
     // PtContract의 사용을 먼저 취소하고, schedule cancel을 해야함. cancel을 먼저하면 ptContract가 null로 변함
@@ -148,7 +148,7 @@ public class ScheduleTraineeService {
     LocalDateTime endDateTime = LocalDateTime.of(endDate, END_TIME);
 
     if (Duration.between(startDateTime, endDateTime).toDays() > MAX_QUERY_DAYS) {
-      throw new ScheduleRangeTooLong();
+      throw new ScheduleRangeTooLongException();
     }
 
     return scheduleRepository.getScheduleListByTrainee(
