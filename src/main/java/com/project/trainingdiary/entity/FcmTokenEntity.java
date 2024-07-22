@@ -15,12 +15,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@Builder
 @Getter
 @Setter
 @ToString(exclude = {"trainer", "trainee"})
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity(name = "fcm_token")
 public class FcmTokenEntity extends BaseEntity {
 

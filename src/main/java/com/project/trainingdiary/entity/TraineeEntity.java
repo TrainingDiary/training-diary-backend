@@ -4,9 +4,9 @@ import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.model.GenderType;
-import com.project.trainingdiary.model.TargetType;
-import com.project.trainingdiary.model.UserRoleType;
+import com.project.trainingdiary.model.type.GenderType;
+import com.project.trainingdiary.model.type.TargetType;
+import com.project.trainingdiary.model.type.UserRoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -14,7 +14,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import java.time.LocalDate;
@@ -25,13 +24,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "trainee")
+@Builder
+@Entity(name = "trainee")
 public class TraineeEntity extends BaseEntity {
 
   @Id

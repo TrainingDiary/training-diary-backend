@@ -4,7 +4,7 @@ import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.model.NotificationType;
+import com.project.trainingdiary.model.type.NotificationType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -19,12 +19,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-@Builder
 @Getter
 @Setter
 @ToString(exclude = {"trainer", "trainee"})
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity(name = "notification")
 public class NotificationEntity extends BaseEntity {
 

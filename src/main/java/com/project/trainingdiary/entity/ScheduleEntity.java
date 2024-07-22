@@ -3,7 +3,7 @@ package com.project.trainingdiary.entity;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.model.ScheduleStatus;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -18,11 +18,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Builder
 @Getter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity(name = "schedule")
 public class ScheduleEntity {
 
@@ -38,7 +38,7 @@ public class ScheduleEntity {
 
   @Enumerated(value = STRING)
   @Column(nullable = false)
-  private ScheduleStatus scheduleStatus;
+  private ScheduleStatusType scheduleStatusType;
 
   @ManyToOne
   @JoinColumn(name = "pt_contract_id")
@@ -49,21 +49,21 @@ public class ScheduleEntity {
   private TrainerEntity trainer;
 
   public void apply(PtContractEntity ptContract) {
-    this.scheduleStatus = ScheduleStatus.RESERVE_APPLIED;
+    this.scheduleStatusType = ScheduleStatusType.RESERVE_APPLIED;
     this.ptContract = ptContract;
   }
 
   public void acceptReserveApplied() {
-    this.scheduleStatus = ScheduleStatus.RESERVED;
+    this.scheduleStatusType = ScheduleStatusType.RESERVED;
   }
 
   public void rejectReserveApplied() {
-    this.scheduleStatus = ScheduleStatus.OPEN;
+    this.scheduleStatusType = ScheduleStatusType.OPEN;
     this.ptContract = null;
   }
 
   public void cancel() {
-    this.scheduleStatus = ScheduleStatus.OPEN;
+    this.scheduleStatusType = ScheduleStatusType.OPEN;
     this.ptContract = null;
   }
 
@@ -76,7 +76,7 @@ public class ScheduleEntity {
         .startAt(startAt)
         .endAt(endAt)
         .trainer(trainer)
-        .scheduleStatus(ScheduleStatus.OPEN)
+        .scheduleStatusType(ScheduleStatusType.OPEN)
         .build();
   }
 }

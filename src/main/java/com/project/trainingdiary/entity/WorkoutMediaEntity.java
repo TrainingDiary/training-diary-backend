@@ -3,7 +3,7 @@ package com.project.trainingdiary.entity;
 import static jakarta.persistence.EnumType.STRING;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
-import com.project.trainingdiary.model.WorkoutMediaType;
+import com.project.trainingdiary.model.type.WorkoutMediaType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
@@ -14,11 +14,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Builder
 @Getter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity(name = "workout_media")
 public class WorkoutMediaEntity extends BaseEntity {
 
