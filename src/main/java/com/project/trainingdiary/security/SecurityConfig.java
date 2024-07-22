@@ -3,6 +3,8 @@ package com.project.trainingdiary.security;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +17,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -24,27 +29,43 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+  private static final long MAX_AGE_SECS = 3600L;
+
   @Bean
   public SecurityFilterChain configure(HttpSecurity http) throws Exception {
 
     http
         .csrf(AbstractHttpConfigurer::disable)
-//        .sessionManagement(e -> e.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .httpBasic(AbstractHttpConfigurer::disable)
+        .cors(cors -> cors
+            .configurationSource(corsConfigurationSource())
+        )
         .authorizeHttpRequests(authz -> authz
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
                 "/swagger-resources/**", "/webjars/**", "/h2-console/**", "api/users/**")
-            .permitAll() // Swagger UI
-            .requestMatchers("/api/pt-contracts/**").authenticated()
-            .requestMatchers("/api/schedules/**").authenticated()
-            .requestMatchers("/api/workout-types/**").authenticated()
-            .requestMatchers("api/workout-sessions", "api/workout-sessions/**").authenticated()
+            .permitAll()
             .anyRequest().authenticated())
         .exceptionHandling(exception -> exception
             .authenticationEntryPoint(new FailedAuthenticationEntryPoint()))
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
+  }
+
+  @Bean
+  protected CorsConfigurationSource corsConfigurationSource() {
+
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedHeaders(List.of("Cache-Control", "Content-Type", "Cookie"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+    configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
+    configuration.setAllowCredentials(true);
+    configuration.setMaxAge(MAX_AGE_SECS);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+
+    return source;
   }
 }
 
