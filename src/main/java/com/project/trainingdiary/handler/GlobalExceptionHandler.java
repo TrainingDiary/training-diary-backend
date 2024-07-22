@@ -3,11 +3,12 @@ package com.project.trainingdiary.handler;
 import com.project.trainingdiary.exception.ErrorResponse;
 import com.project.trainingdiary.exception.GlobalException;
 import jakarta.servlet.http.HttpServletRequest;
-import java.nio.file.AccessDeniedException;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,6 +16,26 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  /**
+   * 프로젝트에서 생성한 예외를 처리합니다.
+   *
+   * @param e Exception
+   * @return ResponseEntity<ErrorResponse> - 전역 예외 응답
+   */
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ErrorResponse> handleExceptionClass(
+      Exception e, HttpServletRequest request) {
+
+    log.error(
+        "Exception, {}, {}, {}",
+        HttpStatus.INTERNAL_SERVER_ERROR,e.getMessage(), request.getRequestURI()
+    );
+
+    ErrorResponse response = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage());
+    return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
 
   /**
    * 프로젝트에서 생성한 예외를 처리합니다.
@@ -79,7 +100,7 @@ public class GlobalExceptionHandler {
    * @return ResponseEntity<ErrorResponse> - 잘못된 JSON 요청 오류 응답
    */
   @ExceptionHandler(HttpMessageNotReadableException.class)
-  public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+  public ResponseEntity<ErrorResponse> handleExceptionClass(
       HttpMessageNotReadableException e, HttpServletRequest request) {
 
     log.error(
