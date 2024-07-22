@@ -142,9 +142,11 @@ class WorkoutSessionServiceTest {
     trainee = TraineeEntity.builder().id(10L).role(TRAINEE).build();
     ptContract = PtContractEntity.builder().id(100L).trainer(trainer).trainee(trainee).build();
     workoutType = WorkoutTypeEntity.builder().id(1000L).name("workout1").targetMuscle("target1")
-        .remarks("remark1").trainer(trainer).build();
+        .remarks("remark1").trainer(trainer).weightInputRequired(true).repInputRequired(true)
+        .setInputRequired(true).timeInputRequired(false).speedInputRequired(false).build();
     workout = WorkoutEntity.builder().id(100000L).workoutTypeName(workoutType.getName())
-        .remarks(workoutType.getRemarks()).targetMuscle(workoutType.getTargetMuscle()).build();
+        .remarks(workoutType.getRemarks()).targetMuscle(workoutType.getTargetMuscle())
+        .weight(15).rep(10).sets(5).time(0).speed(0).build();
     workoutSession = WorkoutSessionEntity.builder().id(10000L).sessionDate(LocalDate.now())
         .sessionNumber(1).ptContract(ptContract).workouts(new ArrayList<>())
         .workoutMedia(new ArrayList<>()).build();

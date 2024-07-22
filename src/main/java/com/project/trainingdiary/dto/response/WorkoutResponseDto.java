@@ -20,11 +20,11 @@ public class WorkoutResponseDto {
   private String targetMuscle;
   private String remarks;
 
-  private int weight;
-  private int rep;
-  private int sets;
-  private int time;
-  private int speed;
+  private Integer weight;
+  private Integer rep;
+  private Integer sets;
+  private Integer time;
+  private Integer speed;
 
   public static WorkoutResponseDto fromEntity(WorkoutEntity workout) {
 
