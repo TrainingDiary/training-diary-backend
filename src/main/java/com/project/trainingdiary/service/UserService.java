@@ -380,6 +380,7 @@ public class UserService implements UserDetailsService {
               .email(trainer.getEmail())
               .name(trainer.getName())
               .role(trainer.getRole())
+              .unreadNotification(trainer.isUnreadNotification())
               .build())
           .orElseThrow(TrainerNotFoundException::new);
     }
@@ -389,6 +390,7 @@ public class UserService implements UserDetailsService {
             .email(trainee.getEmail())
             .name(trainee.getName())
             .role(trainee.getRole())
+            .unreadNotification(trainee.isUnreadNotification())
             .build())
         .orElseThrow(TrainerNotFoundException::new);
   }

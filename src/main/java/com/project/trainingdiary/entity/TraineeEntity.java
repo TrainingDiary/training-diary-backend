@@ -72,4 +72,6 @@ public class TraineeEntity extends BaseEntity {
 
   @OneToOne(mappedBy = "trainee")
   private FcmTokenEntity fcmToken;
+
+  private boolean unreadNotification;
 }
