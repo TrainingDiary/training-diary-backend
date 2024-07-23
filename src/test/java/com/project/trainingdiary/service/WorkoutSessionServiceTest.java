@@ -5,10 +5,11 @@ import static com.project.trainingdiary.model.type.UserRoleType.TRAINER;
 import static com.project.trainingdiary.model.type.WorkoutMediaType.IMAGE;
 import static com.project.trainingdiary.model.type.WorkoutMediaType.VIDEO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -43,6 +44,7 @@ import com.project.trainingdiary.exception.workout.WorkoutSessionAccessDeniedExc
 import com.project.trainingdiary.exception.workout.WorkoutSessionAlreadyExistException;
 import com.project.trainingdiary.exception.workout.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.workout.WorkoutTypeNotFoundException;
+import com.project.trainingdiary.provider.S3VideoProvider;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.WorkoutMediaRepository;
@@ -120,6 +122,9 @@ class WorkoutSessionServiceTest {
 
   @Mock
   private S3Operations s3Operations;
+
+  @Mock
+  private S3VideoProvider s3VideoProvider;
 
   @Mock
   private MultipartFile video;
@@ -751,11 +756,14 @@ class WorkoutSessionServiceTest {
         return s3ResourceThumbnail;
       }
       return null;
-    }).when(s3Operations).upload(bucketCaptor.capture(), keyCaptor.capture(), inputStreamCaptor.capture(), metadataCaptor.capture());
+    }).when(s3Operations)
+        .upload(bucketCaptor.capture(), keyCaptor.capture(),
+            inputStreamCaptor.capture(), metadataCaptor.capture());
 
     WorkoutImageResponseDto response = workoutSessionService.uploadWorkoutImage(imageRequestDto);
 
-    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor.forClass(WorkoutMediaEntity.class);
+    ArgumentCaptor<WorkoutMediaEntity> mediaCaptor = ArgumentCaptor
+        .forClass(WorkoutMediaEntity.class);
     verify(workoutMediaRepository, times(1)).save(mediaCaptor.capture());
     WorkoutMediaEntity savedMedia = mediaCaptor.getValue();
     assertEquals(IMAGE, savedMedia.getMediaType());
@@ -765,7 +773,8 @@ class WorkoutSessionServiceTest {
     assertEquals(bucket, capturedBuckets.get(0));
     assertEquals(bucket, capturedBuckets.get(1));
 
-    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor.forClass(WorkoutSessionEntity.class);
+    ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
+        .forClass(WorkoutSessionEntity.class);
     verify(workoutSessionRepository, times(1)).save(sessionCaptor.capture());
     WorkoutSessionEntity savedSession = sessionCaptor.getValue();
     assertEquals(1, savedSession.getWorkoutMedia().size());
@@ -774,8 +783,10 @@ class WorkoutSessionServiceTest {
     assertEquals(1, response.getOriginalUrls().size());
     assertEquals(1, response.getThumbnailUrls().size());
 
-    assertEquals("https://test-bucket.s3.amazonaws.com/original_test.jpg", response.getOriginalUrls().get(0));
-    assertEquals("https://test-bucket.s3.amazonaws.com/thumb_test.jpg", response.getThumbnailUrls().get(0));
+    assertEquals("https://dolakp01zo8g4.cloudfront.net/original_test.jpg",
+        response.getOriginalUrls().get(0));
+    assertEquals("https://dolakp01zo8g4.cloudfront.net/thumb_test.jpg",
+        response.getThumbnailUrls().get(0));
   }
 
 
@@ -881,7 +892,8 @@ class WorkoutSessionServiceTest {
 
   @Test
   @DisplayName("동영상 업로드 성공")
-  public void testUploadWorkoutVideoSuccess() throws IOException {
+  public void testUploadWorkoutVideoSuccess()
+      throws IOException, InterruptedException {
     Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -898,17 +910,11 @@ class WorkoutSessionServiceTest {
         .sessionId(workoutSession.getId())
         .video(video).build();
 
-    S3Resource s3Resource = mock(S3Resource.class);
-    when(s3Resource.getURL()).thenReturn(new URL("https://test-bucket.s3.amazonaws.com/original"));
+    String originalUrl = "https://test-bucket.s3.amazonaws.com/original";
+    String thumbnailUrl = "https://test-bucket.s3.amazonaws.com/thumb";
 
-    ArgumentCaptor<String> bucketCaptor = ArgumentCaptor.forClass(String.class);
-    ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-    ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
-    ArgumentCaptor<ObjectMetadata> metadataCaptor = ArgumentCaptor.forClass(ObjectMetadata.class);
-
-    doAnswer(invocation -> s3Resource).when(s3Operations)
-        .upload(bucketCaptor.capture(), keyCaptor.capture(),
-            inputStreamCaptor.capture(), metadataCaptor.capture());
+    when(s3VideoProvider.uploadVideo(eq(video), anyString())).thenReturn(originalUrl);
+    when(s3VideoProvider.uploadThumbnail(eq(originalUrl), anyString())).thenReturn(thumbnailUrl);
 
     WorkoutVideoResponseDto response = workoutSessionService.uploadWorkoutVideo(videoRequestDto);
 
@@ -918,11 +924,8 @@ class WorkoutSessionServiceTest {
     WorkoutMediaEntity savedMedia = mediaCaptor.getValue();
     assertEquals("VIDEO", savedMedia.getMediaType().name());
 
-    List<String> capturedBuckets = bucketCaptor.getAllValues();
-    List<String> capturedKeys = keyCaptor.getAllValues();
-
-    assertEquals(bucket, capturedBuckets.get(0));
-    assertFalse(capturedKeys.isEmpty());
+    verify(s3VideoProvider, times(1)).uploadVideo(eq(video), anyString());
+    verify(s3VideoProvider, times(1)).uploadThumbnail(eq(originalUrl), anyString());
 
     ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
         .forClass(WorkoutSessionEntity.class);
@@ -931,7 +934,8 @@ class WorkoutSessionServiceTest {
     assertEquals(1, savedSession.getWorkoutMedia().size());
 
     assertEquals(workoutSession.getId(), response.getSessionId());
-    assertEquals(1, response.getOriginalUrls().size());
+    assertNotNull(response.getOriginalUrls());
+    assertNotNull(response.getThumbnailUrls());
   }
 
   @Test

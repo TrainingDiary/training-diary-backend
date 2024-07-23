@@ -22,8 +22,8 @@ spring:
   jwt:
     secret:
 
-  spring:
-    cloud:
-      aws:
-        s3:
-          bucket: test-bucket
+
+  cloud:
+    aws:
+      s3:
+        bucket: test-bucket
