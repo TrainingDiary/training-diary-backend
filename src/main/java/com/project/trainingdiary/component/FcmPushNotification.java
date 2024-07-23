@@ -40,6 +40,7 @@ public class FcmPushNotification {
       String response = FirebaseMessaging.getInstance().send(msg);
       log.debug("메시지 전송 완료: {}", response);
     } catch (Exception e) {
+      // Requested entity was not found. 에러가 나오면 token 이 더 이상 유효하지 않아서 일 수 있음
       log.error("메시지 전송 실패: {}", e.getMessage());
     }
   }

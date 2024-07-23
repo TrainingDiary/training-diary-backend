@@ -5,14 +5,14 @@ import java.time.format.DateTimeFormatter;
 
 public class NotificationMessageGeneratorUtil {
 
+  private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M월 d일 HH:mm");
+
   /**
    * 트레이니의 일정 신청
    */
   public static String reserveApplied(String traineeName, LocalDateTime startAt) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M월 d일 HH:mm");
-
     return String.format(
-        "%s님이 %s에 일정 예약을 신청했습니다.",
+        "%s님이 %s 일정 예약을 신청했습니다.",
         traineeName,
         startAt.format(formatter)
     );
@@ -25,7 +25,7 @@ public class NotificationMessageGeneratorUtil {
     return String.format(
         "%s님이 %s 일정을 취소했습니다.",
         traineeName,
-        startAt
+        startAt.format(formatter)
     );
   }
 
@@ -36,7 +36,7 @@ public class NotificationMessageGeneratorUtil {
     return String.format(
         "%s님이 %s 일정을 수락했습니다.",
         trainerName,
-        startAt
+        startAt.format(formatter)
     );
   }
 
@@ -47,7 +47,7 @@ public class NotificationMessageGeneratorUtil {
     return String.format(
         "%s님이 %s 일정을 거절했습니다.",
         trainerName,
-        startAt
+        startAt.format(formatter)
     );
   }
 
@@ -58,7 +58,7 @@ public class NotificationMessageGeneratorUtil {
     return String.format(
         "%s님이 %s 일정을 취소했습니다.",
         trainerName,
-        startAt
+        startAt.format(formatter)
     );
   }
 
