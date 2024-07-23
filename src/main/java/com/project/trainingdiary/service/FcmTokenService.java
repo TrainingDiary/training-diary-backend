@@ -13,38 +13,51 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class FcmTokenService {
 
-  private final FcmTokenRepository fcmTokenRepository;
   private final TrainerRepository trainerRepository;
   private final TraineeRepository traineeRepository;
+  private final FcmTokenRepository fcmTokenEntityRepository;
 
+  @Transactional
   public void registerFcmToken(RegisterFcmTokenRequestDto dto) {
     String email = getMyEmail();
-    FcmTokenEntity fcmToken;
 
     switch (getMyRole()) {
       case TRAINER -> {
         TrainerEntity trainer = trainerRepository.findByEmail(email)
             .orElseThrow(UserNotFoundException::new);
-        fcmToken = fcmTokenRepository.findByTrainerId(trainer.getId())
-            .orElse(FcmTokenEntity.of(dto.getToken(), trainer, null));
-        fcmToken.setToken(dto.getToken());
+        if (trainer.getFcmToken() != null) {
+          fcmTokenEntityRepository.delete(trainer.getFcmToken());
+        }
+
+        FcmTokenEntity token = FcmTokenEntity.builder()
+            .token(dto.getToken())
+            .build();
+        trainer.setFcmToken(token);
+        fcmTokenEntityRepository.save(token);
+        trainerRepository.save(trainer);
       }
       case TRAINEE -> {
         TraineeEntity trainee = traineeRepository.findByEmail(email)
             .orElseThrow(UserNotFoundException::new);
-        fcmToken = fcmTokenRepository.findByTraineeId(trainee.getId())
-            .orElse(FcmTokenEntity.of(dto.getToken(), null, trainee));
-        fcmToken.setToken(dto.getToken());
+        if (trainee.getFcmToken() != null) {
+          fcmTokenEntityRepository.delete(trainee.getFcmToken());
+        }
+
+        FcmTokenEntity token = FcmTokenEntity.builder()
+            .token(dto.getToken())
+            .build();
+        trainee.setFcmToken(token);
+        fcmTokenEntityRepository.save(token);
+        traineeRepository.save(trainee);
       }
       default -> throw new UserNotFoundException();
     }
-
-    fcmTokenRepository.save(fcmToken);
   }
 
   private String getMyEmail() {

@@ -38,6 +38,7 @@ public class DietService {
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
   private final PtContractRepository ptContractRepository;
+
   private final ImageUtil imageUtil;
 
   /**
@@ -157,10 +158,10 @@ public class DietService {
   private DietDetailsInfoResponseDto getDietDetailsInfoForTrainee(Long id) {
     TraineeEntity trainee = getAuthenticatedTrainee();
 
-    DietEntity diet = dietRepository.findByTraineeIdAndId(trainee.getId(), id)
+    DietEntity diet = dietRepository.findByTraineeIdAndIdWithCommentsAndTrainer(trainee.getId(), id)
         .orElseThrow(DietNotExistException::new);
 
-    return DietDetailsInfoResponseDto.of(diet);
+    return DietDetailsInfoResponseDto.of(diet, diet.getComments());
   }
 
   /**
@@ -173,12 +174,12 @@ public class DietService {
   private DietDetailsInfoResponseDto getDietDetailsInfoForTrainer(Long id) {
     TrainerEntity trainer = getAuthenticatedTrainer();
 
-    DietEntity diet = dietRepository.findById(id)
+    DietEntity diet = dietRepository.findByIdWithCommentsAndTrainer(id)
         .orElseThrow(DietNotExistException::new);
 
     hasContractWithTrainee(trainer, diet.getTrainee());
 
-    return DietDetailsInfoResponseDto.of(diet);
+    return DietDetailsInfoResponseDto.of(diet, diet.getComments());
   }
 
   /**

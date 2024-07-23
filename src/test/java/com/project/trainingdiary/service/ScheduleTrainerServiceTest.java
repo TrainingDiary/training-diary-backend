@@ -156,15 +156,15 @@ class ScheduleTrainerServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(10, 0))
-                    .status(ScheduleStatusType.RESERVED)
+                    .scheduleStatus(ScheduleStatusType.RESERVED)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(11, 0))
-                    .status(ScheduleStatusType.OPEN)
+                    .scheduleStatus(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(12, 0))
-                    .status(ScheduleStatusType.OPEN)
+                    .scheduleStatus(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build(),
@@ -174,15 +174,15 @@ class ScheduleTrainerServiceTest {
             .details(List.of(
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(20, 0))
-                    .status(ScheduleStatusType.OPEN)
+                    .scheduleStatus(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(21, 0))
-                    .status(ScheduleStatusType.OPEN)
+                    .scheduleStatus(ScheduleStatusType.OPEN)
                     .build(),
                 ScheduleResponseDetail.builder()
                     .startTime(LocalTime.of(22, 0))
-                    .status(ScheduleStatusType.OPEN)
+                    .scheduleStatus(ScheduleStatusType.OPEN)
                     .build()
             ))
             .build()
@@ -466,7 +466,7 @@ class ScheduleTrainerServiceTest {
 
     assertEquals(4, ptContractCaptor.getValue().getUsedSession());
     assertEquals(ScheduleStatusType.OPEN, scheduleCaptor.getValue().getScheduleStatusType());
-    assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatusType());
+    assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatus());
   }
 
   @Test

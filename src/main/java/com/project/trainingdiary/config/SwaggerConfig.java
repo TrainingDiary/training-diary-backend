@@ -12,12 +12,12 @@ import io.swagger.v3.oas.annotations.servers.Server;
     ),
     servers = {
         @Server(
-            url = "http://localhost:8080",
-            description = "Local Server"
+            url = "https://api.training-diary.co.kr",
+            description = "Stage Server"
         ),
         @Server(
-            url = "https://trainingdiaryapi.marcel-dev.com",
-            description = "Stage Server"
+            url = "http://localhost:8080",
+            description = "Local Server"
         )
     }
 )
