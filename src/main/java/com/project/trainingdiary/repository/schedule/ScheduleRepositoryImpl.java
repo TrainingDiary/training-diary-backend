@@ -107,14 +107,14 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
                   .traineeId(getTraineeId(tuple, includeOnlyThisTraineeId))
                   .traineeName(getTraineeName(tuple, includeOnlyThisTraineeId))
                   .startTime(LocalTime.parse(Objects.requireNonNull(tuple.get(startTime()))))
-                  .status(tuple.get(scheduleEntity.scheduleStatusType))
+                  .scheduleStatus(tuple.get(scheduleEntity.scheduleStatusType))
                   .build()
               )
               .collect(Collectors.toList());
 
           // 해당 날짜에 예약이 존재하는지 검사
           boolean existReserved = details.stream()
-              .anyMatch(detail -> detail.getStatus() == ScheduleStatusType.RESERVED);
+              .anyMatch(detail -> detail.getScheduleStatus() == ScheduleStatusType.RESERVED);
 
           return ScheduleResponseDto.builder()
               .startDate(date)

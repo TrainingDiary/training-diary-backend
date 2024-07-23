@@ -11,5 +11,5 @@ import lombok.Setter;
 public class CancelScheduleByTraineeResponseDto {
 
   private long scheduleId;
-  private ScheduleStatusType scheduleStatusType;
+  private ScheduleStatusType scheduleStatus;
 }
