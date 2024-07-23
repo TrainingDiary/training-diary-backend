@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-public class WorkoutVideoUtil {
+public class VideoUtil {
 
   private static final String VIDEO_QUALITY = "1280:720";
   private static final String VIDEO_THUMBNAIL = "360:-1";
