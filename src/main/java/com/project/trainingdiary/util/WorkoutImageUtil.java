@@ -64,7 +64,9 @@ public class WorkoutImageUtil {
 
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
       ImageIO.write(resizedImage, extension, byteArrayOutputStream);
-      try (InputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
+      try (InputStream inputStream = new ByteArrayInputStream(
+          byteArrayOutputStream.toByteArray())
+      ) {
         String contentType = "image/" + extension;
         S3Resource s3Resource = uploadImage(s3Operations, bucket, key, inputStream, contentType);
         return s3Resource.getURL().toExternalForm();
@@ -80,7 +82,11 @@ public class WorkoutImageUtil {
     return filename;
   }
 
-  public static UploadResult uploadImageAndThumbnail(S3Operations s3Operations, String bucket, MultipartFile file) throws IOException {
+  public static UploadResult uploadImageAndThumbnail(
+      S3Operations s3Operations,
+      String bucket,
+      MultipartFile file
+  ) throws IOException {
     if (!isValidImageType(file)) {
       throw new InvalidFileTypeException();
     }
@@ -91,11 +97,13 @@ public class WorkoutImageUtil {
 
     // 썸네일 생성 및 업로드
     BufferedImage thumbnailImage = resizeImageToWidth(originalImage, THUMBNAIL_SIZE);
-    String thumbnailUrl = uploadResizedImage(s3Operations, bucket, file, "thumb_" + key, thumbnailImage);
+    String thumbnailUrl = uploadResizedImage(
+        s3Operations, bucket, file, "thumb_" + key, thumbnailImage);
 
     // 원본 크기 조정 이미지 생성 및 업로드
     BufferedImage resizedOriginalImage = resizeImageToWidth(originalImage, ORIGINAL_SIZE);
-    String originalUrl = uploadResizedImage(s3Operations, bucket, file, "original_" + key, resizedOriginalImage);
+    String originalUrl = uploadResizedImage(
+        s3Operations, bucket, file, "original_" + key, resizedOriginalImage);
 
     return new UploadResult(originalUrl, thumbnailUrl);
   }
