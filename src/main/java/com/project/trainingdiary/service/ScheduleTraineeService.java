@@ -11,6 +11,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
@@ -78,6 +79,10 @@ public class ScheduleTraineeService {
         schedule.getTrainer().getId(),
         trainee.getId()
     );
+    // 남은 세션이 없는 경우 신청 불가
+    if (ptContract.getRemainingSession() <= 0) {
+      throw new PtContractNotEnoughSessionException();
+    }
 
     // 일정 신청
     ptContract.useSession();
