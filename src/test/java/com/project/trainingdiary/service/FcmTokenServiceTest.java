@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.notification.RegisterFcmTokenRequestDto;
+import com.project.trainingdiary.entity.FcmTokenEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.model.UserPrincipal;
@@ -129,11 +130,14 @@ class FcmTokenServiceTest {
     when(traineeRepository.findByEmail(trainee.getEmail()))
         .thenReturn(Optional.of(trainee));
     fcmTokenService.registerFcmToken(dto);
-    ArgumentCaptor<TraineeEntity> captor = ArgumentCaptor.forClass(TraineeEntity.class);
+    ArgumentCaptor<TraineeEntity> captorTrainee = ArgumentCaptor.forClass(TraineeEntity.class);
+    ArgumentCaptor<FcmTokenEntity> captorFcmToken = ArgumentCaptor.forClass(FcmTokenEntity.class);
 
     //then
-    verify(traineeRepository).save(captor.capture());
-    assertEquals("token1", captor.getValue().getFcmToken().getToken());
+    verify(traineeRepository).save(captorTrainee.capture());
+    verify(fcmTokenRepository).save(captorFcmToken.capture());
+    assertEquals("token1", captorTrainee.getValue().getFcmToken().getToken());
+    assertEquals("token1", captorFcmToken.getValue().getToken());
   }
 
   @Test
@@ -148,10 +152,12 @@ class FcmTokenServiceTest {
     when(trainerRepository.findByEmail(trainer.getEmail()))
         .thenReturn(Optional.of(trainer));
     fcmTokenService.registerFcmToken(dto);
-    ArgumentCaptor<TrainerEntity> captor = ArgumentCaptor.forClass(TrainerEntity.class);
+    ArgumentCaptor<TrainerEntity> captorTrainer = ArgumentCaptor.forClass(TrainerEntity.class);
+    ArgumentCaptor<FcmTokenEntity> captorFcmToken = ArgumentCaptor.forClass(FcmTokenEntity.class);
 
     //then
-    verify(trainerRepository).save(captor.capture());
-    assertEquals("token2", captor.getValue().getFcmToken().getToken());
+    verify(trainerRepository).save(captorTrainer.capture());
+    assertEquals("token2", captorTrainer.getValue().getFcmToken().getToken());
+    assertEquals("token2", captorFcmToken.getValue().getToken());
   }
 }
