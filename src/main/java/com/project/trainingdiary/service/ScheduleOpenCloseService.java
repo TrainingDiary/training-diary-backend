@@ -1,10 +1,15 @@
 package com.project.trainingdiary.service;
 
+import static com.project.trainingdiary.model.type.NotificationType.RESERVE_REGISTER;
+
+import com.project.trainingdiary.component.FcmPushNotification;
 import com.project.trainingdiary.dto.request.schedule.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.response.schedule.RegisterScheduleResponseDto;
+import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
+import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
@@ -14,12 +19,17 @@ import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.ScheduleDateTimes;
+import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
+import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
+import com.project.trainingdiary.util.NotificationMessageGeneratorUtil;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +43,8 @@ public class ScheduleOpenCloseService {
   private final ScheduleRepository scheduleRepository;
   private final PtContractRepository ptContractRepository;
   private final TrainerRepository trainerRepository;
+  private final NotificationRepository notificationRepository;
+  private final FcmPushNotification fcmPushNotification;
 
   /**
    * 일정이 예약 가능하도록 열기
@@ -112,9 +124,19 @@ public class ScheduleOpenCloseService {
         existingStartTimes, ptContract
     );
 
+    // 일정 등록
     scheduleRepository.saveAll(newSchedules);
     scheduleRepository.saveAll(existingSchedules);
     ptContractRepository.save(ptContract);
+
+    // 알림 저장 및 전송
+    saveNotification(
+        RESERVE_REGISTER,
+        trainer,
+        ptContract.getTrainee(),
+        getFirstDateOf(newSchedules, existingSchedules),
+        newSchedules.size() + existingSchedules.size()
+    );
 
     return new RegisterScheduleResponseDto(
         newSchedules.size() + existingSchedules.size(),
@@ -192,5 +214,53 @@ public class ScheduleOpenCloseService {
     return times.stream()
         .max(LocalDateTime::compareTo)
         .orElseThrow(ScheduleInvalidException::new);
+  }
+
+  private LocalDateTime getFirstDateOf(List<ScheduleEntity> newSchedules,
+      List<ScheduleEntity> existingSchedules) {
+    PriorityQueue<LocalDateTime> queue = new PriorityQueue<>(Comparator.naturalOrder());
+    newSchedules.stream()
+        .map(ScheduleEntity::getStartAt)
+        .forEach(queue::add);
+    existingSchedules.stream()
+        .map(ScheduleEntity::getStartAt)
+        .forEach(queue::add);
+    return queue.peek();
+  }
+
+  /**
+   * 알림 엔티티를 만들어서 저장함
+   */
+  private NotificationEntity saveNotification(
+      NotificationType notificationType,
+      TrainerEntity trainer,
+      TraineeEntity trainee,
+      LocalDateTime startAt,
+      Integer ptSessionCount
+  ) {
+    String message = "";
+    if (notificationType == RESERVE_REGISTER) {
+      message = NotificationMessageGeneratorUtil.reserveRegister(trainee.getName(), ptSessionCount);
+    }
+    NotificationEntity notification = NotificationEntity.of(
+        notificationType, true, false,
+        trainer, trainee, message,
+        startAt.toLocalDate()
+    );
+    notificationRepository.save(notification);
+    return notification;
+  }
+
+  /**
+   * 알림을 전송하고, 전송한 사용자에게 미확인 알림 표시를 함
+   */
+  private void sendNotification(NotificationEntity notification) {
+    fcmPushNotification.sendPushNotification(notification);
+    if (notification.isToTrainee()) {
+      notification.getTrainee().setUnreadNotification(true);
+    }
+    if (notification.isToTrainer()) {
+      notification.getTrainer().setUnreadNotification(true);
+    }
   }
 }

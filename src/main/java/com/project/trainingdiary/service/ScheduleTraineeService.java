@@ -10,6 +10,7 @@ import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
+import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
@@ -78,25 +79,20 @@ public class ScheduleTraineeService {
         trainee.getId()
     );
 
+    // 일정 신청
     ptContract.useSession();
     ptContractRepository.save(ptContract);
-
     schedule.apply(ptContract);
     scheduleRepository.save(schedule);
 
-    // 알림 저장하기
-    NotificationEntity notification = NotificationEntity.of(
+    // 알림 저장 및 전송
+    NotificationEntity notification = saveNotification(
         NotificationType.RESERVE_APPLIED,
-        true,
-        false,
         schedule.getTrainer(),
         trainee,
-        NotificationMessageGeneratorUtil.reserveApplied(trainee.getName(), schedule.getStartAt()),
-        schedule.getStartAt().toLocalDate()
+        schedule.getStartAt()
     );
-    notificationRepository.save(notification);
-    fcmPushNotification.sendPushNotification(notification);
-    schedule.getTrainer().setUnreadNotification(true);
+    sendNotification(notification);
 
     return new ApplyScheduleResponseDto(schedule.getId(), schedule.getScheduleStatusType());
   }
@@ -125,13 +121,22 @@ public class ScheduleTraineeService {
       throw new ScheduleStartWithin1DayException();
     }
 
+    // 트레이니의 일정 취소
     // PtContract의 사용을 먼저 취소하고, schedule cancel을 해야함. cancel을 먼저하면 ptContract가 null로 변함
     PtContractEntity ptContract = schedule.getPtContract();
     ptContract.restoreSession();
     ptContractRepository.save(ptContract);
-
     schedule.cancel();
     scheduleRepository.save(schedule);
+
+    // 알림 저장 및 전송
+    NotificationEntity notification = saveNotification(
+        NotificationType.RESERVE_CANCEL_BY_TRAINEE,
+        schedule.getTrainer(),
+        trainee,
+        schedule.getStartAt()
+    );
+    sendNotification(notification);
 
     return new CancelScheduleByTraineeResponseDto(schedule.getId(),
         schedule.getScheduleStatusType());
@@ -174,5 +179,48 @@ public class ScheduleTraineeService {
   private PtContractEntity getPtContract(Long traineeId) {
     return ptContractRepository.findByTraineeId(traineeId)
         .orElseThrow(PtContractNotExistException::new);
+  }
+
+  /**
+   * 알림 엔티티를 만들어서 저장함
+   */
+  private NotificationEntity saveNotification(
+      NotificationType notificationType,
+      TrainerEntity trainer,
+      TraineeEntity trainee,
+      LocalDateTime startAt
+  ) {
+    String message = "";
+    switch (notificationType) {
+      case RESERVE_APPLIED:
+        message = NotificationMessageGeneratorUtil.reserveApplied(trainee.getName(), startAt);
+        break;
+      case RESERVE_CANCEL_BY_TRAINEE:
+        message = NotificationMessageGeneratorUtil.reserveCancelByTrainee(trainee.getName(),
+            startAt);
+        break;
+      default:
+        break;
+    }
+    NotificationEntity notification = NotificationEntity.of(
+        notificationType, true, false,
+        trainer, trainee, message,
+        startAt.toLocalDate()
+    );
+    notificationRepository.save(notification);
+    return notification;
+  }
+
+  /**
+   * 알림을 전송하고, 전송한 사용자에게 미확인 알림 표시를 함
+   */
+  private void sendNotification(NotificationEntity notification) {
+    fcmPushNotification.sendPushNotification(notification);
+    if (notification.isToTrainee()) {
+      notification.getTrainee().setUnreadNotification(true);
+    }
+    if (notification.isToTrainer()) {
+      notification.getTrainer().setUnreadNotification(true);
+    }
   }
 }
