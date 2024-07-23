@@ -20,5 +20,5 @@ public class ScheduleResponseDetail {
   private String trainerName;
   private Long traineeId;
   private String traineeName;
-  private ScheduleStatusType status;
+  private ScheduleStatusType scheduleStatus;
 }
