@@ -6,12 +6,14 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.repository.FcmTokenRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,7 +21,9 @@ public class FcmTokenService {
 
   private final TrainerRepository trainerRepository;
   private final TraineeRepository traineeRepository;
+  private final FcmTokenRepository fcmTokenEntityRepository;
 
+  @Transactional
   public void registerFcmToken(RegisterFcmTokenRequestDto dto) {
     String email = getMyEmail();
 
@@ -30,7 +34,12 @@ public class FcmTokenService {
         FcmTokenEntity token = FcmTokenEntity.builder()
             .token(dto.getToken())
             .build();
+
+        if (trainer.getFcmToken() != null) {
+          fcmTokenEntityRepository.delete(trainer.getFcmToken());
+        }
         trainer.setFcmToken(token);
+        fcmTokenEntityRepository.save(token);
         trainerRepository.save(trainer);
       }
       case TRAINEE -> {
@@ -40,6 +49,7 @@ public class FcmTokenService {
             .token(dto.getToken())
             .build();
         trainee.setFcmToken(token);
+        fcmTokenEntityRepository.save(token);
         traineeRepository.save(trainee);
       }
       default -> throw new UserNotFoundException();

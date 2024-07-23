@@ -11,6 +11,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.repository.FcmTokenRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import java.util.Collection;
@@ -41,6 +42,9 @@ class FcmTokenServiceTest {
 
   @Mock
   private TraineeRepository traineeRepository;
+
+  @Mock
+  private FcmTokenRepository fcmTokenRepository;
 
   @InjectMocks
   private FcmTokenService fcmTokenService;
