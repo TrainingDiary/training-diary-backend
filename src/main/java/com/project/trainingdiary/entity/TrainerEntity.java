@@ -1,6 +1,7 @@
 package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import com.project.trainingdiary.model.type.UserRoleType;
@@ -42,7 +43,7 @@ public class TrainerEntity extends BaseEntity {
   @Column(nullable = false)
   private UserRoleType role;
 
-  @OneToOne(mappedBy = "trainer")
+  @OneToOne(fetch = LAZY)
   private FcmTokenEntity fcmToken;
 
   private boolean unreadNotification;

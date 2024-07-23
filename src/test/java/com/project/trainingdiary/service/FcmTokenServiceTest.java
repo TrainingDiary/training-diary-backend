@@ -60,11 +60,12 @@ class FcmTokenServiceTest {
   }
 
   private void setupTrainee() {
-    trainee = new TraineeEntity();
-    trainee.setId(10L);
-    trainee.setEmail("trainee@example.com");
-    trainee.setName("김트레이니");
-    trainee.setRole(UserRoleType.TRAINEE);
+    trainee = TraineeEntity.builder()
+        .id(10L)
+        .email("trainee@example.com")
+        .name("김트레이니")
+        .role(UserRoleType.TRAINEE)
+        .build();
   }
 
   private void setupTrainer() {
@@ -130,11 +131,14 @@ class FcmTokenServiceTest {
     when(traineeRepository.findByEmail(trainee.getEmail()))
         .thenReturn(Optional.of(trainee));
     fcmTokenService.registerFcmToken(dto);
-    ArgumentCaptor<FcmTokenEntity> captor = ArgumentCaptor.forClass(FcmTokenEntity.class);
+    ArgumentCaptor<TraineeEntity> captorTrainee = ArgumentCaptor.forClass(TraineeEntity.class);
+    ArgumentCaptor<FcmTokenEntity> captorFcmToken = ArgumentCaptor.forClass(FcmTokenEntity.class);
 
     //then
-    verify(fcmTokenRepository).save(captor.capture());
-    assertEquals("token1", captor.getValue().getToken());
+    verify(traineeRepository).save(captorTrainee.capture());
+    verify(fcmTokenRepository).save(captorFcmToken.capture());
+    assertEquals("token1", captorTrainee.getValue().getFcmToken().getToken());
+    assertEquals("token1", captorFcmToken.getValue().getToken());
   }
 
   @Test
@@ -149,10 +153,13 @@ class FcmTokenServiceTest {
     when(trainerRepository.findByEmail(trainer.getEmail()))
         .thenReturn(Optional.of(trainer));
     fcmTokenService.registerFcmToken(dto);
-    ArgumentCaptor<FcmTokenEntity> captor = ArgumentCaptor.forClass(FcmTokenEntity.class);
+    ArgumentCaptor<TrainerEntity> captorTrainer = ArgumentCaptor.forClass(TrainerEntity.class);
+    ArgumentCaptor<FcmTokenEntity> captorFcmToken = ArgumentCaptor.forClass(FcmTokenEntity.class);
 
     //then
-    verify(fcmTokenRepository).save(captor.capture());
-    assertEquals("token2", captor.getValue().getToken());
+    verify(trainerRepository).save(captorTrainer.capture());
+    verify(fcmTokenRepository).save(captorFcmToken.capture());
+    assertEquals("token2", captorTrainer.getValue().getFcmToken().getToken());
+    assertEquals("token2", captorFcmToken.getValue().getToken());
   }
 }

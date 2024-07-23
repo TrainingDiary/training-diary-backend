@@ -2,6 +2,7 @@ package com.project.trainingdiary.entity;
 
 import static jakarta.persistence.CascadeType.ALL;
 import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.FetchType.LAZY;
 import static jakarta.persistence.GenerationType.IDENTITY;
 
 import com.project.trainingdiary.model.type.GenderType;
@@ -68,7 +69,7 @@ public class TraineeEntity extends BaseEntity {
 
   private String targetReward;
 
-  @OneToOne(mappedBy = "trainee")
+  @OneToOne(fetch = LAZY)
   private FcmTokenEntity fcmToken;
 
   private boolean unreadNotification;
