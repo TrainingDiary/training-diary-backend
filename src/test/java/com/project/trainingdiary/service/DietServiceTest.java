@@ -37,6 +37,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -331,8 +332,10 @@ public class DietServiceTest {
     diet.setContent("Test content");
     diet.setOriginalUrl("https://test-bucket.s3.amazonaws.com/original.jpg");
     diet.setComments(Collections.emptyList());
+    diet.setCreatedAt(LocalDateTime.now());
 
-    when(dietRepository.findByTraineeIdAndId(trainee.getId(), diet.getId())).thenReturn(
+    when(dietRepository.findByTraineeIdAndIdWithCommentsAndTrainer(trainee.getId(),
+        diet.getId())).thenReturn(
         Optional.of(diet));
 
     DietDetailsInfoResponseDto response = dietService.getDietDetails(diet.getId());
@@ -391,8 +394,9 @@ public class DietServiceTest {
     diet.setContent("Test content");
     diet.setOriginalUrl("https://test-bucket.s3.amazonaws.com/original.jpg");
     diet.setComments(Collections.emptyList());
+    diet.setCreatedAt(LocalDateTime.now());
 
-    when(dietRepository.findById(diet.getId())).thenReturn(Optional.of(diet));
+    when(dietRepository.findByIdWithCommentsAndTrainer(diet.getId())).thenReturn(Optional.of(diet));
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), traineeToView.getId()))
         .thenReturn(Optional.of(new PtContractEntity()));
 
@@ -416,7 +420,7 @@ public class DietServiceTest {
     diet.setId(1L);
     diet.setTrainee(traineeToView);
 
-    when(dietRepository.findById(diet.getId())).thenReturn(Optional.of(diet));
+    when(dietRepository.findByIdWithCommentsAndTrainer(diet.getId())).thenReturn(Optional.of(diet));
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), traineeToView.getId()))
         .thenReturn(Optional.empty());
 
