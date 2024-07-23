@@ -36,11 +36,15 @@ import com.project.trainingdiary.repository.WorkoutSessionRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.util.WorkoutImageUtil;
+import com.project.trainingdiary.util.WorkoutVideoUtil;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -72,6 +76,9 @@ public class WorkoutSessionService {
 
   @Value("${spring.cloud.aws.s3.bucket}")
   private String bucket;
+
+  @Value("${spring.cloud.aws.s3.temp-bucket}")
+  private String tempBucket;
 
   /**
    * 트레이너의 운동 일지 생성
@@ -249,7 +256,8 @@ public class WorkoutSessionService {
    * 운동 일지 - 동영상 업로드
    */
   @Transactional
-  public WorkoutVideoResponseDto uploadWorkoutVideo(WorkoutVideoRequestDto dto) throws IOException {
+  public WorkoutVideoResponseDto uploadWorkoutVideo(WorkoutVideoRequestDto dto)
+      throws IOException, InterruptedException {
     // 현재 로그인 되어있는 트레이너 본인의 엔티티
     TrainerEntity trainer = getTrainer();
     MultipartFile video = dto.getVideo();
@@ -274,26 +282,58 @@ public class WorkoutSessionService {
 
     // 확장자 추출
     String extension = WorkoutImageUtil.getExtension(WorkoutImageUtil.checkFileNameExist(video));
-    // key (동영상 이름) 설정 후 업로드
-    String originalKey = UUID.randomUUID() + "." + extension;
-    S3Resource s3Resource;
+
+    String uuid = UUID.randomUUID().toString();
+    String tempKey = "temp_" + uuid + "." + extension;
+    String thumbnailKey = "thumb_" + uuid + ".png";
+    String originalKey = "original_" + uuid + "." + extension;
+
+    // 임시 버킷에 영상 업로드
+    S3Resource tempS3Resource;
     try (InputStream inputStream = video.getInputStream()) {
-      s3Resource = s3Operations.upload(bucket, originalKey, inputStream,
+      tempS3Resource = s3Operations.upload(tempBucket, tempKey, inputStream,
           ObjectMetadata.builder().contentType(video.getContentType()).build());
     }
-    String originalUrl = s3Resource.getURL().toExternalForm();
+    String tempVideoUrl = tempS3Resource.getURL().toExternalForm();
+
+    // 비디오 인코딩
+    S3Resource videoS3Resource;
+    try (InputStream inputStream = new URL(tempVideoUrl).openStream();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+      WorkoutVideoUtil.encodeVideo(inputStream, outputStream);
+      try (InputStream encodedInputStream = new ByteArrayInputStream(outputStream.toByteArray())) {
+        videoS3Resource = s3Operations.upload(bucket, originalKey, encodedInputStream,
+            ObjectMetadata.builder().contentType(video.getContentType()).build());
+      }
+    }
+    String originalUrl = videoS3Resource.getURL().toExternalForm();
+
+    // 썸네일 생성 및 업로드
+    S3Resource thumbS3Resource;
+    try (InputStream inputStream = new URL(originalUrl).openStream();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+      WorkoutVideoUtil.generateThumbnail(inputStream, outputStream);
+      try (InputStream thumbnailInputStream = new ByteArrayInputStream(
+          outputStream.toByteArray())) {
+        thumbS3Resource = s3Operations.upload(bucket, thumbnailKey, thumbnailInputStream,
+            ObjectMetadata.builder().contentType("image/png").build());
+      }
+    }
+    String thumbnailUrl = thumbS3Resource.getURL().toExternalForm();
 
     WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder()
-        .originalUrl(originalUrl).mediaType(VIDEO).build();
+        .originalUrl(originalUrl).thumbnailUrl(thumbnailUrl).mediaType(VIDEO).build();
     workoutMediaRepository.save(workoutMedia);
-
     workoutSession.getWorkoutMedia().add(workoutMedia);
     workoutSessionRepository.save(workoutSession);
 
-    List<WorkoutMediaEntity> videoUrlList = workoutSession.getWorkoutMedia().stream()
+    // 임시 버킷 및 로컬 파일 삭제
+    s3Operations.deleteObject(tempBucket, tempKey);
+
+    List<WorkoutMediaEntity> workoutMedias = workoutSession.getWorkoutMedia().stream()
         .filter(media -> media.getMediaType() == VIDEO).toList();
 
-    return WorkoutVideoResponseDto.fromEntity(videoUrlList, dto.getSessionId());
+    return WorkoutVideoResponseDto.fromEntity(workoutMedias, dto.getSessionId());
   }
 
   /**
