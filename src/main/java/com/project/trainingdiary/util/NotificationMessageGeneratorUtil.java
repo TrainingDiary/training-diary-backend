@@ -72,4 +72,15 @@ public class NotificationMessageGeneratorUtil {
         count
     );
   }
+
+  /**
+   * 트레이너의 트레이니 등록
+   */
+  public static String createPtContract(String trainerName, String traineeName) {
+    return String.format(
+        "%s님이 %s을 트레이니로 등록했습니다.",
+        trainerName,
+        traineeName
+    );
+  }
 }

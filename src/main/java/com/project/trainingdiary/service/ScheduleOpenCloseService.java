@@ -130,13 +130,14 @@ public class ScheduleOpenCloseService {
     ptContractRepository.save(ptContract);
 
     // 알림 저장 및 전송
-    saveNotification(
+    NotificationEntity notification = saveNotification(
         RESERVE_REGISTER,
         trainer,
         ptContract.getTrainee(),
         getFirstDateOf(newSchedules, existingSchedules),
         newSchedules.size() + existingSchedules.size()
     );
+    sendNotification(notification);
 
     return new RegisterScheduleResponseDto(
         newSchedules.size() + existingSchedules.size(),
