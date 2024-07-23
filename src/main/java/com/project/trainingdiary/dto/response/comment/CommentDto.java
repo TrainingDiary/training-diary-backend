@@ -1,7 +1,7 @@
 package com.project.trainingdiary.dto.response.comment;
 
 import com.project.trainingdiary.entity.CommentEntity;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -11,13 +11,13 @@ public class CommentDto {
 
   private Long id;
   private String comment;
-  private LocalDateTime createdDate;
+  private LocalDate createdDate;
 
   public static CommentDto fromEntity(CommentEntity comment) {
     return CommentDto.builder()
         .id(comment.getId())
         .comment(comment.getComment())
-        .createdDate(comment.getCreatedAt())
+        .createdDate(comment.getCreatedAt().toLocalDate())
         .build();
   }
 }

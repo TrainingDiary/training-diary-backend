@@ -25,13 +25,21 @@ public class CommentService {
   private final DietRepository dietRepository;
   private final TrainerRepository trainerRepository;
 
+  /**
+   * 트레이너가 새로운 댓글을 추가합니다.
+   *
+   * @param dto 댓글 추가 요청 DTO
+   * @throws DietNotExistException    주어진 식단 ID에 해당하는 식단이 없을 경우 예외 발생
+   * @throws TrainerNotFoundException 인증된 트레이너가 존재하지 않을 경우 예외 발생
+   */
   public void addTrainerComment(AddCommentRequestDto dto) {
-
     TrainerEntity trainer = getAuthenticatedTrainer();
 
+    // 주어진 식단 ID에 해당하는 식단 조회 및 예외 처리
     DietEntity diet = dietRepository.findById(dto.getId())
         .orElseThrow(DietNotExistException::new);
 
+    // 새로운 댓글 엔티티 생성 및 저장
     CommentEntity comment = CommentEntity.builder()
         .comment(dto.getComment())
         .trainer(trainer)
@@ -41,19 +49,51 @@ public class CommentService {
     commentRepository.save(comment);
   }
 
-
+  /**
+   * 트레이너가 기존 댓글을 수정합니다.
+   *
+   * @param dto 댓글 수정 요청 DTO
+   * @throws CommentNotExistException     주어진 댓글 ID에 해당하는 댓글이 없을 경우 예외 발생
+   * @throws UnauthorizedCommentException 댓글 작성자가 현재 인증된 트레이너가 아닐 경우 예외 발생
+   * @throws TrainerNotFoundException     인증된 트레이너가 존재하지 않을 경우 예외 발생
+   */
   public void updateTrainerComment(UpdateCommentRequestDto dto) {
     TrainerEntity trainer = getAuthenticatedTrainer();
 
+    // 주어진 댓글 ID에 해당하는 댓글 조회 및 예외 처리
     CommentEntity comment = commentRepository.findById(dto.getId())
         .orElseThrow(CommentNotExistException::new);
 
+    // 댓글 작성자가 현재 인증된 트레이너가 아닐 경우 예외 발생
     if (!comment.getTrainer().equals(trainer)) {
       throw new UnauthorizedCommentException();
     }
 
     comment.setComment(dto.getComment());
     commentRepository.save(comment);
+  }
+
+  /**
+   * 트레이너가 댓글을 삭제합니다.
+   *
+   * @param id 삭제할 댓글 ID
+   * @throws CommentNotExistException     주어진 댓글 ID에 해당하는 댓글이 없을 경우 예외 발생
+   * @throws UnauthorizedCommentException 댓글 작성자가 현재 인증된 트레이너가 아닐 경우 예외 발생
+   * @throws TrainerNotFoundException     인증된 트레이너가 존재하지 않을 경우 예외 발생
+   */
+  public void deleteTrainerComment(Long id) {
+    TrainerEntity trainer = getAuthenticatedTrainer();
+
+    // 주어진 댓글 ID에 해당하는 댓글 조회 및 예외 처리
+    CommentEntity comment = commentRepository.findById(id)
+        .orElseThrow(CommentNotExistException::new);
+
+    // 댓글 작성자가 현재 인증된 트레이너가 아닐 경우 예외 발생
+    if (!comment.getTrainer().equals(trainer)) {
+      throw new UnauthorizedCommentException();
+    }
+
+    commentRepository.delete(comment);
   }
 
   /**

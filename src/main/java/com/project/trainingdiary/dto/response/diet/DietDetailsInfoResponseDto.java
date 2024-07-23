@@ -3,7 +3,7 @@ package com.project.trainingdiary.dto.response.diet;
 import com.project.trainingdiary.dto.response.comment.CommentDto;
 import com.project.trainingdiary.entity.CommentEntity;
 import com.project.trainingdiary.entity.DietEntity;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,12 +16,13 @@ public class DietDetailsInfoResponseDto {
   private String imageUrl;
   private String content;
   private List<CommentDto> comments;
-  private LocalDateTime createdDate;
+  private LocalDate createdDate;
 
   public static DietDetailsInfoResponseDto of(DietEntity diet,
       List<CommentEntity> comments) {
 
-    List<CommentDto> commentDtos = comments.stream()
+    List<CommentDto> commentDto = comments.stream()
+        .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
         .map(CommentDto::fromEntity)
         .toList();
 
@@ -29,8 +30,8 @@ public class DietDetailsInfoResponseDto {
         .id(diet.getId())
         .imageUrl(diet.getOriginalUrl())
         .content(diet.getContent())
-        .comments(commentDtos)
-        .createdDate(diet.getCreatedAt())
+        .comments(commentDto)
+        .createdDate(diet.getCreatedAt().toLocalDate())
         .build();
   }
 }

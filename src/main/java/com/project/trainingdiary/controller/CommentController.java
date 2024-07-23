@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -58,10 +59,19 @@ public class CommentController {
     return ResponseEntity.ok().build();
   }
 
-  @PostMapping("{id}")
+  @Operation(
+      summary = "식단 댓글 삭제",
+      description = "식단 댓글를 삭제합니다."
+  )
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+  })
+  @PreAuthorize("hasRole('TRAINER')")
+  @DeleteMapping("{id}")
   public ResponseEntity<Void> deleteTrainerComment(
       @PathVariable Long id
   ) {
+    commentService.deleteTrainerComment(id);
     return ResponseEntity.ok().build();
   }
 }

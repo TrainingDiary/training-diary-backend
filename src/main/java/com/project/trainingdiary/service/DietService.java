@@ -13,7 +13,6 @@ import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import com.project.trainingdiary.model.type.UserRoleType;
-import com.project.trainingdiary.repository.CommentRepository;
 import com.project.trainingdiary.repository.DietRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -39,7 +38,6 @@ public class DietService {
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
   private final PtContractRepository ptContractRepository;
-  private final CommentRepository commentRepository;
 
   private final ImageUtil imageUtil;
 
@@ -160,7 +158,7 @@ public class DietService {
   private DietDetailsInfoResponseDto getDietDetailsInfoForTrainee(Long id) {
     TraineeEntity trainee = getAuthenticatedTrainee();
 
-    DietEntity diet = dietRepository.findByTraineeIdAndId(trainee.getId(), id)
+    DietEntity diet = dietRepository.findByTraineeIdAndIdWithCommentsAndTrainer(trainee.getId(), id)
         .orElseThrow(DietNotExistException::new);
 
     return DietDetailsInfoResponseDto.of(diet, diet.getComments());
@@ -176,7 +174,7 @@ public class DietService {
   private DietDetailsInfoResponseDto getDietDetailsInfoForTrainer(Long id) {
     TrainerEntity trainer = getAuthenticatedTrainer();
 
-    DietEntity diet = dietRepository.findById(id)
+    DietEntity diet = dietRepository.findByIdWithCommentsAndTrainer(id)
         .orElseThrow(DietNotExistException::new);
 
     hasContractWithTrainee(trainer, diet.getTrainee());
