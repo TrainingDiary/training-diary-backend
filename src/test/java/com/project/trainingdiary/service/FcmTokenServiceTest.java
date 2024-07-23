@@ -60,11 +60,12 @@ class FcmTokenServiceTest {
   }
 
   private void setupTrainee() {
-    trainee = new TraineeEntity();
-    trainee.setId(10L);
-    trainee.setEmail("trainee@example.com");
-    trainee.setName("김트레이니");
-    trainee.setRole(UserRoleType.TRAINEE);
+    trainee = TraineeEntity.builder()
+        .id(10L)
+        .email("trainee@example.com")
+        .name("김트레이니")
+        .role(UserRoleType.TRAINEE)
+        .build();
   }
 
   private void setupTrainer() {
@@ -157,6 +158,7 @@ class FcmTokenServiceTest {
 
     //then
     verify(trainerRepository).save(captorTrainer.capture());
+    verify(fcmTokenRepository).save(captorFcmToken.capture());
     assertEquals("token2", captorTrainer.getValue().getFcmToken().getToken());
     assertEquals("token2", captorFcmToken.getValue().getToken());
   }

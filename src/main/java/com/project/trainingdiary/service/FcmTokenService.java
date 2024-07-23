@@ -31,13 +31,13 @@ public class FcmTokenService {
       case TRAINER -> {
         TrainerEntity trainer = trainerRepository.findByEmail(email)
             .orElseThrow(UserNotFoundException::new);
-        FcmTokenEntity token = FcmTokenEntity.builder()
-            .token(dto.getToken())
-            .build();
-
         if (trainer.getFcmToken() != null) {
           fcmTokenEntityRepository.delete(trainer.getFcmToken());
         }
+
+        FcmTokenEntity token = FcmTokenEntity.builder()
+            .token(dto.getToken())
+            .build();
         trainer.setFcmToken(token);
         fcmTokenEntityRepository.save(token);
         trainerRepository.save(trainer);
@@ -45,6 +45,10 @@ public class FcmTokenService {
       case TRAINEE -> {
         TraineeEntity trainee = traineeRepository.findByEmail(email)
             .orElseThrow(UserNotFoundException::new);
+        if (trainee.getFcmToken() != null) {
+          fcmTokenEntityRepository.delete(trainee.getFcmToken());
+        }
+
         FcmTokenEntity token = FcmTokenEntity.builder()
             .token(dto.getToken())
             .build();
