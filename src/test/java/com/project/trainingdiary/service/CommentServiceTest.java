@@ -8,9 +8,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.dto.request.comment.AddCommentRequestDto;
+import com.project.trainingdiary.dto.request.comment.UpdateCommentRequestDto;
 import com.project.trainingdiary.entity.CommentEntity;
 import com.project.trainingdiary.entity.DietEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.comment.CommentNotExistException;
+import com.project.trainingdiary.exception.comment.UnauthorizedCommentException;
 import com.project.trainingdiary.exception.diet.DietNotExistException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.model.UserPrincipal;
@@ -52,11 +55,13 @@ class CommentServiceTest {
 
   private TrainerEntity trainer;
   private DietEntity diet;
+  private CommentEntity comment;
 
   @BeforeEach
   public void setup() {
     setupTrainer();
     setupDiet();
+    setupComment();
   }
 
   private void setupTrainer() {
@@ -71,6 +76,20 @@ class CommentServiceTest {
     diet = DietEntity.builder()
         .id(1L)
         .content("Sample Diet")
+        .build();
+  }
+
+  private void setupComment() {
+    DietEntity diet = DietEntity.builder()
+        .id(1L)
+        .content("Sample Diet")
+        .build();
+
+    comment = CommentEntity.builder()
+        .id(1L)
+        .comment("Initial Comment")
+        .trainer(trainer)
+        .diet(diet)
         .build();
   }
 
@@ -98,11 +117,11 @@ class CommentServiceTest {
     // given
     setupTrainerAuth();
     AddCommentRequestDto dto = new AddCommentRequestDto();
-    dto.setDietId(diet.getId());
+    dto.setId(diet.getId());
     dto.setComment("Great job!");
 
     // when
-    when(dietRepository.findById(dto.getDietId())).thenReturn(Optional.of(diet));
+    when(dietRepository.findById(dto.getId())).thenReturn(Optional.of(diet));
     ArgumentCaptor<CommentEntity> captor = ArgumentCaptor.forClass(CommentEntity.class);
 
     // execute
@@ -122,11 +141,11 @@ class CommentServiceTest {
     // given
     setupTrainerAuth();
     AddCommentRequestDto dto = new AddCommentRequestDto();
-    dto.setDietId(99L);  // Non-existent diet ID
+    dto.setId(99L);  // Non-existent diet ID
     dto.setComment("Great job!");
 
     // when
-    when(dietRepository.findById(dto.getDietId())).thenReturn(Optional.empty());
+    when(dietRepository.findById(dto.getId())).thenReturn(Optional.empty());
 
     // then
     assertThrows(DietNotExistException.class, () -> commentService.addTrainerComment(dto));
@@ -143,7 +162,7 @@ class CommentServiceTest {
     SecurityContextHolder.setContext(securityContext);
 
     AddCommentRequestDto dto = new AddCommentRequestDto();
-    dto.setDietId(diet.getId());
+    dto.setId(diet.getId());
     dto.setComment("Great job!");
 
     // when
@@ -151,5 +170,72 @@ class CommentServiceTest {
 
     // then
     assertThrows(TrainerNotFoundException.class, () -> commentService.addTrainerComment(dto));
+  }
+
+  @Test
+  @DisplayName("트레이너 댓글 업데이트 - 성공")
+  void updateTrainerComment_Success() {
+    // given
+    setupTrainerAuth();
+    UpdateCommentRequestDto dto = new UpdateCommentRequestDto();
+    dto.setId(comment.getId());
+    dto.setComment("Updated Comment");
+
+    // when
+    when(commentRepository.findById(dto.getId())).thenReturn(Optional.of(comment));
+    ArgumentCaptor<CommentEntity> captor = ArgumentCaptor.forClass(CommentEntity.class);
+
+    // execute
+    commentService.updateTrainerComment(dto);
+
+    // then
+    verify(commentRepository).save(captor.capture());
+    CommentEntity updatedComment = captor.getValue();
+    assertEquals(dto.getComment(), updatedComment.getComment());
+  }
+
+  @Test
+  @DisplayName("트레이너 댓글 업데이트 - 실패(존재하지 않는 댓글)")
+  void updateTrainerComment_Fail_CommentNotExist() {
+    // given
+    setupTrainerAuth();
+    UpdateCommentRequestDto dto = new UpdateCommentRequestDto();
+    dto.setId(99L);  // Non-existent comment ID
+    dto.setComment("Updated Comment");
+
+    // when
+    when(commentRepository.findById(dto.getId())).thenReturn(Optional.empty());
+
+    // then
+    assertThrows(CommentNotExistException.class, () -> commentService.updateTrainerComment(dto));
+  }
+
+  @Test
+  @DisplayName("트레이너 댓글 업데이트 - 실패(권한 없음)")
+  void updateTrainerComment_Fail_Unauthorized() {
+    // given
+    setupTrainerAuth();
+    TrainerEntity anotherTrainer = TrainerEntity.builder()
+        .id(2L)
+        .email("another_trainer@example.com")
+        .name("Another Trainer")
+        .build();
+
+    CommentEntity anotherComment = CommentEntity.builder()
+        .id(comment.getId())
+        .comment("Initial Comment")
+        .trainer(anotherTrainer)
+        .diet(comment.getDiet())
+        .build();
+
+    UpdateCommentRequestDto dto = new UpdateCommentRequestDto();
+    dto.setId(anotherComment.getId());
+    dto.setComment("Updated Comment");
+
+    // when
+    when(commentRepository.findById(dto.getId())).thenReturn(Optional.of(anotherComment));
+
+    // then
+    assertThrows(UnauthorizedCommentException.class, () -> commentService.updateTrainerComment(dto));
   }
 }
