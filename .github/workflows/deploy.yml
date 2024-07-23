@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'README.md'
+      - '.github/workflows/**'
+      - 'docs/**'
 
 env:
   CODE_DEPLOY_APPLICATION_NAME: training-diary-v1
