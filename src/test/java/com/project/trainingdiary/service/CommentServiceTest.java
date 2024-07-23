@@ -236,6 +236,67 @@ class CommentServiceTest {
     when(commentRepository.findById(dto.getId())).thenReturn(Optional.of(anotherComment));
 
     // then
-    assertThrows(UnauthorizedCommentException.class, () -> commentService.updateTrainerComment(dto));
+    assertThrows(UnauthorizedCommentException.class,
+        () -> commentService.updateTrainerComment(dto));
+  }
+
+  @Test
+  @DisplayName("트레이너 댓글 삭제 - 성공")
+  void deleteTrainerComment_Success() {
+    // given
+    setupTrainerAuth();
+    Long commentId = comment.getId();
+
+    // when
+    when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+
+    // execute
+    commentService.deleteTrainerComment(commentId);
+
+    // then
+    verify(commentRepository).delete(comment);
+  }
+
+  @Test
+  @DisplayName("트레이너 댓글 삭제 - 실패(존재하지 않는 댓글)")
+  void deleteTrainerComment_Fail_CommentNotExist() {
+    // given
+    setupTrainerAuth();
+    Long commentId = 99L; // Non-existent comment ID
+
+    // when
+    when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
+
+    // then
+    assertThrows(CommentNotExistException.class,
+        () -> commentService.deleteTrainerComment(commentId));
+  }
+
+  @Test
+  @DisplayName("트레이너 댓글 삭제 - 실패(권한 없음)")
+  void deleteTrainerComment_Fail_Unauthorized() {
+    // given
+    setupTrainerAuth();
+    TrainerEntity anotherTrainer = TrainerEntity.builder()
+        .id(2L)
+        .email("another_trainer@example.com")
+        .name("Another Trainer")
+        .build();
+
+    CommentEntity anotherComment = CommentEntity.builder()
+        .id(comment.getId())
+        .comment("Initial Comment")
+        .trainer(anotherTrainer)
+        .diet(comment.getDiet())
+        .build();
+
+    Long commentId = anotherComment.getId();
+
+    // when
+    when(commentRepository.findById(commentId)).thenReturn(Optional.of(anotherComment));
+
+    // then
+    assertThrows(UnauthorizedCommentException.class,
+        () -> commentService.deleteTrainerComment(commentId));
   }
 }
