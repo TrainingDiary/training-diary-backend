@@ -28,6 +28,7 @@ import com.project.trainingdiary.exception.workout.WorkoutSessionAccessDeniedExc
 import com.project.trainingdiary.exception.workout.WorkoutSessionAlreadyExistException;
 import com.project.trainingdiary.exception.workout.WorkoutSessionNotFoundException;
 import com.project.trainingdiary.exception.workout.WorkoutTypeNotFoundException;
+import com.project.trainingdiary.provider.S3ImageProvider;
 import com.project.trainingdiary.provider.S3VideoProvider;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -36,17 +37,14 @@ import com.project.trainingdiary.repository.WorkoutRepository;
 import com.project.trainingdiary.repository.WorkoutSessionRepository;
 import com.project.trainingdiary.repository.WorkoutTypeRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
-import com.project.trainingdiary.util.WorkoutImageUtil;
-import io.awspring.cloud.s3.S3Operations;
+import com.project.trainingdiary.util.MediaUtil;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,13 +62,12 @@ public class WorkoutSessionService {
   private final TraineeRepository traineeRepository;
   private final PtContractRepository ptContractRepository;
 
-  private final S3Operations s3Operations;
+  private final S3ImageProvider s3ImageProvider;
   private final S3VideoProvider s3VideoProvider;
 
   private static final int MAX_MEDIA_COUNT = 10;
-
-  @Value("${spring.cloud.aws.s3.bucket}")
-  private String bucket;
+  private static final int THUMBNAIL_SIZE = 250;
+  private static final int ORIGINAL_SIZE = 360;
 
   /**
    * 트레이너의 운동 일지 생성
@@ -151,21 +148,14 @@ public class WorkoutSessionService {
 
     List<WorkoutMediaEntity> workoutMedias = workoutSession.getWorkoutMedia();
     for (WorkoutMediaEntity workoutMedia : workoutMedias) {
-      s3Operations.deleteObject(bucket, extractKey(workoutMedia.getOriginalUrl()));
+      s3ImageProvider.deleteMedia(workoutMedia.getOriginalUrl());
       if (workoutMedia.getThumbnailUrl() != null) {
-        s3Operations.deleteObject(bucket, extractKey(workoutMedia.getThumbnailUrl()));
+        s3ImageProvider.deleteMedia(workoutMedia.getThumbnailUrl());
       }
     }
     workoutMediaRepository.deleteAll(workoutMedias);
 
     workoutSessionRepository.delete(workoutSession);
-  }
-
-  /**
-   * s3 URL 추출
-   */
-  private String extractKey(String url) {
-    return url.substring(url.lastIndexOf("/") + 1);
   }
 
   /**
@@ -226,11 +216,17 @@ public class WorkoutSessionService {
 
     // 이미지 업로드 및 썸네일 생성
     for (MultipartFile file : dto.getImages()) {
-      WorkoutImageUtil.UploadResult uploadResult = WorkoutImageUtil
-          .uploadImageAndThumbnail(s3Operations, bucket, file);
+      String extension = MediaUtil.getExtension(MediaUtil.checkFileNameExist(file));
+      String uuid = UUID.randomUUID().toString();
+      String originalKey = "original_" + uuid + "." + extension;
+      String thumbnailKey = "thumb_" + uuid + "." + extension;
+
+      String originalUrl = s3ImageProvider.uploadImage(file, originalKey, extension, ORIGINAL_SIZE);
+      String thumbnailUrl = s3ImageProvider.uploadImage(file, thumbnailKey, extension,
+          THUMBNAIL_SIZE);
       WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder()
-          .originalUrl(uploadResult.getOriginalUrl())
-          .thumbnailUrl(uploadResult.getThumbnailUrl())
+          .originalUrl(originalUrl)
+          .thumbnailUrl(thumbnailUrl)
           .mediaType(IMAGE)
           .build();
       workoutMediaRepository.save(workoutMedia);
@@ -268,7 +264,7 @@ public class WorkoutSessionService {
     }
 
     // 동영상 타입 확인
-    if (!isValidVideoType(video)) {
+    if (!MediaUtil.isValidVideoType(video)) {
       throw new InvalidFileTypeException();
     }
 
@@ -286,13 +282,6 @@ public class WorkoutSessionService {
         .filter(media -> media.getMediaType() == VIDEO).toList();
 
     return WorkoutVideoResponseDto.fromEntity(workoutMedias, dto.getSessionId());
-  }
-
-  /**
-   * 동영상 확인 - mp4 가능
-   */
-  private boolean isValidVideoType(MultipartFile file) {
-    return MediaType.valueOf("video/mp4").toString().equals(file.getContentType());
   }
 
   /**
