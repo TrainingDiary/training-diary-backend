@@ -11,11 +11,17 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity(name = "diet")
 public class DietEntity extends BaseEntity {
 
@@ -36,5 +42,5 @@ public class DietEntity extends BaseEntity {
   private TraineeEntity trainee;
 
   @OneToMany(mappedBy = "diet", fetch = LAZY)
-  private List<TrainerCommentEntity> comments;
+  private List<CommentEntity> comments;
 }

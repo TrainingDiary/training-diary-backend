@@ -19,8 +19,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity(name = "trainer_comment")
-public class TrainerCommentEntity extends BaseEntity {
+@Entity(name = "comment")
+public class CommentEntity extends BaseEntity {
 
   @Id
   @GeneratedValue(strategy = IDENTITY)
