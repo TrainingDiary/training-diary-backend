@@ -1,6 +1,7 @@
 package com.project.trainingdiary.dto.response.workout.session;
 
 import com.project.trainingdiary.entity.WorkoutMediaEntity;
+import com.project.trainingdiary.util.ConvertCloudFrontUrlUtil;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,8 +27,10 @@ public class WorkoutImageResponseDto {
 
     return WorkoutImageResponseDto.builder()
         .sessionId(sessionId)
-        .originalUrls(workoutMediaList.stream().map(WorkoutMediaEntity::getOriginalUrl).toList())
-        .thumbnailUrls(workoutMediaList.stream().map(WorkoutMediaEntity::getThumbnailUrl).toList())
+        .originalUrls(workoutMediaList.stream().map(WorkoutMediaEntity::getOriginalUrl)
+            .map(ConvertCloudFrontUrlUtil::convertToCloudFrontUrl).toList())
+        .thumbnailUrls(workoutMediaList.stream().map(WorkoutMediaEntity::getThumbnailUrl)
+            .map(ConvertCloudFrontUrlUtil::convertToCloudFrontUrl).toList())
         .build();
 
   }
