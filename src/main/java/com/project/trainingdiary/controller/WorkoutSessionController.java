@@ -141,7 +141,8 @@ public class WorkoutSessionController {
       @ApiResponse(responseCode = "415", description = "사진 확장자 타입은 jpeg와 png만 가능", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @PutMapping(value = "/photos", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+  @PutMapping(value = "/photos",
+      consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
   public ResponseEntity<WorkoutImageResponseDto> uploadWorkoutImage(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("images") List<MultipartFile> images
@@ -164,11 +165,12 @@ public class WorkoutSessionController {
       @ApiResponse(responseCode = "415", description = "동영상 확장자 타입은 mp4만 가능", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @PutMapping(value = "/videos", consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+  @PutMapping(value = "/videos",
+      consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
   public ResponseEntity<WorkoutVideoResponseDto> uploadWorkoutVideo(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("video") MultipartFile video
-  ) throws IOException {
+  ) throws IOException, InterruptedException {
     WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
         .sessionId(sessionId)
         .video(video)
