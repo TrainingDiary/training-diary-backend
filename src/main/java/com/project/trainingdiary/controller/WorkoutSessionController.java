@@ -138,7 +138,7 @@ public class WorkoutSessionController {
       @ApiResponse(responseCode = "200", description = "성공"),
       @ApiResponse(responseCode = "404", description = "운동 일지를 찾을 수 없음", content = @Content),
       @ApiResponse(responseCode = "413", description = "사진 업로드 개수는 10개까지 가능", content = @Content),
-      @ApiResponse(responseCode = "415", description = "사진 확장자 타입은 jpeg와 png만 가능", content = @Content)
+      @ApiResponse(responseCode = "415", description = "파일 타입 확인 필요", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PutMapping(value = "/photos",
@@ -162,7 +162,7 @@ public class WorkoutSessionController {
       @ApiResponse(responseCode = "200", description = "성공"),
       @ApiResponse(responseCode = "404", description = "운동 일지를 찾을 수 없음", content = @Content),
       @ApiResponse(responseCode = "413", description = "동영상 업로드 개수는 10개까지 가능", content = @Content),
-      @ApiResponse(responseCode = "415", description = "동영상 확장자 타입은 mp4만 가능", content = @Content)
+      @ApiResponse(responseCode = "415", description = "파일 타입 확인 필요", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PutMapping(value = "/videos",
