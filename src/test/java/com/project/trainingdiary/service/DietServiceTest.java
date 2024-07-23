@@ -25,6 +25,7 @@ import com.project.trainingdiary.exception.user.TraineeNotExistException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.repository.CommentRepository;
 import com.project.trainingdiary.repository.DietRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
@@ -78,6 +79,9 @@ public class DietServiceTest {
 
   @Mock
   private PtContractRepository ptContractRepository;
+
+  @Mock
+  private CommentRepository commentRepository;
 
   @Mock
   private ImageUtil imageUtil;
@@ -326,6 +330,7 @@ public class DietServiceTest {
     diet.setTrainee(trainee);
     diet.setContent("Test content");
     diet.setOriginalUrl("https://test-bucket.s3.amazonaws.com/original.jpg");
+    diet.setComments(Collections.emptyList());
 
     when(dietRepository.findByTraineeIdAndId(trainee.getId(), diet.getId())).thenReturn(
         Optional.of(diet));
@@ -385,6 +390,7 @@ public class DietServiceTest {
     diet.setTrainee(traineeToView);
     diet.setContent("Test content");
     diet.setOriginalUrl("https://test-bucket.s3.amazonaws.com/original.jpg");
+    diet.setComments(Collections.emptyList());
 
     when(dietRepository.findById(diet.getId())).thenReturn(Optional.of(diet));
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), traineeToView.getId()))

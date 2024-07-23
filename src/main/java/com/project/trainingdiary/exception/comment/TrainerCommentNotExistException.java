@@ -1,4 +1,4 @@
-package com.project.trainingdiary.exception.trainer;
+package com.project.trainingdiary.exception.comment;
 
 import com.project.trainingdiary.exception.GlobalException;
 import org.springframework.http.HttpStatus;
