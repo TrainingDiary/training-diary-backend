@@ -1,9 +1,12 @@
 package com.project.trainingdiary.service;
 
 import com.project.trainingdiary.dto.request.comment.AddCommentRequestDto;
+import com.project.trainingdiary.dto.request.comment.UpdateCommentRequestDto;
 import com.project.trainingdiary.entity.CommentEntity;
 import com.project.trainingdiary.entity.DietEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.comment.CommentNotExistException;
+import com.project.trainingdiary.exception.comment.UnauthorizedCommentException;
 import com.project.trainingdiary.exception.diet.DietNotExistException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.repository.CommentRepository;
@@ -26,7 +29,7 @@ public class CommentService {
 
     TrainerEntity trainer = getAuthenticatedTrainer();
 
-    DietEntity diet = dietRepository.findById(dto.getDietId())
+    DietEntity diet = dietRepository.findById(dto.getId())
         .orElseThrow(DietNotExistException::new);
 
     CommentEntity comment = CommentEntity.builder()
@@ -35,6 +38,21 @@ public class CommentService {
         .diet(diet)
         .build();
 
+    commentRepository.save(comment);
+  }
+
+
+  public void updateTrainerComment(UpdateCommentRequestDto dto) {
+    TrainerEntity trainer = getAuthenticatedTrainer();
+
+    CommentEntity comment = commentRepository.findById(dto.getId())
+        .orElseThrow(CommentNotExistException::new);
+
+    if (!comment.getTrainer().equals(trainer)) {
+      throw new UnauthorizedCommentException();
+    }
+
+    comment.setComment(dto.getComment());
     commentRepository.save(comment);
   }
 

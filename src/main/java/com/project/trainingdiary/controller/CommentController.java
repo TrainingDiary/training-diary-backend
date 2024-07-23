@@ -1,7 +1,11 @@
 package com.project.trainingdiary.controller;
 
 import com.project.trainingdiary.dto.request.comment.AddCommentRequestDto;
+import com.project.trainingdiary.dto.request.comment.UpdateCommentRequestDto;
 import com.project.trainingdiary.service.CommentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,13 @@ public class CommentController {
 
   private final CommentService commentService;
 
+  @Operation(
+      summary = "식단 댓글 추가",
+      description = "식단 댓글를 추가합니다."
+  )
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+  })
   @PostMapping
   @PreAuthorize("hasRole('TRAINER')")
   public ResponseEntity<Void> addTrainerComment(
@@ -31,8 +42,19 @@ public class CommentController {
     return ResponseEntity.ok().build();
   }
 
+  @Operation(
+      summary = "식단 댓글 변경",
+      description = "식단 댓글를 변경합니다."
+  )
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "성공"),
+  })
   @PutMapping
-  public ResponseEntity<Void> updateTrainerComment() {
+  @PreAuthorize("hasRole('TRAINER')")
+  public ResponseEntity<Void> updateTrainerComment(
+      @RequestBody @Valid UpdateCommentRequestDto dto
+  ) {
+    commentService.updateTrainerComment(dto);
     return ResponseEntity.ok().build();
   }
 

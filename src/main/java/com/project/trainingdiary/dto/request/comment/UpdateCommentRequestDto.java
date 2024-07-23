@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AddCommentRequestDto {
+public class UpdateCommentRequestDto {
 
   @Schema(description = "식단 댓글의 id", example = "1")
   @NotNull(message = "id 값은 null이 없습니다.")
