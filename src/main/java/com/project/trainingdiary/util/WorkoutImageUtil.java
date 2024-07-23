@@ -1,8 +1,5 @@
 package com.project.trainingdiary.util;
 
-import static org.imgscalr.Scalr.Method.QUALITY;
-import static org.imgscalr.Scalr.Mode.AUTOMATIC;
-
 import com.project.trainingdiary.exception.workout.FileNoNameException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import io.awspring.cloud.s3.ObjectMetadata;
@@ -17,14 +14,13 @@ import java.util.UUID;
 import javax.imageio.ImageIO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.imgscalr.Scalr;
+import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.web.multipart.MultipartFile;
 
-public class ImageUploadUtil {
+public class WorkoutImageUtil {
 
-
-  private static final int THUMBNAIL_WIDTH = 150;
-  private static final int THUMBNAIL_HEIGHT = 150;
+  private static final int THUMBNAIL_SIZE = 250;
+  private static final int ORIGINAL_SIZE = 360;
 
   private static boolean isValidImageType(MultipartFile file) {
     String contentType = file.getContentType();
@@ -38,35 +34,39 @@ public class ImageUploadUtil {
   private static S3Resource uploadImage(
       S3Operations s3Operations,
       String bucket,
-      MultipartFile file,
-      String originalKey
-  ) throws IOException {
-    try (InputStream inputStream = file.getInputStream()) {
-      return s3Operations.upload(bucket, originalKey, inputStream,
-          ObjectMetadata.builder().contentType(file.getContentType()).build());
-    }
+      String key,
+      InputStream inputStream,
+      String contentType
+  ) {
+    return s3Operations.upload(bucket, key, inputStream,
+        ObjectMetadata.builder().contentType(contentType).build());
   }
 
-  private static String createAndUploadThumbnail(
+  private static BufferedImage resizeImageToWidth(
+      BufferedImage originalImage,
+      int width
+  ) throws IOException {
+    return Thumbnails.of(originalImage)     // thumbnailator 사용
+        .width(width)
+        .keepAspectRatio(true)
+        .asBufferedImage();
+    //return Scalr.resize(originalImage, QUALITY, FIT_TO_WIDTH, width);   // scalr 사용
+  }
+
+  private static String uploadResizedImage(
       S3Operations s3Operations,
       String bucket,
       MultipartFile file,
-      String originalKey
+      String key,
+      BufferedImage resizedImage
   ) throws IOException {
-    BufferedImage originalImage = ImageIO.read(file.getInputStream());
-    BufferedImage thumbnailImage = Scalr
-        .resize(originalImage, QUALITY, AUTOMATIC, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT);
-
     String extension = getExtension(checkFileNameExist(file));
 
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
-      ImageIO.write(thumbnailImage, extension, byteArrayOutputStream);
-      try (InputStream inputStream = new ByteArrayInputStream(
-          byteArrayOutputStream.toByteArray())) {
-        String thumbnailKey = "thumb_" + originalKey;
+      ImageIO.write(resizedImage, extension, byteArrayOutputStream);
+      try (InputStream inputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray())) {
         String contentType = "image/" + extension;
-        S3Resource s3Resource = s3Operations.upload(bucket, thumbnailKey, inputStream,
-            ObjectMetadata.builder().contentType(contentType).build());
+        S3Resource s3Resource = uploadImage(s3Operations, bucket, key, inputStream, contentType);
         return s3Resource.getURL().toExternalForm();
       }
     }
@@ -80,16 +80,23 @@ public class ImageUploadUtil {
     return filename;
   }
 
-  public static UploadResult uploadImageAndThumbnail(S3Operations s3Operations, String bucket,
-      MultipartFile file) throws IOException {
+  public static UploadResult uploadImageAndThumbnail(S3Operations s3Operations, String bucket, MultipartFile file) throws IOException {
     if (!isValidImageType(file)) {
       throw new InvalidFileTypeException();
     }
     String extension = getExtension(checkFileNameExist(file));
-    String originalKey = UUID.randomUUID() + "." + extension;
-    S3Resource s3Resource = uploadImage(s3Operations, bucket, file, originalKey);
-    String originalUrl = s3Resource.getURL().toExternalForm();
-    String thumbnailUrl = createAndUploadThumbnail(s3Operations, bucket, file, originalKey);
+    String key = UUID.randomUUID() + "." + extension;
+
+    BufferedImage originalImage = ImageIO.read(file.getInputStream());
+
+    // 썸네일 생성 및 업로드
+    BufferedImage thumbnailImage = resizeImageToWidth(originalImage, THUMBNAIL_SIZE);
+    String thumbnailUrl = uploadResizedImage(s3Operations, bucket, file, "thumb_" + key, thumbnailImage);
+
+    // 원본 크기 조정 이미지 생성 및 업로드
+    BufferedImage resizedOriginalImage = resizeImageToWidth(originalImage, ORIGINAL_SIZE);
+    String originalUrl = uploadResizedImage(s3Operations, bucket, file, "original_" + key, resizedOriginalImage);
+
     return new UploadResult(originalUrl, thumbnailUrl);
   }
 
