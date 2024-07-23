@@ -1,7 +1,7 @@
 package com.project.trainingdiary.provider;
 
-import com.project.trainingdiary.util.WorkoutImageUtil;
-import com.project.trainingdiary.util.WorkoutVideoUtil;
+import com.project.trainingdiary.util.MediaUtil;
+import com.project.trainingdiary.util.VideoUtil;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
@@ -29,7 +29,7 @@ public class S3VideoProvider {
 
   public String uploadVideo(MultipartFile video, String uuid)
       throws IOException, InterruptedException {
-    String extension = WorkoutImageUtil.getExtension(WorkoutImageUtil.checkFileNameExist(video));
+    String extension = MediaUtil.getExtension(MediaUtil.checkFileNameExist(video));
     String tempKey = "temp_" + uuid + "." + extension;
     String originalKey = "original_" + uuid + "." + extension;
 
@@ -56,7 +56,7 @@ public class S3VideoProvider {
     S3Resource thumbS3Resource;
     try (InputStream inputStream = new URL(encodedVideoUrl).openStream();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      WorkoutVideoUtil.generateThumbnail(inputStream, outputStream);
+      VideoUtil.generateThumbnail(inputStream, outputStream);
       try (InputStream thumbnailInputStream = new ByteArrayInputStream(
           outputStream.toByteArray())) {
         thumbS3Resource = s3Operations.upload(bucket, thumbnailKey, thumbnailInputStream,
@@ -71,7 +71,7 @@ public class S3VideoProvider {
     S3Resource videoS3Resource;
     try (InputStream inputStream = new URL(tempVideoUrl).openStream();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      WorkoutVideoUtil.encodeVideo(inputStream, outputStream);
+      VideoUtil.encodeVideo(inputStream, outputStream);
       try (InputStream encodedInputStream = new ByteArrayInputStream(outputStream.toByteArray())) {
         videoS3Resource = s3Operations.upload(bucket, originalKey, encodedInputStream,
             ObjectMetadata.builder().contentType(contentType).build());
