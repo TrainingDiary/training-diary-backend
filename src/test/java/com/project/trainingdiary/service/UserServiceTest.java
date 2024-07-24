@@ -239,13 +239,17 @@ public class UserServiceTest {
         .thenReturn(Optional.of(verificationEntity));
 
     assertThrows(
-        VerificationCodeNotYetVerifiedException.class, () -> userService.signUp(signUpDto, null));
+        VerificationCodeNotYetVerifiedException.class, () -> userService.signUp(signUpDto, null, null));
   }
 
   @Test
   @DisplayName("회원가입 실패 - 비밀번호 불일치")
   void signUpFailPasswordMismatch() {
     // given
+
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
+
     SignUpRequestDto signUpDto = new SignUpRequestDto();
     signUpDto.setEmail("new@example.com");
     signUpDto.setPassword("password");
@@ -261,7 +265,7 @@ public class UserServiceTest {
         .thenReturn(java.util.Optional.of(verificationEntity));
 
     // when / then
-    assertThrows(PasswordMismatchedException.class, () -> userService.signUp(signUpDto, null));
+    assertThrows(PasswordMismatchedException.class, () -> userService.signUp(signUpDto, request, response));
   }
 
   @Test
@@ -270,6 +274,9 @@ public class UserServiceTest {
     SignInRequestDto signInDto = new SignInRequestDto();
     signInDto.setEmail("trainee@example.com");
     signInDto.setPassword("password");
+
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
 
     LocalDateTime accessTokenExpiryDate = Instant.ofEpochMilli(System.currentTimeMillis() + 3600000)
         .atZone(ZoneId.systemDefault())
@@ -289,9 +296,7 @@ public class UserServiceTest {
     when(tokenProvider.getExpiryDateFromToken("accessToken")).thenReturn(accessTokenExpiryDate);
     when(tokenProvider.getExpiryDateFromToken("refreshToken")).thenReturn(refreshTokenExpiryDate);
 
-    HttpServletResponse response = mock(HttpServletResponse.class);
-
-    SignInResponseDto responseDto = userService.signIn(signInDto, response);
+    SignInResponseDto responseDto = userService.signIn(signInDto, request, response);
 
     assertEquals("trainee@example.com", responseDto.getEmail());
     assertEquals("[ROLE_TRAINEE]", responseDto.getRole());
@@ -307,18 +312,24 @@ public class UserServiceTest {
     signInDto.setEmail("trainee@example.com");
     signInDto.setPassword("wrongPassword");
 
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
+
     when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(
         Optional.of(traineeEntity));
     when(passwordEncoder.matches(signInDto.getPassword(), traineeEntity.getPassword())).thenReturn(
         false);
 
     assertThrows(WrongPasswordException.class,
-        () -> userService.signIn(signInDto, mock(HttpServletResponse.class)));
+        () -> userService.signIn(signInDto, request, response));
   }
 
   @Test
   @DisplayName("로그인 실패 - 사용자 없음")
   void signInFailUserNotFound() {
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
+
     SignInRequestDto signInDto = new SignInRequestDto();
     signInDto.setEmail("nonexistent@example.com");
     signInDto.setPassword("password");
@@ -327,7 +338,7 @@ public class UserServiceTest {
     when(trainerRepository.findByEmail(signInDto.getEmail())).thenReturn(Optional.empty());
 
     assertThrows(UserNotFoundException.class,
-        () -> userService.signIn(signInDto, mock(HttpServletResponse.class)));
+        () -> userService.signIn(signInDto, request, response));
   }
 
   @Test
@@ -349,8 +360,8 @@ public class UserServiceTest {
 
     verify(tokenProvider, times(1)).blacklistToken("accessToken");
     verify(tokenProvider, times(1)).blacklistToken("refreshToken");
-    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token");
-    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token");
+    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token", false);
+    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token", false);
   }
 
   @Test
@@ -362,8 +373,8 @@ public class UserServiceTest {
     userService.signOut(request, response);
 
     verify(tokenProvider, times(0)).blacklistToken(anyString());
-    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token");
-    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token");
+    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token", false);
+    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token", false);
   }
 
   @Test
@@ -385,7 +396,7 @@ public class UserServiceTest {
 
     verify(tokenProvider, times(0)).blacklistToken("invalidAccessToken");
     verify(tokenProvider, times(0)).blacklistToken("invalidRefreshToken");
-    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token");
-    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token");
+    verify(cookieProvider, times(1)).clearCookie(response, "Access-Token", false);
+    verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token", false);
   }
 }
