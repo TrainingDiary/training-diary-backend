@@ -65,7 +65,8 @@ public class WorkoutSessionService {
   private final S3ImageProvider s3ImageProvider;
   private final S3VideoProvider s3VideoProvider;
 
-  private static final int MAX_MEDIA_COUNT = 10;
+  private static final int MAX_IMAGE_COUNT = 10;
+  private static final int MAX_VIDEO_COUNT = 5;
   private static final int THUMBNAIL_SIZE = 250;
   private static final int ORIGINAL_SIZE = 360;
 
@@ -210,7 +211,7 @@ public class WorkoutSessionService {
     int newImageCount = dto.getImages().size();
 
     // 현재 운동 일지에 존재하는 이미지와 새로 받은 이미지의 합이 10을 넘으면 예외 발생 - 이미지는 최대 10개까지 업로드 가능
-    if (existingImageCount + newImageCount > MAX_MEDIA_COUNT) {
+    if (existingImageCount + newImageCount > MAX_IMAGE_COUNT) {
       throw new MediaCountExceededException();
     }
 
@@ -258,8 +259,8 @@ public class WorkoutSessionService {
     int existingVideoCount = (int) workoutSession.getWorkoutMedia().stream()
         .filter(media -> media.getMediaType() == VIDEO).count();
 
-    // 운동 일지에 이미 동영상이 10개 존재한다면 더이상 업로드 할 수 없음
-    if (existingVideoCount >= MAX_MEDIA_COUNT) {
+    // 운동 일지에 이미 동영상이 5개 존재한다면 더이상 업로드 할 수 없음
+    if (existingVideoCount >= MAX_VIDEO_COUNT) {
       throw new MediaCountExceededException();
     }
 
