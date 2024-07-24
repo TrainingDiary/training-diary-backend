@@ -11,6 +11,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleAlreadyExistException;
@@ -18,6 +19,7 @@ import com.project.trainingdiary.exception.schedule.ScheduleInvalidException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.NotificationMessage;
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
@@ -239,13 +241,14 @@ public class ScheduleOpenCloseService {
       LocalDateTime startAt,
       Integer ptSessionCount
   ) {
-    String message = "";
-    if (notificationType == RESERVATION_REGISTERED) {
-      message = NotificationMessageGeneratorUtil.reserveRegister(trainee.getName(), ptSessionCount);
-    }
+    NotificationMessage message = switch (notificationType) {
+      case RESERVATION_REGISTERED ->
+          NotificationMessageGeneratorUtil.reserveRegister(trainee.getName(), ptSessionCount);
+      default -> throw new UnsupportedNotificationTypeException();
+    };
     NotificationEntity notification = NotificationEntity.of(
         notificationType, true, false,
-        trainer, trainee, message,
+        trainer, trainee, message.getBody(), message.getTitle(),
         startAt.toLocalDate()
     );
     notificationRepository.save(notification);

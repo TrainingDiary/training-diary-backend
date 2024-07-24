@@ -12,6 +12,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
@@ -19,6 +20,7 @@ import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongExceptio
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.NotificationMessage;
 import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.repository.NotificationRepository;
@@ -197,24 +199,19 @@ public class ScheduleTrainerService {
       TraineeEntity trainee,
       LocalDateTime startAt
   ) {
-    String message = "";
-    switch (notificationType) {
-      case RESERVATION_ACCEPTED:
-        message = NotificationMessageGeneratorUtil.reserveAccept(trainer.getName(), startAt);
-        break;
-      case RESERVATION_REJECTED:
-        message = NotificationMessageGeneratorUtil.reserveReject(trainer.getName(), startAt);
-        break;
-      case RESERVATION_CANCELLED_BY_TRAINER:
-        message = NotificationMessageGeneratorUtil.reserveCancelByTrainer(trainer.getName(),
-            startAt);
-        break;
-      default:
-        break;
-    }
+    NotificationMessage message = switch (notificationType) {
+      case RESERVATION_ACCEPTED ->
+          NotificationMessageGeneratorUtil.reserveAccept(trainer.getName(), startAt);
+      case RESERVATION_REJECTED ->
+          NotificationMessageGeneratorUtil.reserveReject(trainer.getName(), startAt);
+      case RESERVATION_CANCELLED_BY_TRAINER ->
+          NotificationMessageGeneratorUtil.reserveCancelByTrainer(trainer.getName(),
+              startAt);
+      default -> throw new UnsupportedNotificationTypeException();
+    };
     NotificationEntity notification = NotificationEntity.of(
         notificationType, false, true,
-        trainer, trainee, message,
+        trainer, trainee, message.getBody(), message.getTitle(),
         startAt.toLocalDate()
     );
     notificationRepository.save(notification);

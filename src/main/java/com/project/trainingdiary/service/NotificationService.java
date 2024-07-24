@@ -6,7 +6,9 @@ import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.NotificationMessage;
 import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.NotificationRepository;
@@ -111,14 +113,16 @@ public class NotificationService {
       TraineeEntity trainee,
       LocalDateTime startAt
   ) {
-    String message = "";
+    NotificationMessage message;
     if (notificationType == NotificationType.ONE_HOUR_BEFORE_PT_SESSION) {
       message = NotificationMessageGeneratorUtil.oneHourBeforePtSession(trainer.getName(),
           trainee.getName(), startAt);
+    } else {
+      throw new UnsupportedNotificationTypeException();
     }
     NotificationEntity notification = NotificationEntity.of(
         notificationType, true, true,
-        trainer, trainee, message,
+        trainer, trainee, message.getBody(), message.getTitle(),
         startAt.toLocalDate()
     );
     NotificationEntity saved = notificationRepository.save(notification);

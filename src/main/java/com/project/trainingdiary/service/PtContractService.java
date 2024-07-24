@@ -10,9 +10,11 @@ import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.NotificationMessage;
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.UserRoleType;
@@ -137,15 +139,17 @@ public class PtContractService {
       TrainerEntity trainer,
       TraineeEntity trainee
   ) {
-    String message = "";
+    NotificationMessage message;
     if (notificationType == NotificationType.PT_CONTRACT_CREATED) {
       message = NotificationMessageGeneratorUtil.createPtContract(
           trainer.getName(), trainee.getName()
       );
+    } else {
+      throw new UnsupportedNotificationTypeException();
     }
     NotificationEntity notification = NotificationEntity.of(
         notificationType, true, false,
-        trainer, trainee, message,
+        trainer, trainee, message.getBody(), message.getTitle(),
         null
     );
     notificationRepository.save(notification);

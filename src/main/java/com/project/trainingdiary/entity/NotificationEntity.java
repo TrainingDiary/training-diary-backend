@@ -35,8 +35,9 @@ public class NotificationEntity extends BaseEntity {
   @Enumerated(STRING)
   private NotificationType notificationType;
 
-  // NotificationType 별로 넣어놓을 노트를 지정. 예약 관련이면 날짜와 시간을 넣는 식
-  private String note;
+  private String title;
+
+  private String body;
 
   private LocalDate eventDate;
 
@@ -58,7 +59,8 @@ public class NotificationEntity extends BaseEntity {
       boolean toTrainee,
       TrainerEntity trainer,
       TraineeEntity trainee,
-      String note,
+      String body,
+      String title,
       LocalDate eventDate
   ) {
     return NotificationEntity.builder()
@@ -67,7 +69,8 @@ public class NotificationEntity extends BaseEntity {
         .toTrainer(toTrainer)
         .trainer(trainer)
         .trainee(trainee)
-        .note(note)
+        .body(body)
+        .title(title)
         .eventDate(eventDate)
         .build();
   }

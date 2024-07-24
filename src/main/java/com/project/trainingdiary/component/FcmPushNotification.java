@@ -11,26 +11,32 @@ import org.springframework.stereotype.Component;
 @Component
 public class FcmPushNotification {
 
+  private static final String logoUrl = "https://training-diary-brand.s3.ap-northeast-2.amazonaws.com/training_diary_logo_60x60.png";
+
   public void sendPushNotification(NotificationEntity notification) {
     if (notification.isToTrainee() && notification.getTrainee().getFcmToken() != null) {
       send(
           notification.getTrainee().getFcmToken().getToken(),
-          notification.getNote()
+          notification.getTitle(),
+          notification.getBody()
       );
     }
     if (notification.isToTrainer() && notification.getTrainer().getFcmToken() != null) {
       send(
           notification.getTrainer().getFcmToken().getToken(),
-          notification.getNote()
+          notification.getTitle(),
+          notification.getBody()
       );
     }
   }
 
-  private void send(String token, String message) {
+  private void send(String token, String title, String body) {
     Message msg = Message.builder()
         .setNotification(
             Notification.builder()
-                .setBody(message)
+                .setTitle(title)
+                .setBody(body)
+                .setImage(logoUrl)
                 .build()
         )
         .setToken(token)

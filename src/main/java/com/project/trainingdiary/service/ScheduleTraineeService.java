@@ -11,6 +11,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
@@ -21,6 +22,7 @@ import com.project.trainingdiary.exception.schedule.ScheduleStartWithin1DayExcep
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotOpenException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedOrReservedException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.NotificationMessage;
 import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.repository.NotificationRepository;
@@ -195,21 +197,17 @@ public class ScheduleTraineeService {
       TraineeEntity trainee,
       LocalDateTime startAt
   ) {
-    String message = "";
-    switch (notificationType) {
-      case RESERVATION_APPLIED:
-        message = NotificationMessageGeneratorUtil.reserveApplied(trainee.getName(), startAt);
-        break;
-      case RESERVATION_CANCELLED_BY_TRAINEE:
-        message = NotificationMessageGeneratorUtil.reserveCancelByTrainee(trainee.getName(),
-            startAt);
-        break;
-      default:
-        break;
-    }
+    NotificationMessage message = switch (notificationType) {
+      case RESERVATION_APPLIED ->
+          NotificationMessageGeneratorUtil.reserveApplied(trainee.getName(), startAt);
+      case RESERVATION_CANCELLED_BY_TRAINEE ->
+          NotificationMessageGeneratorUtil.reserveCancelByTrainee(trainee.getName(),
+              startAt);
+      default -> throw new UnsupportedNotificationTypeException();
+    };
     NotificationEntity notification = NotificationEntity.of(
         notificationType, true, false,
-        trainer, trainee, message,
+        trainer, trainee, message.getBody(), message.getTitle(),
         startAt.toLocalDate()
     );
     notificationRepository.save(notification);

@@ -139,7 +139,7 @@ class NotificationServiceTest {
     List<NotificationEntity> notifications = List.of(
         NotificationEntity.builder()
             .id(100L)
-            .note("일정 예약을 수락했습니다.")
+            .body("일정 예약을 수락했습니다.")
             .toTrainee(true)
             .toTrainer(false)
             .trainer(trainer)
@@ -175,7 +175,7 @@ class NotificationServiceTest {
     List<NotificationEntity> notifications = List.of(
         NotificationEntity.builder()
             .id(100L)
-            .note("일정 예약을 신청했습니다.")
+            .body("일정 예약을 신청했습니다.")
             .toTrainer(true)
             .toTrainee(false)
             .trainer(trainer)
