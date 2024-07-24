@@ -239,7 +239,8 @@ public class UserServiceTest {
         .thenReturn(Optional.of(verificationEntity));
 
     assertThrows(
-        VerificationCodeNotYetVerifiedException.class, () -> userService.signUp(signUpDto, null, null));
+        VerificationCodeNotYetVerifiedException.class,
+        () -> userService.signUp(signUpDto, null, null));
   }
 
   @Test
@@ -265,7 +266,8 @@ public class UserServiceTest {
         .thenReturn(java.util.Optional.of(verificationEntity));
 
     // when / then
-    assertThrows(PasswordMismatchedException.class, () -> userService.signUp(signUpDto, request, response));
+    assertThrows(PasswordMismatchedException.class,
+        () -> userService.signUp(signUpDto, request, response));
   }
 
   @Test

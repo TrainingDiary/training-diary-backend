@@ -92,7 +92,8 @@ public class UserService implements UserDetailsService {
    * @param response HTTP 응답 객체
    */
   @Transactional
-  public void signUp(SignUpRequestDto dto, HttpServletRequest request, HttpServletResponse response) {
+  public void signUp(SignUpRequestDto dto, HttpServletRequest request,
+      HttpServletResponse response) {
     VerificationEntity verificationEntity = getVerificationEntity(dto.getEmail());
     validateEmailNotExists(dto.getEmail());
     validatePasswordsMatch(dto.getPassword(), dto.getConfirmPassword());
@@ -113,7 +114,8 @@ public class UserService implements UserDetailsService {
    * @param response HTTP 응답 객체
    * @return SignInResponseDto 로그인 응답 DTO
    */
-  public SignInResponseDto signIn(SignInRequestDto dto, HttpServletRequest request, HttpServletResponse response) {
+  public SignInResponseDto signIn(SignInRequestDto dto, HttpServletRequest request,
+      HttpServletResponse response) {
     UserDetails userDetails = loadUserByUsername(dto.getEmail());
     validatePassword(dto.getPassword(), userDetails.getPassword());
     return generateTokensAndSetCookies(userDetails.getUsername(), request, response);
