@@ -72,10 +72,6 @@ public class ScheduleTrainerService {
     if (ptContract == null) {
       throw new PtContractNotExistException();
     }
-    // 전체 세션의 갯수와 사용한 세션의 갯수를 비교해 더 사용할 수 있는지 확인
-    if (ptContract.getTotalSession() <= ptContract.getUsedSession()) {
-      throw new UsedSessionExceededTotalSessionException();
-    }
 
     // 일정 수락
     schedule.acceptReserveApplied();

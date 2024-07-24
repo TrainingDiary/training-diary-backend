@@ -71,8 +71,7 @@ public class PtContractController {
       description = "트레이너가 PT 계약을 종료함"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "계약이 없습니다.")
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/terminate")
