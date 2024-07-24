@@ -1,9 +1,11 @@
 package com.project.trainingdiary.util;
 
+import static org.imgscalr.Scalr.Method.QUALITY;
+import static org.imgscalr.Scalr.Mode.FIT_TO_WIDTH;
+
 import com.project.trainingdiary.exception.workout.FileNoNameException;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import net.coobird.thumbnailator.Thumbnails;
+import org.imgscalr.Scalr;
 import org.springframework.web.multipart.MultipartFile;
 
 public class MediaUtil {
@@ -20,13 +22,8 @@ public class MediaUtil {
     return filename.substring(filename.lastIndexOf('.') + 1);
   }
 
-  public static BufferedImage resizeImageToWidth(BufferedImage originalImage, int width)
-      throws IOException {
-    return Thumbnails.of(originalImage) // thumbnailator 사용
-        .width(width)
-        .keepAspectRatio(true)
-        .asBufferedImage();
-    //return Scalr.resize(originalImage, QUALITY, FIT_TO_WIDTH, width);   // scalr 사용
+  public static BufferedImage resizeImageToWidth(BufferedImage originalImage, int width) {
+    return Scalr.resize(originalImage, QUALITY, FIT_TO_WIDTH, width);
   }
 
   public static String checkFileNameExist(MultipartFile file) {
