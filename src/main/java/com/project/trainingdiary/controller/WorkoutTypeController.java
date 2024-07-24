@@ -89,7 +89,7 @@ public class WorkoutTypeController {
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공")
   })
-  @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
+  @PreAuthorize("hasRole('TRAINER')")
   @GetMapping
   public ResponseEntity<Page<WorkoutTypeResponseDto>> getWorkoutTypes(
       @RequestParam(defaultValue = "0") int page,
