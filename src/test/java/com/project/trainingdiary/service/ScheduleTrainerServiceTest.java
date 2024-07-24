@@ -235,7 +235,7 @@ class ScheduleTrainerServiceTest {
     //then
     scheduleTrainerService.acceptSchedule(dto);
     verify(notificationRepository).save(captorNotification.capture());
-    assertEquals(NotificationType.RESERVE_ACCEPT,
+    assertEquals(NotificationType.RESERVATION_ACCEPTED,
         captorNotification.getValue().getNotificationType());
     assertTrue(captorNotification.getValue().isToTrainee());
     assertFalse(captorNotification.getValue().isToTrainer());
@@ -385,7 +385,7 @@ class ScheduleTrainerServiceTest {
     verify(ptContractRepository).save(captorPtContract.capture());
     verify(notificationRepository).save(captorNotification.capture());
     assertEquals(4, captorPtContract.getValue().getUsedSession());
-    assertEquals(NotificationType.RESERVE_REJECT,
+    assertEquals(NotificationType.RESERVATION_REJECTED,
         captorNotification.getValue().getNotificationType());
     assertTrue(captorNotification.getValue().isToTrainee());
     assertFalse(captorNotification.getValue().isToTrainer());
@@ -509,7 +509,7 @@ class ScheduleTrainerServiceTest {
     assertEquals(ScheduleStatusType.OPEN, captorSchedule.getValue().getScheduleStatusType());
     assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatus());
     verify(notificationRepository).save(captorNotification.capture());
-    assertEquals(NotificationType.RESERVE_CANCEL_BY_TRAINER,
+    assertEquals(NotificationType.RESERVATION_CANCELLED_BY_TRAINER,
         captorNotification.getValue().getNotificationType());
     assertTrue(captorNotification.getValue().isToTrainee());
     assertFalse(captorNotification.getValue().isToTrainer());

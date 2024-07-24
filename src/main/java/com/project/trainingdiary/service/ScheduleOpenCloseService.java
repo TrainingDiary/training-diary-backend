@@ -1,6 +1,6 @@
 package com.project.trainingdiary.service;
 
-import static com.project.trainingdiary.model.type.NotificationType.RESERVE_REGISTER;
+import static com.project.trainingdiary.model.type.NotificationType.RESERVATION_REGISTERED;
 
 import com.project.trainingdiary.component.FcmPushNotification;
 import com.project.trainingdiary.dto.request.schedule.OpenScheduleRequestDto;
@@ -131,7 +131,7 @@ public class ScheduleOpenCloseService {
 
     // 알림 저장 및 전송
     NotificationEntity notification = saveNotification(
-        RESERVE_REGISTER,
+        RESERVATION_REGISTERED,
         trainer,
         ptContract.getTrainee(),
         getFirstDateOf(newSchedules, existingSchedules),
@@ -240,7 +240,7 @@ public class ScheduleOpenCloseService {
       Integer ptSessionCount
   ) {
     String message = "";
-    if (notificationType == RESERVE_REGISTER) {
+    if (notificationType == RESERVATION_REGISTERED) {
       message = NotificationMessageGeneratorUtil.reserveRegister(trainee.getName(), ptSessionCount);
     }
     NotificationEntity notification = NotificationEntity.of(

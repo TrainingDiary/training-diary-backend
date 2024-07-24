@@ -272,7 +272,7 @@ class ScheduleTraineeServiceTest {
     assertEquals(
         ScheduleStatusType.RESERVE_APPLIED, captorSchedule.getValue().getScheduleStatusType());
     assertEquals(11, captorPtContract.getValue().getUsedSession());
-    assertEquals(NotificationType.RESERVE_APPLIED,
+    assertEquals(NotificationType.RESERVATION_APPLIED,
         captorNotification.getValue().getNotificationType());
     assertTrue(captorNotification.getValue().isToTrainer());
     assertFalse(captorNotification.getValue().isToTrainee());
@@ -454,7 +454,7 @@ class ScheduleTraineeServiceTest {
     assertEquals(4, captorPtContract.getValue().getUsedSession());
     assertEquals(ScheduleStatusType.OPEN, captorSchedule.getValue().getScheduleStatusType());
     assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatus());
-    assertEquals(NotificationType.RESERVE_CANCEL_BY_TRAINEE,
+    assertEquals(NotificationType.RESERVATION_CANCELLED_BY_TRAINEE,
         captorNotification.getValue().getNotificationType());
     assertTrue(captorNotification.getValue().isToTrainer());
     assertFalse(captorNotification.getValue().isToTrainee());

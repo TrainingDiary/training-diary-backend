@@ -81,7 +81,7 @@ public class ScheduleTrainerService {
 
     // 알림 저장 및 전송
     NotificationEntity notification = saveNotification(
-        NotificationType.RESERVE_ACCEPT,
+        NotificationType.RESERVATION_ACCEPTED,
         schedule.getTrainer(),
         ptContract.getTrainee(),
         schedule.getStartAt()
@@ -118,7 +118,7 @@ public class ScheduleTrainerService {
 
     // 알림 저장 및 전송
     NotificationEntity notification = saveNotification(
-        NotificationType.RESERVE_REJECT,
+        NotificationType.RESERVATION_REJECTED,
         schedule.getTrainer(),
         ptContract.getTrainee(),
         schedule.getStartAt()
@@ -155,7 +155,7 @@ public class ScheduleTrainerService {
 
     // 알림 저장 및 전송
     NotificationEntity notification = saveNotification(
-        NotificationType.RESERVE_CANCEL_BY_TRAINER,
+        NotificationType.RESERVATION_CANCELLED_BY_TRAINER,
         schedule.getTrainer(),
         ptContract.getTrainee(),
         schedule.getStartAt()
@@ -199,13 +199,13 @@ public class ScheduleTrainerService {
   ) {
     String message = "";
     switch (notificationType) {
-      case RESERVE_ACCEPT:
+      case RESERVATION_ACCEPTED:
         message = NotificationMessageGeneratorUtil.reserveAccept(trainer.getName(), startAt);
         break;
-      case RESERVE_REJECT:
+      case RESERVATION_REJECTED:
         message = NotificationMessageGeneratorUtil.reserveReject(trainer.getName(), startAt);
         break;
-      case RESERVE_CANCEL_BY_TRAINER:
+      case RESERVATION_CANCELLED_BY_TRAINER:
         message = NotificationMessageGeneratorUtil.reserveCancelByTrainer(trainer.getName(),
             startAt);
         break;
