@@ -351,8 +351,9 @@ public class UserService implements UserDetailsService {
   }
 
   public boolean isLocalRequest(HttpServletRequest request) {
-    String origin = request.getHeader("Origin");
-    return origin != null && origin.contains("localhost");
+    String remoteAddr = request.getRemoteAddr();
+    log.info("RemoteAddr: {}", remoteAddr);
+    return "127.0.0.1".equals(remoteAddr) || "0:0:0:0:0:0:0:1".equals(remoteAddr);
   }
 
   /**
