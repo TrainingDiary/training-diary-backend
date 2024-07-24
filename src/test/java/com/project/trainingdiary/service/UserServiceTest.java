@@ -398,5 +398,6 @@ public class UserServiceTest {
     verify(tokenProvider, times(0)).blacklistToken("invalidRefreshToken");
     verify(cookieProvider, times(1)).clearCookie(response, "Access-Token", false);
     verify(cookieProvider, times(1)).clearCookie(response, "Refresh-Token", false);
+
   }
 }
