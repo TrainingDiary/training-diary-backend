@@ -58,6 +58,9 @@ dependencies {
     // image resize
     implementation 'org.imgscalr:imgscalr-lib:4.2'
 
+    // FFmpeg
+    implementation 'net.bramp.ffmpeg:ffmpeg:0.8.0'
+
     // Querydsl
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
     annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"

@@ -80,8 +80,8 @@ public class WorkoutSessionController {
   }
 
   @Operation(
-      summary = "운동 종류 삭제",
-      description = "트레이너가 운동 일지를 수정함"
+      summary = "운동 일지 삭제",
+      description = "트레이너가 운동 일지를 삭제함"
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
@@ -138,16 +138,19 @@ public class WorkoutSessionController {
       @ApiResponse(responseCode = "200", description = "성공"),
       @ApiResponse(responseCode = "404", description = "운동 일지를 찾을 수 없음", content = @Content),
       @ApiResponse(responseCode = "413", description = "사진 업로드 개수는 10개까지 가능", content = @Content),
-      @ApiResponse(responseCode = "415", description = "사진 확장자 타입은 jpeg와 png만 가능", content = @Content)
+      @ApiResponse(responseCode = "415", description = "파일 타입 확인 필요", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @PutMapping(value = "/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PutMapping(value = "/photos",
+      consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
   public ResponseEntity<WorkoutImageResponseDto> uploadWorkoutImage(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("images") List<MultipartFile> images
   ) throws IOException {
     WorkoutImageRequestDto dto = WorkoutImageRequestDto.builder()
-        .sessionId(sessionId).images(images).build();
+        .sessionId(sessionId)
+        .images(images)
+        .build();
     return ResponseEntity.ok(workoutSessionService.uploadWorkoutImage(dto));
   }
 
@@ -159,16 +162,19 @@ public class WorkoutSessionController {
       @ApiResponse(responseCode = "200", description = "성공"),
       @ApiResponse(responseCode = "404", description = "운동 일지를 찾을 수 없음", content = @Content),
       @ApiResponse(responseCode = "413", description = "동영상 업로드 개수는 10개까지 가능", content = @Content),
-      @ApiResponse(responseCode = "415", description = "동영상 확장자 타입은 mp4만 가능", content = @Content)
+      @ApiResponse(responseCode = "415", description = "파일 타입 확인 필요", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @PutMapping("/videos")
+  @PutMapping(value = "/videos",
+      consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
   public ResponseEntity<WorkoutVideoResponseDto> uploadWorkoutVideo(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("video") MultipartFile video
-  ) throws IOException {
+  ) throws IOException, InterruptedException {
     WorkoutVideoRequestDto dto = WorkoutVideoRequestDto.builder()
-        .sessionId(sessionId).video(video).build();
+        .sessionId(sessionId)
+        .video(video)
+        .build();
     return ResponseEntity.ok(workoutSessionService.uploadWorkoutVideo(dto));
   }
 
