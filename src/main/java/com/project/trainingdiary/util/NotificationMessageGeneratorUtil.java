@@ -83,4 +83,17 @@ public class NotificationMessageGeneratorUtil {
         traineeName
     );
   }
+
+  /**
+   * PT 1시간 전 알림
+   */
+  public static String oneHourBeforePtSession(String trainerName, String traineeName,
+      LocalDateTime startAt) {
+    return String.format(
+        "%s님과 %s님의 %s PT가 1시간 후에 시작됩니다.",
+        trainerName,
+        traineeName,
+        startAt.format(formatter)
+    );
+  }
 }

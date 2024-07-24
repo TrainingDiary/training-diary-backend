@@ -21,4 +21,13 @@ public interface ScheduleRepository extends JpaRepository<ScheduleEntity, Long>,
       + "where s.startAt >= ?1 "
       + "and s.startAt <= ?2")
   List<ScheduleEntity> findByDates(LocalDateTime startAt1, LocalDateTime startAt2);
+
+  @Query("select s "
+      + "from schedule s "
+      + "left join fetch s.trainer "
+      + "left join fetch s.ptContract "
+      + "left join fetch s.ptContract.trainee "
+      + "where s.startAt >= ?1 "
+      + "and s.startAt <= ?2")
+  List<ScheduleEntity> findByDatesWithDetails(LocalDateTime startAt1, LocalDateTime startAt2);
 }
