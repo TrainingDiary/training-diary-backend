@@ -7,9 +7,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.project.trainingdiary.component.FcmPushNotification;
 import com.project.trainingdiary.dto.request.ptcontract.AddPtContractSessionRequestDto;
 import com.project.trainingdiary.dto.request.ptcontract.CreatePtContractRequestDto;
 import com.project.trainingdiary.dto.request.ptcontract.TerminatePtContractRequestDto;
+import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
@@ -18,7 +20,9 @@ import com.project.trainingdiary.exception.ptcontract.PtContractNotExistExceptio
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.UserPrincipal;
+import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
@@ -58,6 +62,12 @@ class PtContractServiceTest {
 
   @Mock
   private TraineeRepository traineeRepository;
+
+  @Mock
+  private NotificationRepository notificationRepository;
+
+  @Mock
+  private FcmPushNotification fcmPushNotification;
 
   @InjectMocks
   private PtContractService ptContractService;
@@ -144,11 +154,17 @@ class PtContractServiceTest {
     when(ptContractRepository.existsByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(false);
 
-    ArgumentCaptor<PtContractEntity> captor = ArgumentCaptor.forClass(PtContractEntity.class);
+    ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
+        PtContractEntity.class);
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(
+        NotificationEntity.class);
     ptContractService.createPtContract(dto);
 
     //then
-    verify(ptContractRepository).save(captor.capture());
+    verify(ptContractRepository).save(captorPtContract.capture());
+    verify(notificationRepository).save(captorNotification.capture());
+    assertEquals(NotificationType.PT_CONTRACT_CREATED,
+        captorNotification.getValue().getNotificationType());
   }
 
   @Test

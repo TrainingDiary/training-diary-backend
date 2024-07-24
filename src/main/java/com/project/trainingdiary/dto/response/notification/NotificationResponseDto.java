@@ -20,7 +20,7 @@ public class NotificationResponseDto {
   public static NotificationResponseDto fromEntity(NotificationEntity entity) {
     return NotificationResponseDto.builder()
         .notificationId(entity.getId())
-        .note(entity.getNote())
+        .note(entity.getBody())
         .eventDate(entity.getEventDate())
         .createdAt(entity.getCreatedAt())
         .build();
