@@ -1,7 +1,9 @@
 package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -270,8 +272,10 @@ class ScheduleTraineeServiceTest {
     assertEquals(
         ScheduleStatusType.RESERVE_APPLIED, captorSchedule.getValue().getScheduleStatusType());
     assertEquals(11, captorPtContract.getValue().getUsedSession());
-    assertEquals(NotificationType.RESERVE_APPLIED,
+    assertEquals(NotificationType.RESERVATION_APPLIED,
         captorNotification.getValue().getNotificationType());
+    assertTrue(captorNotification.getValue().isToTrainer());
+    assertFalse(captorNotification.getValue().isToTrainee());
   }
 
   @Test
@@ -436,17 +440,24 @@ class ScheduleTraineeServiceTest {
         dto,
         LocalDateTime.of(2024, 7, 15, 8, 0, 0)
     );
-    ArgumentCaptor<PtContractEntity> ptContractCaptor = ArgumentCaptor.forClass(
+    ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
         PtContractEntity.class);
-    ArgumentCaptor<ScheduleEntity> scheduleCaptor = ArgumentCaptor.forClass(ScheduleEntity.class);
+    ArgumentCaptor<ScheduleEntity> captorSchedule = ArgumentCaptor.forClass(ScheduleEntity.class);
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(
+        NotificationEntity.class);
 
     //then
-    verify(ptContractRepository).save(ptContractCaptor.capture());
-    verify(scheduleRepository).save(scheduleCaptor.capture());
+    verify(ptContractRepository).save(captorPtContract.capture());
+    verify(scheduleRepository).save(captorSchedule.capture());
+    verify(notificationRepository).save(captorNotification.capture());
 
-    assertEquals(4, ptContractCaptor.getValue().getUsedSession());
-    assertEquals(ScheduleStatusType.OPEN, scheduleCaptor.getValue().getScheduleStatusType());
+    assertEquals(4, captorPtContract.getValue().getUsedSession());
+    assertEquals(ScheduleStatusType.OPEN, captorSchedule.getValue().getScheduleStatusType());
     assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatus());
+    assertEquals(NotificationType.RESERVATION_CANCELLED_BY_TRAINEE,
+        captorNotification.getValue().getNotificationType());
+    assertTrue(captorNotification.getValue().isToTrainer());
+    assertFalse(captorNotification.getValue().isToTrainee());
   }
 
   @Test

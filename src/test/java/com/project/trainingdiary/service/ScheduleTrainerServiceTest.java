@@ -1,18 +1,22 @@
 package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.project.trainingdiary.component.FcmPushNotification;
 import com.project.trainingdiary.dto.request.schedule.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTrainerRequestDto;
 import com.project.trainingdiary.dto.request.schedule.RejectScheduleRequestDto;
 import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTrainerResponseDto;
 import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
+import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
@@ -26,8 +30,10 @@ import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppl
 import com.project.trainingdiary.model.ScheduleDateTimes;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.UserPrincipal;
+import com.project.trainingdiary.model.type.NotificationType;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import com.project.trainingdiary.repository.schedule.ScheduleRepository;
@@ -66,6 +72,12 @@ class ScheduleTrainerServiceTest {
 
   @Mock
   private PtContractRepository ptContractRepository;
+
+  @Mock
+  private NotificationRepository notificationRepository;
+
+  @Mock
+  private FcmPushNotification fcmPushNotification;
 
   @InjectMocks
   private ScheduleTrainerService scheduleTrainerService;
@@ -196,25 +208,37 @@ class ScheduleTrainerServiceTest {
     setupTrainerAuth();
     AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
     dto.setScheduleId(100L);
+    LocalDateTime startAt = LocalDateTime.of(2024, 1, 1, 0, 0, 0);
 
     //when
     when(scheduleRepository.findById(100L))
         .thenReturn(Optional.of(
             ScheduleEntity.builder()
                 .id(100L)
+                .trainer(trainer)
+                .startAt(startAt)
                 .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
                         .totalSession(10)
                         .usedSession(5)
+                        .trainee(trainee)
                         .build()
                 )
                 .build()
         ));
 
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(
+        NotificationEntity.class);
+
     //then
     scheduleTrainerService.acceptSchedule(dto);
+    verify(notificationRepository).save(captorNotification.capture());
+    assertEquals(NotificationType.RESERVATION_ACCEPTED,
+        captorNotification.getValue().getNotificationType());
+    assertTrue(captorNotification.getValue().isToTrainee());
+    assertFalse(captorNotification.getValue().isToTrainer());
   }
 
   @Test
@@ -330,6 +354,7 @@ class ScheduleTrainerServiceTest {
     setupTrainerAuth();
     RejectScheduleRequestDto dto = new RejectScheduleRequestDto();
     dto.setScheduleId(100L);
+    LocalDateTime startAt = LocalDateTime.of(2024, 1, 1, 0, 0, 0);
 
     //when
     when(scheduleRepository.findById(100L))
@@ -337,22 +362,33 @@ class ScheduleTrainerServiceTest {
             ScheduleEntity.builder()
                 .id(100L)
                 .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
+                .startAt(startAt)
+                .trainer(trainer)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
                         .totalSession(10)
                         .usedSession(5)
+                        .trainee(trainee)
                         .build()
                 )
                 .build()
         ));
 
-    ArgumentCaptor<PtContractEntity> captor = ArgumentCaptor.forClass(PtContractEntity.class);
+    ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
+        PtContractEntity.class);
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(
+        NotificationEntity.class);
     scheduleTrainerService.rejectSchedule(dto);
 
     //then
-    verify(ptContractRepository).save(captor.capture());
-    assertEquals(4, captor.getValue().getUsedSession());
+    verify(ptContractRepository).save(captorPtContract.capture());
+    verify(notificationRepository).save(captorNotification.capture());
+    assertEquals(4, captorPtContract.getValue().getUsedSession());
+    assertEquals(NotificationType.RESERVATION_REJECTED,
+        captorNotification.getValue().getNotificationType());
+    assertTrue(captorNotification.getValue().isToTrainee());
+    assertFalse(captorNotification.getValue().isToTrainer());
   }
 
   @Test
@@ -436,6 +472,7 @@ class ScheduleTrainerServiceTest {
     //given
     setupTrainerAuth();
     CancelScheduleByTrainerRequestDto dto = new CancelScheduleByTrainerRequestDto(100L);
+    LocalDateTime startAt = LocalDateTime.of(2024, 1, 1, 0, 0, 0);
 
     //when
     when(scheduleRepository.findById(100L))
@@ -444,11 +481,13 @@ class ScheduleTrainerServiceTest {
                 .id(100L)
                 .scheduleStatusType(ScheduleStatusType.RESERVED)
                 .trainer(trainer)
+                .startAt(startAt)
                 .ptContract(
                     PtContractEntity.builder()
                         .id(1000L)
                         .totalSession(10)
                         .usedSession(5)
+                        .trainee(trainee)
                         .build()
                 )
                 .build()
@@ -456,17 +495,24 @@ class ScheduleTrainerServiceTest {
 
     CancelScheduleByTrainerResponseDto response = scheduleTrainerService.cancelSchedule(
         dto);
-    ArgumentCaptor<PtContractEntity> ptContractCaptor = ArgumentCaptor.forClass(
+    ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
         PtContractEntity.class);
-    ArgumentCaptor<ScheduleEntity> scheduleCaptor = ArgumentCaptor.forClass(ScheduleEntity.class);
+    ArgumentCaptor<ScheduleEntity> captorSchedule = ArgumentCaptor.forClass(ScheduleEntity.class);
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(
+        NotificationEntity.class);
 
     //then
-    verify(ptContractRepository).save(ptContractCaptor.capture());
-    verify(scheduleRepository).save(scheduleCaptor.capture());
+    verify(ptContractRepository).save(captorPtContract.capture());
+    verify(scheduleRepository).save(captorSchedule.capture());
 
-    assertEquals(4, ptContractCaptor.getValue().getUsedSession());
-    assertEquals(ScheduleStatusType.OPEN, scheduleCaptor.getValue().getScheduleStatusType());
+    assertEquals(4, captorPtContract.getValue().getUsedSession());
+    assertEquals(ScheduleStatusType.OPEN, captorSchedule.getValue().getScheduleStatusType());
     assertEquals(ScheduleStatusType.OPEN, response.getScheduleStatus());
+    verify(notificationRepository).save(captorNotification.capture());
+    assertEquals(NotificationType.RESERVATION_CANCELLED_BY_TRAINER,
+        captorNotification.getValue().getNotificationType());
+    assertTrue(captorNotification.getValue().isToTrainee());
+    assertFalse(captorNotification.getValue().isToTrainer());
   }
 
   @Test

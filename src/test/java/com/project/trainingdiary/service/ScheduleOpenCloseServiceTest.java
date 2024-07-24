@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.project.trainingdiary.component.FcmPushNotification;
 import com.project.trainingdiary.dto.request.schedule.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.response.schedule.RegisterScheduleResponseDto;
@@ -27,6 +28,7 @@ import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
@@ -71,6 +73,12 @@ class ScheduleOpenCloseServiceTest {
 
   @Mock
   private PtContractRepository ptContractRepository;
+
+  @Mock
+  private NotificationRepository notificationRepository;
+
+  @Mock
+  private FcmPushNotification fcmPushNotification;
 
   @InjectMocks
   private ScheduleOpenCloseService scheduleOpenCloseService;
