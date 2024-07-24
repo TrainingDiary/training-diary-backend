@@ -99,8 +99,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (userDetails != null) {
       String newAccessToken = tokenProvider.createAccessToken(username);
       log.info("새로운 접근 토큰을 쿠키에 설정: {}", newAccessToken);
+
+      boolean isLocal = userService.isLocalRequest(request);
+
       cookieProvider.setCookie(response, ACCESS_TOKEN_COOKIE_NAME, newAccessToken,
-          tokenProvider.getExpiryDateFromToken(newAccessToken));
+          tokenProvider.getExpiryDateFromToken(newAccessToken), isLocal);
       redisTokenRepository.saveAccessToken(username, newAccessToken,
           tokenProvider.getExpiryDateFromToken(newAccessToken));
       authenticateUser(newAccessToken, request);

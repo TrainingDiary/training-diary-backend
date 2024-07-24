@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -29,25 +30,42 @@ public class CookieProvider {
    * 주어진 이름과 값, 만료 날짜로 쿠키를 설정합니다.
    */
   public void setCookie(HttpServletResponse response, String name, String value,
-      LocalDateTime expiry) {
-    Cookie cookie = new Cookie(name, value);
-    cookie.setHttpOnly(true); // 쿠키를 HTTP 전용으로 설정
-    cookie.setSecure(true); // 쿠키를 HTTPS에서만 전송하도록 설정
-    cookie.setPath("/");
+      LocalDateTime expiry, boolean isLocal) {
+
     long maxAge = Duration.between(LocalDateTime.now(ZoneId.systemDefault()), expiry).getSeconds();
-    cookie.setMaxAge((int) maxAge);
-    response.addCookie(cookie);
+
+    ResponseCookie responseCookie = createResponseCookieBuilder(name, value, (int) maxAge, isLocal)
+        .build();
+
+    response.addHeader("Set-Cookie", responseCookie.toString());
   }
 
   /**
    * 주어진 이름의 쿠키를 클리어합니다.
    */
-  public void clearCookie(HttpServletResponse response, String name) {
-    Cookie cookie = new Cookie(name, null);
-    cookie.setHttpOnly(true); // 쿠키를 HTTP 전용으로 설정
-    cookie.setSecure(true); // 쿠키를 HTTPS에서만 전송하도록 설정
-    cookie.setPath("/");
-    cookie.setMaxAge(0);
-    response.addCookie(cookie);
+  public void clearCookie(HttpServletResponse response, String name, boolean isLocal) {
+    ResponseCookie responseCookie = createResponseCookieBuilder(name, null, 0, isLocal)
+        .build();
+
+    response.addHeader("Set-Cookie", responseCookie.toString());
+  }
+
+  /**
+   * ResponseCookieBuilder를 생성합니다.
+   */
+  private ResponseCookie.ResponseCookieBuilder createResponseCookieBuilder(String name,
+      String value, int maxAge, boolean isLocal) {
+    ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(name, value)
+        .httpOnly(true)
+        .path("/")
+        .maxAge(maxAge);
+
+    if (isLocal) { // 로컬
+      cookieBuilder.secure(false).sameSite("Lax");
+    } else { // 배포
+      cookieBuilder.secure(true).sameSite("None");
+    }
+
+    return cookieBuilder;
   }
 }
