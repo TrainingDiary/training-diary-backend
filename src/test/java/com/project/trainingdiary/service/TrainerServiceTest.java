@@ -17,7 +17,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.user.TraineeNotExistException;
+import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.model.type.GenderType;
 import com.project.trainingdiary.model.type.TargetType;
@@ -163,7 +163,7 @@ public class TrainerServiceTest {
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.empty());
 
     // when / then
-    assertThrows(TraineeNotExistException.class, () -> trainerService.getTraineeInfo(traineeId));
+    assertThrows(TraineeNotFoundException.class, () -> trainerService.getTraineeInfo(traineeId));
     verify(trainerRepository, times(1)).findByEmail(trainerEmail);
     verify(traineeRepository, times(1)).findById(traineeId);
   }
@@ -240,7 +240,7 @@ public class TrainerServiceTest {
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.empty());
 
     // when / then
-    assertThrows(TraineeNotExistException.class, () -> trainerService.editTraineeInfo(dto));
+    assertThrows(TraineeNotFoundException.class, () -> trainerService.editTraineeInfo(dto));
     verify(trainerRepository, times(1)).findByEmail(trainerEmail);
     verify(traineeRepository, times(1)).findById(traineeId);
   }
@@ -310,7 +310,7 @@ public class TrainerServiceTest {
     when(traineeRepository.findById(traineeId)).thenReturn(Optional.empty());
 
     // when / then
-    assertThrows(TraineeNotExistException.class, () -> trainerService.addInBodyRecord(dto));
+    assertThrows(TraineeNotFoundException.class, () -> trainerService.addInBodyRecord(dto));
     verify(trainerRepository, times(1)).findByEmail(trainerEmail);
     verify(traineeRepository, times(1)).findById(traineeId);
 

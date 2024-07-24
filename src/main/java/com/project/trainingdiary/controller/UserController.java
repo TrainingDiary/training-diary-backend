@@ -6,8 +6,10 @@ import com.project.trainingdiary.dto.request.user.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.user.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.user.MemberInfoResponseDto;
 import com.project.trainingdiary.dto.response.user.SignInResponseDto;
+import com.project.trainingdiary.dto.response.user.SignUpResponseDto;
 import com.project.trainingdiary.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +37,8 @@ public class UserController {
       description = "이메일 중복 여부를 확인하고 인증 코드를 발송합니다."
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공")
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "409", description = "이미 등록된 이메일입니다.", content = @Content)
   })
   @PostMapping("/check-duplicate-and-send-verification")
   public ResponseEntity<Void> checkDuplicateAndSendVerification(
@@ -50,7 +53,9 @@ public class UserController {
       description = "사용자 이메일로 전송된 인증 코드를 확인합니다."
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공")
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "400", description = "인증 코드가 일치하지 않습니다.", content = @Content),
+      @ApiResponse(responseCode = "406", description = "인증 코드가 만료 되었습니다.", content = @Content)
   })
   @PostMapping("/check-verification-code")
   public ResponseEntity<Void> verifyCode(
@@ -66,14 +71,16 @@ public class UserController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "400", description = "인증 코드가 아직 검증되지 않았습니다.", content = @Content),
+      @ApiResponse(responseCode = "403", description = "비밀번호가 일치하지 않습니다.", content = @Content),
+      @ApiResponse(responseCode = "409", description = "이미 등록된 이메일입니다.", content = @Content)
   })
   @PostMapping("/sign-up")
-  public ResponseEntity<Void> signUp(
+  public ResponseEntity<SignUpResponseDto> signUp(
       @RequestBody @Valid SignUpRequestDto dto, HttpServletRequest request,
       HttpServletResponse response
   ) {
-    userService.signUp(dto, request, response);
-    return ResponseEntity.ok().build();
+    return ResponseEntity.ok(userService.signUp(dto, request, response));
   }
 
   @Operation(
@@ -82,7 +89,8 @@ public class UserController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-  })
+      @ApiResponse(responseCode = "400", description = "비밀번호가 일치하지 않습니다.", content = @Content),
+      @ApiResponse(responseCode = "404", description = "존재하지 않는 회원입니다.", content = @Content)})
   @PostMapping("/sign-in")
   public ResponseEntity<SignInResponseDto> signIn(
       @RequestBody @Valid SignInRequestDto dto, HttpServletRequest request,
@@ -112,7 +120,7 @@ public class UserController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-  })
+      @ApiResponse(responseCode = "404", description = "존재하지 않는 회원입니다.", content = @Content)})
   @GetMapping("/info")
   public ResponseEntity<MemberInfoResponseDto> userInfo() {
     return ResponseEntity.ok(userService.memberInfo());

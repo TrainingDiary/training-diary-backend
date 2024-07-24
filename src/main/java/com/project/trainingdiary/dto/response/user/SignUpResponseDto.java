@@ -12,15 +12,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SignInResponseDto {
+public class SignUpResponseDto {
 
   private Long id;
   private String email;
   private UserRoleType role;
   private boolean unreadNotification;
 
-  public static SignInResponseDto fromEntity(TrainerEntity trainer) {
-    return SignInResponseDto.builder()
+  public static SignUpResponseDto fromEntity(TrainerEntity trainer) {
+    return SignUpResponseDto.builder()
         .id(trainer.getId())
         .email(trainer.getEmail())
         .role(UserRoleType.TRAINER)
@@ -28,8 +28,8 @@ public class SignInResponseDto {
         .build();
   }
 
-  public static SignInResponseDto fromEntity(TraineeEntity trainee) {
-    return SignInResponseDto.builder()
+  public static SignUpResponseDto fromEntity(TraineeEntity trainee) {
+    return SignUpResponseDto.builder()
         .id(trainee.getId())
         .email(trainee.getEmail())
         .role(UserRoleType.TRAINEE)

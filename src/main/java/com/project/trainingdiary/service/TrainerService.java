@@ -10,7 +10,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.user.TraineeNotExistException;
+import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.repository.InBodyRecordHistoryRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
@@ -86,11 +86,11 @@ public class TrainerService {
    *
    * @param id 트레이니의 ID
    * @return TraineeEntity 트레이니 엔티티
-   * @throws TraineeNotExistException 트레이니가 존재하지 않을 경우 예외 발생
+   * @throws TraineeNotFoundException 트레이니가 존재하지 않을 경우 예외 발생
    */
   private TraineeEntity getTraineeById(Long id) {
     return traineeRepository.findById(id)
-        .orElseThrow(TraineeNotExistException::new);
+        .orElseThrow(TraineeNotFoundException::new);
   }
 
   /**

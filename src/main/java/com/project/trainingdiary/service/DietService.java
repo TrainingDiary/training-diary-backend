@@ -8,7 +8,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.diet.DietNotExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.user.TraineeNotExistException;
+import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
@@ -218,16 +218,16 @@ public class DietService {
    * 인증된 트레이니를 조회합니다.
    *
    * @return 인증된 트레이니 엔티티
-   * @throws TraineeNotExistException 인증된 트레이니가 존재하지 않을 경우 예외 발생
+   * @throws TraineeNotFoundException 인증된 트레이니가 존재하지 않을 경우 예외 발생
    */
   private TraineeEntity getAuthenticatedTrainee() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null || authentication.getName() == null) {
-      throw new TraineeNotExistException();
+      throw new TraineeNotFoundException();
     }
     String email = authentication.getName();
     return traineeRepository.findByEmail(email)
-        .orElseThrow(TraineeNotExistException::new);
+        .orElseThrow(TraineeNotFoundException::new);
   }
 
   /**
@@ -251,11 +251,11 @@ public class DietService {
    *
    * @param id 트레이니의 ID
    * @return 트레이니 엔티티
-   * @throws TraineeNotExistException 트레이니가 존재하지 않을 경우 예외 발생
+   * @throws TraineeNotFoundException 트레이니가 존재하지 않을 경우 예외 발생
    */
   private TraineeEntity getTraineeById(Long id) {
     return traineeRepository.findById(id)
-        .orElseThrow(TraineeNotExistException::new);
+        .orElseThrow(TraineeNotFoundException::new);
   }
 
   /**

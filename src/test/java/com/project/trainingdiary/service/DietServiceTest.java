@@ -21,7 +21,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.diet.DietNotExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.user.TraineeNotExistException;
+import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.UserRoleType;
@@ -264,7 +264,7 @@ public class DietServiceTest {
         .image(image)
         .build();
 
-    assertThrows(TraineeNotExistException.class, () -> dietService.createDiet(dto));
+    assertThrows(TraineeNotFoundException.class, () -> dietService.createDiet(dto));
   }
 
   @Test
@@ -317,7 +317,7 @@ public class DietServiceTest {
     lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
     SecurityContextHolder.setContext(securityContext);
 
-    assertThrows(TraineeNotExistException.class,
+    assertThrows(TraineeNotFoundException.class,
         () -> dietService.getDiets(999L, PageRequest.of(0, 10)));
   }
 
@@ -437,7 +437,7 @@ public class DietServiceTest {
     lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
     SecurityContextHolder.setContext(securityContext);
 
-    assertThrows(TraineeNotExistException.class, () -> dietService.getDietDetails(1L));
+    assertThrows(TraineeNotFoundException.class, () -> dietService.getDietDetails(1L));
   }
 
   @Test
@@ -503,7 +503,7 @@ public class DietServiceTest {
     lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
     SecurityContextHolder.setContext(securityContext);
 
-    assertThrows(TraineeNotExistException.class, () -> dietService.deleteDiet(1L));
+    assertThrows(TraineeNotFoundException.class, () -> dietService.deleteDiet(1L));
 
     verify(dietRepository, never()).delete(any());
   }
