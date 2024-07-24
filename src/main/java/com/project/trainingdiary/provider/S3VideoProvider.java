@@ -5,8 +5,8 @@ import com.project.trainingdiary.util.VideoUtil;
 import io.awspring.cloud.s3.ObjectMetadata;
 import io.awspring.cloud.s3.S3Operations;
 import io.awspring.cloud.s3.S3Resource;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -31,7 +31,13 @@ public class S3VideoProvider {
       throws IOException, InterruptedException {
     String extension = MediaUtil.getExtension(MediaUtil.checkFileNameExist(video));
     String tempKey = "temp_" + uuid + "." + extension;
-    String originalKey = "original_" + uuid + "." + extension;
+    String originalKey =
+        "original_" + uuid + "." + (extension.equalsIgnoreCase("mov") ? "mp4" : extension);
+
+    String contentType = video.getContentType();
+    if ("mov".equalsIgnoreCase(extension)) {
+      contentType = "video/mp4";
+    }
 
     // 임시 버킷에 영상 업로드
     S3Resource tempS3Resource;
@@ -41,8 +47,8 @@ public class S3VideoProvider {
     }
 
     String tempVideoUrl = tempS3Resource.getURL().toExternalForm();
-    String encodedVideoUrl = encodeAndUploadVideo(tempVideoUrl, originalKey,
-        video.getContentType());
+    String encodedVideoUrl = encodeAndUploadVideo(
+        tempVideoUrl, originalKey, contentType, extension);
 
     // 임시 파일 삭제
     s3Operations.deleteObject(tempBucket, tempKey);
@@ -53,30 +59,49 @@ public class S3VideoProvider {
   public String uploadThumbnail(String encodedVideoUrl, String uuid)
       throws IOException, InterruptedException {
     String thumbnailKey = "thumb_" + uuid + ".png";
+
+    String tmpPath = "/tmp/thumb_" + uuid + ".png";
+    String thumbPath = VideoUtil.generateThumbnail(encodedVideoUrl, tmpPath);
+
     S3Resource thumbS3Resource;
-    try (InputStream inputStream = new URL(encodedVideoUrl).openStream();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      VideoUtil.generateThumbnail(inputStream, outputStream);
-      try (InputStream thumbnailInputStream = new ByteArrayInputStream(
-          outputStream.toByteArray())) {
-        thumbS3Resource = s3Operations.upload(bucket, thumbnailKey, thumbnailInputStream,
-            ObjectMetadata.builder().contentType("image/png").build());
-      }
+
+    try (InputStream inputStream = new FileInputStream(thumbPath)) {
+      thumbS3Resource = s3Operations.upload(bucket, thumbnailKey, inputStream,
+          ObjectMetadata.builder().contentType("image/png").build());
     }
+
+    // 임시 파일 삭제
+    new File(tmpPath).delete();
+
     return thumbS3Resource.getURL().toExternalForm();
   }
 
-  private String encodeAndUploadVideo(String tempVideoUrl, String originalKey, String contentType)
-      throws IOException, InterruptedException {
+  private String encodeAndUploadVideo(
+      String tempVideoUrl,
+      String originalKey,
+      String contentType,
+      String extension
+  ) throws IOException, InterruptedException {
+    // 임시 파일 경로 설정
+    String tmpPath = "/tmp/original_" + originalKey;
+
     S3Resource videoS3Resource;
-    try (InputStream inputStream = new URL(tempVideoUrl).openStream();
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      VideoUtil.encodeVideo(inputStream, outputStream);
-      try (InputStream encodedInputStream = new ByteArrayInputStream(outputStream.toByteArray())) {
-        videoS3Resource = s3Operations.upload(bucket, originalKey, encodedInputStream,
+    if ("mov".equalsIgnoreCase(extension)) {
+      String encodedVideoPath = VideoUtil.encodeVideo(tempVideoUrl, tmpPath);
+      try (InputStream inputStream = new FileInputStream(encodedVideoPath)) {
+        videoS3Resource = s3Operations.upload(bucket, originalKey, inputStream,
+            ObjectMetadata.builder().contentType(contentType).build());
+      }
+      // 임시 파일 삭제
+      new File(tmpPath).delete();
+    } else {
+      // MOV가 아닌 경우 원본을 그대로 사용
+      try (InputStream inputStream = new URL(tempVideoUrl).openStream()) {
+        videoS3Resource = s3Operations.upload(bucket, originalKey, inputStream,
             ObjectMetadata.builder().contentType(contentType).build());
       }
     }
+
     return videoS3Resource.getURL().toExternalForm();
   }
 
