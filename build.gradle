@@ -58,9 +58,6 @@ dependencies {
     // image resize
     implementation 'org.imgscalr:imgscalr-lib:4.2'
 
-    // thumbnailator
-    implementation 'net.coobird:thumbnailator:0.4.20'
-
     // FFmpeg
     implementation 'net.bramp.ffmpeg:ffmpeg:0.8.0'
 
