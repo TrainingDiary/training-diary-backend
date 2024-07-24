@@ -85,8 +85,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   /**
    * 리프레시 토큰을 처리합니다. 리프레시 토큰이 유효한 경우, 새로운 접근 토큰을 발급하고 사용자 인증을 수행합니다.
    */
-  private void handleRefreshToken(HttpServletRequest request, HttpServletResponse response,
-      String refreshToken) throws IOException {
+  private void handleRefreshToken(HttpServletRequest request, HttpServletResponse response, String refreshToken) throws IOException {
     if (tokenProvider.isTokenBlacklisted(refreshToken)) {
       log.warn("리프레시 토큰이 블랙리스트에 있습니다.");
       response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "리프레시 토큰이 블랙리스트에 있습니다.");
@@ -99,8 +98,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (userDetails != null) {
       String newAccessToken = tokenProvider.createAccessToken(username);
       log.info("새로운 접근 토큰을 쿠키에 설정: {}", newAccessToken);
+
+      boolean isLocal = userService.isLocalRequest(request);
+
       cookieProvider.setCookie(response, ACCESS_TOKEN_COOKIE_NAME, newAccessToken,
-          tokenProvider.getExpiryDateFromToken(newAccessToken));
+          tokenProvider.getExpiryDateFromToken(newAccessToken), isLocal);
       redisTokenRepository.saveAccessToken(username, newAccessToken,
           tokenProvider.getExpiryDateFromToken(newAccessToken));
       authenticateUser(newAccessToken, request);

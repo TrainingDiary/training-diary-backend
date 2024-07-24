@@ -92,7 +92,7 @@ public class UserService implements UserDetailsService {
    * @param response HTTP 응답 객체
    */
   @Transactional
-  public void signUp(SignUpRequestDto dto, HttpServletResponse response) {
+  public void signUp(SignUpRequestDto dto, HttpServletRequest request, HttpServletResponse response) {
     VerificationEntity verificationEntity = getVerificationEntity(dto.getEmail());
     validateEmailNotExists(dto.getEmail());
     validatePasswordsMatch(dto.getPassword(), dto.getConfirmPassword());
@@ -100,7 +100,7 @@ public class UserService implements UserDetailsService {
 
     String encodedPassword = passwordEncoder.encode(dto.getPassword());
     saveUser(dto, encodedPassword);
-    generateTokensAndSetCookies(dto.getEmail(), response);
+    generateTokensAndSetCookies(dto.getEmail(), request, response);
     verificationRepository.deleteByEmail(dto.getEmail());
   }
 
@@ -113,10 +113,10 @@ public class UserService implements UserDetailsService {
    * @param response HTTP 응답 객체
    * @return SignInResponseDto 로그인 응답 DTO
    */
-  public SignInResponseDto signIn(SignInRequestDto dto, HttpServletResponse response) {
+  public SignInResponseDto signIn(SignInRequestDto dto, HttpServletRequest request, HttpServletResponse response) {
     UserDetails userDetails = loadUserByUsername(dto.getEmail());
     validatePassword(dto.getPassword(), userDetails.getPassword());
-    return generateTokensAndSetCookies(userDetails.getUsername(), response);
+    return generateTokensAndSetCookies(userDetails.getUsername(), request, response);
   }
 
   /**
@@ -294,6 +294,7 @@ public class UserService implements UserDetailsService {
    * @return SignInResponseDto 로그인 응답 DTO
    */
   private SignInResponseDto generateTokensAndSetCookies(String username,
+      HttpServletRequest request,
       HttpServletResponse response) {
     String accessToken = tokenProvider.createAccessToken(username);
     String refreshToken = tokenProvider.createRefreshToken(username);
@@ -301,10 +302,12 @@ public class UserService implements UserDetailsService {
     LocalDateTime accessTokenExpiryDate = tokenProvider.getExpiryDateFromToken(accessToken);
     LocalDateTime refreshTokenExpiryDate = tokenProvider.getExpiryDateFromToken(refreshToken);
 
+    boolean isLocal = isLocalRequest(request);
+
     cookieProvider.setCookie(response, ACCESS_TOKEN_COOKIE_NAME, accessToken,
-        accessTokenExpiryDate);
+        accessTokenExpiryDate, isLocal);
     cookieProvider.setCookie(response, REFRESH_TOKEN_COOKIE_NAME, refreshToken,
-        refreshTokenExpiryDate);
+        refreshTokenExpiryDate, isLocal);
 
     redisTokenRepository.saveAccessToken(username, accessToken, accessTokenExpiryDate);
     redisTokenRepository.saveRefreshToken(username, refreshToken, refreshTokenExpiryDate);
@@ -323,11 +326,13 @@ public class UserService implements UserDetailsService {
     Cookie accessTokenCookie = cookieProvider.getCookie(request, ACCESS_TOKEN_COOKIE_NAME);
     Cookie refreshTokenCookie = cookieProvider.getCookie(request, REFRESH_TOKEN_COOKIE_NAME);
 
+    boolean isLocal = isLocalRequest(request);
+
     blacklistToken(accessTokenCookie);
     blacklistToken(refreshTokenCookie);
 
-    cookieProvider.clearCookie(response, ACCESS_TOKEN_COOKIE_NAME);
-    cookieProvider.clearCookie(response, REFRESH_TOKEN_COOKIE_NAME);
+    cookieProvider.clearCookie(response, ACCESS_TOKEN_COOKIE_NAME, isLocal);
+    cookieProvider.clearCookie(response, REFRESH_TOKEN_COOKIE_NAME, isLocal);
   }
 
   /**
@@ -341,6 +346,11 @@ public class UserService implements UserDetailsService {
       tokenProvider.blacklistToken(tokenCookie.getValue());
       redisTokenRepository.deleteToken(tokenProvider.getUsernameFromToken(tokenCookie.getValue()));
     }
+  }
+
+  public boolean isLocalRequest(HttpServletRequest request) {
+    String origin = request.getHeader("Origin");
+    return origin != null && origin.contains("localhost");
   }
 
   /**
