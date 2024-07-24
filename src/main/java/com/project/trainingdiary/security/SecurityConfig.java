@@ -42,7 +42,8 @@ public class SecurityConfig {
         )
         .authorizeHttpRequests(authz -> authz
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                "/swagger-resources/**", "/webjars/**", "/h2-console/**", "api/users/check-duplicate-and-send-verification",
+                "/swagger-resources/**", "/webjars/**", "/h2-console/**",
+                "api/users/check-duplicate-and-send-verification",
                 "api/users/check-verification-code", "api/users/sign-up", "api/users/sign-in")
             .permitAll()
             .anyRequest().authenticated())

@@ -53,7 +53,8 @@ public class CookieProvider {
   /**
    * ResponseCookieBuilder를 생성합니다.
    */
-  private ResponseCookie.ResponseCookieBuilder createResponseCookieBuilder(String name, String value, int maxAge, boolean isLocal) {
+  private ResponseCookie.ResponseCookieBuilder createResponseCookieBuilder(String name,
+      String value, int maxAge, boolean isLocal) {
     ResponseCookie.ResponseCookieBuilder cookieBuilder = ResponseCookie.from(name, value)
         .httpOnly(true)
         .path("/")
