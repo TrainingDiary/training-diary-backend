@@ -6,14 +6,17 @@ import com.project.trainingdiary.dto.request.user.SignUpRequestDto;
 import com.project.trainingdiary.dto.request.user.VerifyCodeRequestDto;
 import com.project.trainingdiary.dto.response.user.MemberInfoResponseDto;
 import com.project.trainingdiary.dto.response.user.SignInResponseDto;
+import com.project.trainingdiary.dto.response.user.SignUpResponseDto;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
 import com.project.trainingdiary.exception.user.PasswordMismatchedException;
+import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.exception.user.UserEmailDuplicateException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.user.VerificationCodeExpiredException;
+import com.project.trainingdiary.exception.user.VerificationCodeNotFoundException;
 import com.project.trainingdiary.exception.user.VerificationCodeNotMatchedException;
 import com.project.trainingdiary.exception.user.VerificationCodeNotYetVerifiedException;
 import com.project.trainingdiary.exception.user.WrongPasswordException;
@@ -92,7 +95,7 @@ public class UserService implements UserDetailsService {
    * @param response HTTP 응답 객체
    */
   @Transactional
-  public void signUp(SignUpRequestDto dto, HttpServletRequest request,
+  public SignUpResponseDto signUp(SignUpRequestDto dto, HttpServletRequest request,
       HttpServletResponse response) {
     VerificationEntity verificationEntity = getVerificationEntity(dto.getEmail());
     validateEmailNotExists(dto.getEmail());
@@ -101,8 +104,26 @@ public class UserService implements UserDetailsService {
 
     String encodedPassword = passwordEncoder.encode(dto.getPassword());
     saveUser(dto, encodedPassword);
-    generateTokensAndSetCookies(dto.getEmail(), request, response);
+
+    UserDetails userDetails = loadUserByUsername(dto.getEmail());
+    boolean isTrainer = userDetails.getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_TRAINER"));
+
     verificationRepository.deleteByEmail(dto.getEmail());
+
+    generateTokensAndSetCookies(userDetails.getUsername(), request, response);
+
+    if (isTrainer) {
+      TrainerEntity trainer = trainerRepository.findByEmail(dto.getEmail())
+          .orElseThrow(TrainerNotFoundException::new);
+
+      return SignUpResponseDto.fromEntity(trainer);
+    } else {
+      TraineeEntity trainee = traineeRepository.findByEmail(dto.getEmail())
+          .orElseThrow(TraineeNotFoundException::new);
+
+      return SignUpResponseDto.fromEntity(trainee);
+    }
   }
 
   /**
@@ -118,7 +139,23 @@ public class UserService implements UserDetailsService {
       HttpServletResponse response) {
     UserDetails userDetails = loadUserByUsername(dto.getEmail());
     validatePassword(dto.getPassword(), userDetails.getPassword());
-    return generateTokensAndSetCookies(userDetails.getUsername(), request, response);
+
+    boolean isTrainer = userDetails.getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_TRAINER"));
+
+    generateTokensAndSetCookies(userDetails.getUsername(), request, response);
+
+    if (isTrainer) {
+      TrainerEntity trainer = trainerRepository.findByEmail(dto.getEmail())
+          .orElseThrow(TrainerNotFoundException::new);
+
+      return SignInResponseDto.fromEntity(trainer);
+    } else {
+      TraineeEntity trainee = traineeRepository.findByEmail(dto.getEmail())
+          .orElseThrow(TraineeNotFoundException::new);
+
+      return SignInResponseDto.fromEntity(trainee);
+    }
   }
 
   /**
@@ -224,7 +261,8 @@ public class UserService implements UserDetailsService {
    * @throws UserNotFoundException 인증 엔티티가 존재하지 않으면 예외 발생
    */
   private VerificationEntity getVerificationEntity(String email) {
-    return verificationRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
+    return verificationRepository.findByEmail(email)
+        .orElseThrow(VerificationCodeNotFoundException::new);
   }
 
   /**
@@ -293,9 +331,8 @@ public class UserService implements UserDetailsService {
    *
    * @param username 사용자 이름
    * @param response HTTP 응답 객체
-   * @return SignInResponseDto 로그인 응답 DTO
    */
-  private SignInResponseDto generateTokensAndSetCookies(String username,
+  private void generateTokensAndSetCookies(String username,
       HttpServletRequest request,
       HttpServletResponse response) {
     String accessToken = tokenProvider.createAccessToken(username);
@@ -313,9 +350,6 @@ public class UserService implements UserDetailsService {
 
     redisTokenRepository.saveAccessToken(username, accessToken, accessTokenExpiryDate);
     redisTokenRepository.saveRefreshToken(username, refreshToken, refreshTokenExpiryDate);
-
-    return new SignInResponseDto(username,
-        loadUserByUsername(username).getAuthorities().toString());
   }
 
   /**
@@ -393,6 +427,7 @@ public class UserService implements UserDetailsService {
               .email(trainer.getEmail())
               .name(trainer.getName())
               .role(trainer.getRole())
+              .unreadNotification(trainer.isUnreadNotification())
               .build())
           .orElseThrow(TrainerNotFoundException::new);
     }
@@ -402,6 +437,7 @@ public class UserService implements UserDetailsService {
             .email(trainee.getEmail())
             .name(trainee.getName())
             .role(trainee.getRole())
+            .unreadNotification(trainee.isUnreadNotification())
             .build())
         .orElseThrow(TrainerNotFoundException::new);
   }

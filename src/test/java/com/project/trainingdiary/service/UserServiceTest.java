@@ -25,6 +25,7 @@ import com.project.trainingdiary.exception.user.PasswordMismatchedException;
 import com.project.trainingdiary.exception.user.UserEmailDuplicateException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.user.VerificationCodeExpiredException;
+import com.project.trainingdiary.exception.user.VerificationCodeNotFoundException;
 import com.project.trainingdiary.exception.user.VerificationCodeNotMatchedException;
 import com.project.trainingdiary.exception.user.VerificationCodeNotYetVerifiedException;
 import com.project.trainingdiary.exception.user.WrongPasswordException;
@@ -180,11 +181,12 @@ public class UserServiceTest {
   }
 
   @Test
-  @DisplayName("사용자를 찾을 수 없을 때 예외 발생")
+  @DisplayName("인증번호를 찾을 수 없을 때 예외 발생")
   void checkVerificationCodeThrowsExceptionWhenUserNotFound() {
     when(verificationRepository.findByEmail(verifyDto.getEmail())).thenReturn(Optional.empty());
 
-    assertThrows(UserNotFoundException.class, () -> userService.checkVerificationCode(verifyDto));
+    assertThrows(VerificationCodeNotFoundException.class,
+        () -> userService.checkVerificationCode(verifyDto));
   }
 
   @Test
@@ -301,7 +303,7 @@ public class UserServiceTest {
     SignInResponseDto responseDto = userService.signIn(signInDto, request, response);
 
     assertEquals("trainee@example.com", responseDto.getEmail());
-    assertEquals("[ROLE_TRAINEE]", responseDto.getRole());
+    assertEquals(UserRoleType.TRAINEE, responseDto.getRole());
     assertEquals(accessTokenExpiryDate, tokenProvider.getExpiryDateFromToken("accessToken"));
     assertEquals(refreshTokenExpiryDate, tokenProvider.getExpiryDateFromToken("refreshToken"));
 
