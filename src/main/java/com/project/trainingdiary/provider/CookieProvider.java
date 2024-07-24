@@ -60,9 +60,9 @@ public class CookieProvider {
         .path("/")
         .maxAge(maxAge);
 
-    if (isLocal) {
-      cookieBuilder.sameSite("Lax");
-    } else {
+    if (isLocal) { // 로컬
+      cookieBuilder.secure(false).sameSite("Lax");
+    } else { // 배포
       cookieBuilder.secure(true).sameSite("None");
     }
 
