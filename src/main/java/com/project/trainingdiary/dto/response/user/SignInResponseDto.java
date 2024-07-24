@@ -17,14 +17,14 @@ public class SignInResponseDto {
   private Long id;
   private String email;
   private UserRoleType role;
-  private boolean unReadNotification;
+  private boolean unreadNotification;
 
   public static SignInResponseDto fromEntity(TrainerEntity trainer) {
     return SignInResponseDto.builder()
         .id(trainer.getId())
         .email(trainer.getEmail())
         .role(UserRoleType.TRAINER)
-        .unReadNotification(trainer.isUnreadNotification())
+        .unreadNotification(trainer.isUnreadNotification())
         .build();
   }
 
@@ -33,7 +33,7 @@ public class SignInResponseDto {
         .id(trainee.getId())
         .email(trainee.getEmail())
         .role(UserRoleType.TRAINEE)
-        .unReadNotification(trainee.isUnreadNotification())
+        .unreadNotification(trainee.isUnreadNotification())
         .build();
   }
 }
