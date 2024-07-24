@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class PasswordMismatchedException extends GlobalException {
 
   public PasswordMismatchedException() {
-    super(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다.");
+    super(HttpStatus.FORBIDDEN, "비밀번호가 일치하지 않습니다.");
   }
 }

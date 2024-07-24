@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class VerificationCodeExpiredException extends GlobalException {
 
   public VerificationCodeExpiredException() {
-    super(HttpStatus.BAD_REQUEST, "인증 코드가 만료 되었습니다.");
+    super(HttpStatus.NOT_ACCEPTABLE, "인증 코드가 만료 되었습니다.");
   }
 }
