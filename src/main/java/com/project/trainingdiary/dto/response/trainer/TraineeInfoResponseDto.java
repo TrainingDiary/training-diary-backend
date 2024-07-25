@@ -3,6 +3,7 @@ package com.project.trainingdiary.dto.response.trainer;
 import com.project.trainingdiary.dto.request.trainer.BodyFatHistoryDto;
 import com.project.trainingdiary.dto.request.trainer.MuscleMassHistoryDto;
 import com.project.trainingdiary.dto.request.trainer.WeightHistoryDto;
+import com.project.trainingdiary.entity.InBodyRecordHistoryEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.model.type.GenderType;
 import com.project.trainingdiary.model.type.TargetType;
@@ -19,7 +20,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class TraineeInfoResponseDto {
 
-  private long traineeId;
+  private Long traineeId;
   private String name;
   private int age;
   private GenderType gender;
@@ -35,6 +36,7 @@ public class TraineeInfoResponseDto {
   private String targetReward;
 
   public static TraineeInfoResponseDto fromEntity(TraineeEntity trainee, int remainingSession) {
+    List<InBodyRecordHistoryEntity> inBodyRecords = trainee.getInBodyRecords();
     return TraineeInfoResponseDto.builder()
         .traineeId(trainee.getId())
         .name(trainee.getName())
@@ -43,15 +45,9 @@ public class TraineeInfoResponseDto {
         .gender(trainee.getGender())
         .height(trainee.getHeight())
         .remainingSession(remainingSession)
-        .weightHistory(trainee.getInBodyRecords().stream()
-            .map(WeightHistoryDto::fromEntity)
-            .collect(Collectors.toList()))
-        .bodyFatHistory(trainee.getInBodyRecords().stream()
-            .map(BodyFatHistoryDto::fromEntity)
-            .collect(Collectors.toList()))
-        .muscleMassHistory(trainee.getInBodyRecords().stream()
-            .map(MuscleMassHistoryDto::fromEntity)
-            .collect(Collectors.toList()))
+        .weightHistory(mapToWeightHistory(inBodyRecords))
+        .bodyFatHistory(mapToBodyFatHistory(inBodyRecords))
+        .muscleMassHistory(mapToMuscleMassHistory(inBodyRecords))
         .targetType(trainee.getTargetType())
         .targetValue(trainee.getTargetValue())
         .targetReward(trainee.getTargetReward())
@@ -59,10 +55,24 @@ public class TraineeInfoResponseDto {
   }
 
   private static int calculateAge(LocalDate birthDate) {
-    if (birthDate != null) {
-      return Period.between(birthDate, LocalDate.now()).getYears();
-    } else {
-      return 0;
-    }
+    return birthDate != null ? Period.between(birthDate, LocalDate.now()).getYears() : 0;
+  }
+
+  private static List<WeightHistoryDto> mapToWeightHistory(List<InBodyRecordHistoryEntity> inBodyRecords) {
+    return inBodyRecords.stream()
+        .map(WeightHistoryDto::fromEntity)
+        .collect(Collectors.toList());
+  }
+
+  private static List<BodyFatHistoryDto> mapToBodyFatHistory(List<InBodyRecordHistoryEntity> inBodyRecords) {
+    return inBodyRecords.stream()
+        .map(BodyFatHistoryDto::fromEntity)
+        .collect(Collectors.toList());
+  }
+
+  private static List<MuscleMassHistoryDto> mapToMuscleMassHistory(List<InBodyRecordHistoryEntity> inBodyRecords) {
+    return inBodyRecords.stream()
+        .map(MuscleMassHistoryDto::fromEntity)
+        .collect(Collectors.toList());
   }
 }
