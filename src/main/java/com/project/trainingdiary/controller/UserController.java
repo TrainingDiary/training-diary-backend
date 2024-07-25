@@ -89,8 +89,9 @@ public class UserController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "400", description = "비밀번호가 일치하지 않습니다.", content = @Content),
-      @ApiResponse(responseCode = "404", description = "존재하지 않는 회원입니다.", content = @Content)})
+      @ApiResponse(responseCode = "400", description = "가입된 이메일이 아닙니다.", content = @Content),
+      @ApiResponse(responseCode = "403", description = "비밀번호가 틀렸습니다.", content = @Content)})
+
   @PostMapping("/sign-in")
   public ResponseEntity<SignInResponseDto> signIn(
       @RequestBody @Valid SignInRequestDto dto, HttpServletRequest request,
