@@ -44,7 +44,7 @@ public class DietController {
       @ApiResponse(responseCode = "200", description = "성공"),
   })
   @PreAuthorize("hasRole('TRAINEE')")
-  @PostMapping(consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<Void> createDiet(
       @RequestPart("image") MultipartFile image,
       @RequestPart("content") String content
