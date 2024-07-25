@@ -97,6 +97,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     UserDetails userDetails = userService.loadUserByUsername(username);
 
     if (userDetails != null) {
+      String previousAccessTokenKey = "accessToken:" + username;
+
+      redisTokenRepository.deleteToken(previousAccessTokenKey);
+
       String newAccessToken = tokenProvider.createAccessToken(username);
       log.info("새로운 접근 토큰을 쿠키에 설정: {}", newAccessToken);
 
