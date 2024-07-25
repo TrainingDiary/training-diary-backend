@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,6 +21,14 @@ public class EmailProvider {
 
   private static final String LOGO_IMAGE = "https://training-diary-brand.s3.ap-northeast-2.amazonaws.com/training_diary_logo_and_text.png";
 
+  /**
+   * 이메일 전송
+   *
+   * @param email             이메일
+   * @param verificationNumber 이메일 전송번호
+   * @param expirationTime    이메일 전송된 시간
+   */
+  @Async
   public void sendVerificationEmail(String email, String verificationNumber,
       String expirationTime) {
     try {
