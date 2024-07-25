@@ -42,6 +42,7 @@ public class DietController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "415", description = "유효하지 않은 미디어 타입 입니다.")
   })
   @PreAuthorize("hasRole('TRAINEE')")
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -65,6 +66,7 @@ public class DietController {
   @GetMapping("{id}")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "403", description = "트레이너랑 트레이니 사이의 계약이 없습니다.")
   })
   @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
   public ResponseEntity<Page<DietImageResponseDto>> getTraineeDiets(
@@ -84,6 +86,7 @@ public class DietController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "403", description = "트레이너랑 트레이니 사이의 계약이 없습니다.")
   })
   @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
   @GetMapping("{id}/details")
