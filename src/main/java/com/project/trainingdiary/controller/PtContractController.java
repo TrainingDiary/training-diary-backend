@@ -39,6 +39,7 @@ public class PtContractController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "406", description = "트레이니 이메일이 존재하지 않아 계약할 수 없습니다.", content = @Content),
       @ApiResponse(responseCode = "409", description = "트레이너와 트레이니가 이미 계약이 있습니다.", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
@@ -71,8 +72,7 @@ public class PtContractController {
       description = "트레이너가 PT 계약을 종료함"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "계약이 없습니다.")
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/terminate")

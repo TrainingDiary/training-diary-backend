@@ -17,7 +17,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.exception.ptcontract.PtContractTrainerEmailNotExistException;
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.NotificationType;
@@ -181,7 +181,7 @@ class PtContractServiceTest {
 
     //then
     assertThrows(
-        UserNotFoundException.class,
+        PtContractTrainerEmailNotExistException.class,
         () -> ptContractService.createPtContract(dto)
     );
   }

@@ -14,7 +14,6 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedException;
@@ -71,10 +70,6 @@ public class ScheduleTrainerService {
     // PT 계약이 존재하지 않음
     if (ptContract == null) {
       throw new PtContractNotExistException();
-    }
-    // 전체 세션의 갯수와 사용한 세션의 갯수를 비교해 더 사용할 수 있는지 확인
-    if (ptContract.getTotalSession() <= ptContract.getUsedSession()) {
-      throw new UsedSessionExceededTotalSessionException();
     }
 
     // 일정 수락
