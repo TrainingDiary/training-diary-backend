@@ -348,7 +348,8 @@ public class DietServiceTest {
     assertNotNull(response);
     assertEquals(diet.getId(), response.getId());
     assertEquals(diet.getContent(), response.getContent());
-    assertEquals(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getOriginalUrl()), response.getImageUrl());
+    assertEquals(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getOriginalUrl()),
+        response.getImageUrl());
   }
 
   @Test
@@ -410,7 +411,8 @@ public class DietServiceTest {
     assertNotNull(response);
     assertEquals(diet.getId(), response.getId());
     assertEquals(diet.getContent(), response.getContent());
-    assertEquals(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getOriginalUrl()), response.getImageUrl());
+    assertEquals(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getOriginalUrl()),
+        response.getImageUrl());
   }
 
   @Test
