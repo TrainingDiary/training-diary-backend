@@ -24,9 +24,9 @@ public class EmailProvider {
   /**
    * 이메일 전송
    *
-   * @param email             이메일
+   * @param email              이메일
    * @param verificationNumber 이메일 전송번호
-   * @param expirationTime    이메일 전송된 시간
+   * @param expirationTime     이메일 전송된 시간
    */
   @Async
   public void sendVerificationEmail(String email, String verificationNumber,
