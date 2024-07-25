@@ -7,6 +7,6 @@ public class WrongPasswordException extends
     GlobalException {
 
   public WrongPasswordException() {
-    super(HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다.");
+    super(HttpStatus.FORBIDDEN, "비밀번호가 틀렸습니다.");
   }
 }
