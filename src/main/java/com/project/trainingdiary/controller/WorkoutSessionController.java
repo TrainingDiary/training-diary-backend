@@ -142,7 +142,7 @@ public class WorkoutSessionController {
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PutMapping(value = "/photos",
-      consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<WorkoutImageResponseDto> uploadWorkoutImage(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("images") List<MultipartFile> images
@@ -166,7 +166,7 @@ public class WorkoutSessionController {
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PutMapping(value = "/videos",
-      consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.MULTIPART_FORM_DATA_VALUE})
+      consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<WorkoutVideoResponseDto> uploadWorkoutVideo(
       @RequestPart("sessionId") Long sessionId,
       @RequestPart("video") MultipartFile video
