@@ -1,7 +1,9 @@
 package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -14,6 +16,7 @@ import com.project.trainingdiary.dto.request.schedule.OpenScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.RegisterScheduleRequestDto;
 import com.project.trainingdiary.dto.response.schedule.RegisterScheduleResponseDto;
 import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
+import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
@@ -419,17 +422,21 @@ class ScheduleOpenCloseServiceTest {
     ArgumentCaptor<List<ScheduleEntity>> captorSchedule = ArgumentCaptor.forClass(List.class);
     ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
         PtContractEntity.class);
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(NotificationEntity.class);
 
     //then
     RegisterScheduleResponseDto response = scheduleOpenCloseService.registerSchedule(dto);
 
     verify(scheduleRepository, times(2)).saveAll(captorSchedule.capture());
     verify(ptContractRepository).save(captorPtContract.capture());
+    verify(notificationRepository).save(captorNotification.capture());
 
     assertEquals(3, captorSchedule.getAllValues().get(0).size());
     assertEquals(0, captorSchedule.getAllValues().get(1).size());
     assertEquals(3, captorPtContract.getValue().getUsedSession());
     assertEquals(7, response.getRemainingSession());
+    assertFalse(captorNotification.getValue().isToTrainer());
+    assertTrue(captorNotification.getValue().isToTrainee());
   }
 
   @Test

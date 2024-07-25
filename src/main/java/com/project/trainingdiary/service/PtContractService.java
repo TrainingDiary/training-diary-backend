@@ -13,6 +13,7 @@ import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.ptcontract.PtContractTrainerEmailNotExistException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.NotificationMessage;
 import com.project.trainingdiary.model.PtContractSort;
@@ -45,7 +46,8 @@ public class PtContractService {
    */
   public CreatePtContractResponseDto createPtContract(CreatePtContractRequestDto dto) {
     TrainerEntity trainer = getTrainer();
-    TraineeEntity trainee = getTrainee(dto.getTraineeEmail());
+    TraineeEntity trainee = traineeRepository.findByEmail(dto.getTraineeEmail())
+        .orElseThrow(PtContractTrainerEmailNotExistException::new);
 
     if (ptContractRepository.existsByTrainerIdAndTraineeId(trainer.getId(), trainee.getId())) {
       throw new PtContractAlreadyExistException();
@@ -113,11 +115,6 @@ public class PtContractService {
         .orElseThrow(UserNotFoundException::new);
   }
 
-  private TraineeEntity getTrainee(String email) {
-    return traineeRepository.findByEmail(email)
-        .orElseThrow(UserNotFoundException::new);
-  }
-
   private UserRoleType getMyRole() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_TRAINER"))) {
@@ -148,7 +145,7 @@ public class PtContractService {
       throw new UnsupportedNotificationTypeException();
     }
     NotificationEntity notification = NotificationEntity.of(
-        notificationType, true, false,
+        notificationType, false, true,
         trainer, trainee, message.getBody(), message.getTitle(),
         null
     );

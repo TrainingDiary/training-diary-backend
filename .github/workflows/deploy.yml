@@ -1,6 +1,7 @@
 name: Training Diary Server Build & Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

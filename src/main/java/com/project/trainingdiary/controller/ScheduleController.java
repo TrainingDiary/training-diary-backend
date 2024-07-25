@@ -51,8 +51,7 @@ public class ScheduleController {
       description = "트레이너가 예약 가능한 일정을 열어놓음"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "409", description = "같은 시간에 이미 일정이 존재합니다.", content = @Content)
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/trainers/open")
@@ -68,8 +67,7 @@ public class ScheduleController {
       description = "트레이너가 기간 내의 일정을 조회함. (조회 간격은 최대 180일)"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "413", description = "일정 간격이 너무 깁니다.", content = @Content)
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @GetMapping("/trainers")
@@ -85,8 +83,7 @@ public class ScheduleController {
       description = "트레이니가 기간 내의 일정을 조회함. (조회 간격은 최대 180일)"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "413", description = "일정 간격이 너무 깁니다.", content = @Content)
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINEE')")
   @GetMapping("/trainees")
@@ -102,9 +99,7 @@ public class ScheduleController {
       description = "트레이너가 예약 가능한 일정을 닫음"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "일정이 없습니다.", content = @Content),
-      @ApiResponse(responseCode = "409", description = "일정이 OPEN 상태가 아닙니다.", content = @Content)
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/trainers/close")
@@ -121,10 +116,7 @@ public class ScheduleController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "일정이 없습니다.", content = @Content),
-      @ApiResponse(responseCode = "409", description = "일정이 OPEN 상태가 아닙니다.", content = @Content),
-      @ApiResponse(responseCode = "412", description = "과거의 일정은 예약할 수 없습니다.", content = @Content),
-      @ApiResponse(responseCode = "417", description = "1시간 내 시작하는 일정은 예약할 수 없습니다.", content = @Content)
+      @ApiResponse(responseCode = "406", description = "남은 PT 횟수가 부족합니다.", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINEE')")
   @PostMapping("/trainees/apply")
@@ -139,10 +131,7 @@ public class ScheduleController {
       description = "트레이너가 일정을 수락함"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "일정이 없습니다.", content = @Content),
-      @ApiResponse(responseCode = "409", description = "일정의 상태가 RESERVE_APPLIED가 아닙니다.", content = @Content),
-      @ApiResponse(responseCode = "417", description = "전체 세션 갯수를 다 사용했습니다.", content = @Content)
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/trainers/accept")
@@ -158,9 +147,7 @@ public class ScheduleController {
       description = "트레이너가 일정을 거절함"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "일정이 없습니다.", content = @Content),
-      @ApiResponse(responseCode = "409", description = "일정의 상태가 RESERVE_APPLIED가 아닙니다.", content = @Content)
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/trainers/reject")
@@ -176,8 +163,7 @@ public class ScheduleController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "406", description = "PT 횟수가 부족합니다.", content = @Content),
-      @ApiResponse(responseCode = "409", description = "일정이 OPEN 상태가 아닙니다.", content = @Content)
+      @ApiResponse(responseCode = "406", description = "남은 PT 횟수가 부족합니다.", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/trainers/register")
@@ -192,9 +178,7 @@ public class ScheduleController {
       description = "트레이너가 일정을 취소함. 일정에 연결된 트레이니가 없어지고 OPEN 상태로 변경됨"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "일정이 없습니다.", content = @Content),
-      @ApiResponse(responseCode = "409", description = "일정의 상태가 RESERVED나 RESERVE_APPLIED가 아닙니다.", content = @Content),
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/trainers/cancel")
@@ -209,10 +193,7 @@ public class ScheduleController {
       description = "트레이니가 일정을 취소함"
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "404", description = "일정이 없습니다.", content = @Content),
-      @ApiResponse(responseCode = "409", description = "일정의 상태가 RESERVED나 RESERVE_APPLIED가 아닙니다.", content = @Content),
-      @ApiResponse(responseCode = "417", description = "일정이 하루 안에 시작되므로 취소할 수 없습니다.", content = @Content)
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINEE')")
   @PostMapping("/trainees/cancel")

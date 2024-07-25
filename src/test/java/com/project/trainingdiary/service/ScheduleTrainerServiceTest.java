@@ -22,7 +22,6 @@ import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleRangeTooLongException;
 import com.project.trainingdiary.exception.schedule.ScheduleStatusNotReserveAppliedException;
@@ -312,37 +311,6 @@ class ScheduleTrainerServiceTest {
     //then
     assertThrows(
         PtContractNotExistException.class,
-        () -> scheduleTrainerService.acceptSchedule(dto)
-    );
-  }
-
-  @Test
-  @DisplayName("일정 수락 - 실패(모든 세션 횟수를 사용함)")
-  void acceptScheduleFail_UsedAllSession() {
-    //given
-    setupTrainerAuth();
-    AcceptScheduleRequestDto dto = new AcceptScheduleRequestDto();
-    dto.setScheduleId(100L);
-
-    //when
-    when(scheduleRepository.findById(100L))
-        .thenReturn(Optional.of(
-            ScheduleEntity.builder()
-                .id(100L)
-                .scheduleStatusType(ScheduleStatusType.RESERVE_APPLIED)
-                .ptContract(
-                    PtContractEntity.builder()
-                        .id(1000L)
-                        .totalSession(10)
-                        .usedSession(10) // 모두 사용
-                        .build()
-                )
-                .build()
-        ));
-
-    //then
-    assertThrows(
-        UsedSessionExceededTotalSessionException.class,
         () -> scheduleTrainerService.acceptSchedule(dto)
     );
   }

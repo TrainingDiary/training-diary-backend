@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class ScheduleStartIsPastException extends GlobalException {
 
   public ScheduleStartIsPastException() {
-    super(HttpStatus.CONFLICT, "과거의 일정은 예약할 수 없습니다.");
+    super(HttpStatus.BAD_REQUEST, "과거의 일정은 예약할 수 없습니다.");
   }
 }

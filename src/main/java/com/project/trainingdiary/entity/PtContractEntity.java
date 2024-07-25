@@ -10,7 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -86,7 +85,7 @@ public class PtContractEntity extends BaseEntity {
         .traineeId(trainee.getId())
         .traineeName(trainee.getName())
         .remainingSession(getRemainingSession())
-        .totalSessionUpdatedAt(totalSessionUpdatedAt.atZone(ZoneId.of("Asia/Seoul")))
+        .totalSessionUpdatedAt(totalSessionUpdatedAt.toLocalDate())
         .build();
   }
 }

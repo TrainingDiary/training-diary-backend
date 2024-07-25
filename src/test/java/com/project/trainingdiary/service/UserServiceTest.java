@@ -21,9 +21,9 @@ import com.project.trainingdiary.dto.response.user.SignInResponseDto;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
+import com.project.trainingdiary.exception.user.AuthenticationUserNotFoundException;
 import com.project.trainingdiary.exception.user.PasswordMismatchedException;
 import com.project.trainingdiary.exception.user.UserEmailDuplicateException;
-import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.user.VerificationCodeExpiredException;
 import com.project.trainingdiary.exception.user.VerificationCodeNotFoundException;
 import com.project.trainingdiary.exception.user.VerificationCodeNotMatchedException;
@@ -341,7 +341,7 @@ public class UserServiceTest {
     when(traineeRepository.findByEmail(signInDto.getEmail())).thenReturn(Optional.empty());
     when(trainerRepository.findByEmail(signInDto.getEmail())).thenReturn(Optional.empty());
 
-    assertThrows(UserNotFoundException.class,
+    assertThrows(AuthenticationUserNotFoundException.class,
         () -> userService.signIn(signInDto, request, response));
   }
 

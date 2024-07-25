@@ -1,7 +1,9 @@
 package com.project.trainingdiary.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -17,7 +19,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.exception.ptcontract.PtContractTrainerEmailNotExistException;
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.NotificationType;
@@ -165,6 +167,8 @@ class PtContractServiceTest {
     verify(notificationRepository).save(captorNotification.capture());
     assertEquals(NotificationType.PT_CONTRACT_CREATED,
         captorNotification.getValue().getNotificationType());
+    assertFalse(captorNotification.getValue().isToTrainer());
+    assertTrue(captorNotification.getValue().isToTrainee());
   }
 
   @Test
@@ -181,7 +185,7 @@ class PtContractServiceTest {
 
     //then
     assertThrows(
-        UserNotFoundException.class,
+        PtContractTrainerEmailNotExistException.class,
         () -> ptContractService.createPtContract(dto)
     );
   }

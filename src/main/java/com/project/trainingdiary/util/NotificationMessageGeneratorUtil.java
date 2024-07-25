@@ -94,7 +94,7 @@ public class NotificationMessageGeneratorUtil {
   public static NotificationMessage createPtContract(String trainerName, String traineeName) {
     String title = "트레이니 등록";
     String body = String.format(
-        "%s님이 %s을 트레이니로 등록했습니다.",
+        "%s님이 %s님을 트레이니로 등록했습니다.",
         trainerName,
         traineeName
     );

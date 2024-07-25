@@ -10,6 +10,7 @@ import com.project.trainingdiary.dto.response.user.SignUpResponseDto;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
+import com.project.trainingdiary.exception.user.AuthenticationUserNotFoundException;
 import com.project.trainingdiary.exception.user.PasswordMismatchedException;
 import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
@@ -137,7 +138,14 @@ public class UserService implements UserDetailsService {
    */
   public SignInResponseDto signIn(SignInRequestDto dto, HttpServletRequest request,
       HttpServletResponse response) {
-    UserDetails userDetails = loadUserByUsername(dto.getEmail());
+    UserDetails userDetails;
+
+    try {
+      userDetails = loadUserByUsername(dto.getEmail());
+    } catch (UsernameNotFoundException e) {
+      throw new AuthenticationUserNotFoundException();
+    }
+
     validatePassword(dto.getPassword(), userDetails.getPassword());
 
     boolean isTrainer = userDetails.getAuthorities().stream()
@@ -386,7 +394,6 @@ public class UserService implements UserDetailsService {
 
   public boolean isLocalRequest(HttpServletRequest request) {
     String remoteAddr = request.getRemoteAddr();
-    log.info("RemoteAddr: {}", remoteAddr);
     return "127.0.0.1".equals(remoteAddr) || "0:0:0:0:0:0:0:1".equals(remoteAddr);
   }
 
@@ -402,7 +409,7 @@ public class UserService implements UserDetailsService {
     return traineeRepository.findByEmail(username)
         .map(UserPrincipal::create)
         .orElseGet(() -> UserPrincipal.create(trainerRepository.findByEmail(username)
-            .orElseThrow(UserNotFoundException::new)));
+            .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 이메일 입니다."))));
   }
 
   /**

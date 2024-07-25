@@ -35,7 +35,7 @@ public class TrainerController {
       description = "트레이너가 트레이니 정보를 조회합니다."
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "200", description = "성공")
   })
   @PreAuthorize("hasRole('TRAINER')")
   @GetMapping("/trainees/{id}")
@@ -50,7 +50,7 @@ public class TrainerController {
       description = "트레이너가 트레이니 정보를 수정합니다."
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "수정 성공"),
+      @ApiResponse(responseCode = "200", description = "성공"),
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PutMapping("/trainees")
@@ -65,7 +65,7 @@ public class TrainerController {
       description = "트레이너가 트레이니의 인바디 정보를 추가합니다."
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "추가 성공"),
+      @ApiResponse(responseCode = "200", description = "성공"),
   })
   @PreAuthorize("hasRole('TRAINER')")
   @PostMapping("/trainees")
