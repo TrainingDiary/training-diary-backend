@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.component.FcmPushNotification;
-import com.project.trainingdiary.dto.request.schedule.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTraineeRequestDto;
 import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTraineeResponseDto;
@@ -22,7 +21,6 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
-import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleStartIsPastException;
 import com.project.trainingdiary.exception.schedule.ScheduleStartTooSoonException;
