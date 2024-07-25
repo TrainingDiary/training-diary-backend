@@ -388,7 +388,13 @@ public class UserService implements UserDetailsService {
     if (tokenCookie != null && tokenProvider.validateToken(tokenCookie.getValue())) {
       log.info("블랙리스트에 추가된 토큰: {}", tokenCookie.getValue());
       tokenProvider.blacklistToken(tokenCookie.getValue());
-      redisTokenRepository.deleteToken(tokenProvider.getUsernameFromToken(tokenCookie.getValue()));
+
+      String username = tokenProvider.getUsernameFromToken(tokenCookie.getValue());
+      String accessTokenKey = "accessToken:" + username;
+      String refreshTokenKey = "refreshToken:" + username;
+
+      redisTokenRepository.deleteToken(accessTokenKey);
+      redisTokenRepository.deleteToken(refreshTokenKey);
     }
   }
 
