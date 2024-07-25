@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.project.trainingdiary.component.FcmPushNotification;
+import com.project.trainingdiary.dto.request.schedule.AcceptScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.ApplyScheduleRequestDto;
 import com.project.trainingdiary.dto.request.schedule.CancelScheduleByTraineeRequestDto;
 import com.project.trainingdiary.dto.response.schedule.CancelScheduleByTraineeResponseDto;
@@ -19,7 +20,9 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
+import com.project.trainingdiary.exception.ptcontract.PtContractNotEnoughSessionException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.ptcontract.UsedSessionExceededTotalSessionException;
 import com.project.trainingdiary.exception.schedule.ScheduleNotFoundException;
 import com.project.trainingdiary.exception.schedule.ScheduleStartIsPastException;
 import com.project.trainingdiary.exception.schedule.ScheduleStartTooSoonException;
@@ -295,6 +298,44 @@ class ScheduleTraineeServiceTest {
     assertThrows(
         ScheduleNotFoundException.class,
         () -> scheduleTraineeService.applySchedule(dto, currentTime)
+    );
+  }
+
+  @Test
+  @DisplayName("일정 예약 신청 - 실패(모든 세션 횟수를 사용함)")
+  void applyScheduleFail_UsedAllSession() {
+    //given
+    setupTraineeAuth();
+    ApplyScheduleRequestDto dto = new ApplyScheduleRequestDto();
+    dto.setScheduleId(100L);
+    LocalDateTime now = LocalDateTime.of(2024, 7, 23, 10, 0, 0);
+    PtContractEntity ptContract = PtContractEntity.builder()
+        .id(1000L)
+        .trainer(trainer)
+        .trainee(trainee)
+        .totalSession(10)
+        .usedSession(10)
+        .build();
+
+    //when
+    when(ptContractRepository.findByTrainerIdAndTraineeId(1L, 10L))
+        .thenReturn(Optional.of(ptContract));
+
+    when(scheduleRepository.findById(100L))
+        .thenReturn(Optional.of(
+            ScheduleEntity.builder()
+                .id(100L)
+                .trainer(trainer)
+                .ptContract(ptContract)
+                .startAt(LocalDateTime.of(2024, 7, 24, 14, 0, 0))
+                .scheduleStatusType(ScheduleStatusType.OPEN)
+                .build()
+        ));
+
+    //then
+    assertThrows(
+        PtContractNotEnoughSessionException.class,
+        () -> scheduleTraineeService.applySchedule(dto, now)
     );
   }
 
