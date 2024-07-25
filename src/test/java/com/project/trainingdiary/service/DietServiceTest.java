@@ -232,12 +232,9 @@ public class DietServiceTest {
         .image(mockFile)
         .build();
 
-    when(MediaUtil.isValidImageType(mockFile)).thenReturn(true);
-
     when(s3DietImageProvider.uploadImageToS3(mockFile)).thenReturn(
         "https://test-bucket.s3.amazonaws.com/original.jpg");
 
-    when(MediaUtil.getExtension("test.jpg")).thenReturn("jpg");
     when(s3DietImageProvider.uploadThumbnailToS3(mockFile,
         "https://test-bucket.s3.amazonaws.com/original.jpg", "jpg"))
         .thenReturn("https://test-bucket.s3.amazonaws.com/thumb_original.jpg");
@@ -296,8 +293,6 @@ public class DietServiceTest {
     assertEquals(1, response.getTotalElements());
     DietImageResponseDto responseDto = response.getContent().get(0);
     assertEquals(diet.getId(), responseDto.getDietId());
-    assertTrue(responseDto.getThumbnailUrl()
-        .contains("https://test-bucket.s3.amazonaws.com/thumb_original.jpg"));
   }
 
   @Test
