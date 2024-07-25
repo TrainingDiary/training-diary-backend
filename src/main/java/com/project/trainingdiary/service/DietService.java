@@ -13,11 +13,13 @@ import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.provider.S3DietImageProvider;
 import com.project.trainingdiary.repository.DietRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
-import com.project.trainingdiary.util.ImageUtil;
+import com.project.trainingdiary.util.ConvertCloudFrontUrlUtil;
+import com.project.trainingdiary.util.MediaUtil;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +41,7 @@ public class DietService {
   private final TrainerRepository trainerRepository;
   private final PtContractRepository ptContractRepository;
 
-  private final ImageUtil imageUtil;
+  private final S3DietImageProvider s3DietImageProvider;
 
   /**
    * 새로운 식단을 생성합니다.
@@ -53,13 +55,13 @@ public class DietService {
     TraineeEntity trainee = getAuthenticatedTrainee();
     MultipartFile imageFile = dto.getImage();
 
-    if (!imageUtil.isValidImageType(imageFile)) {
+    if (!MediaUtil.isValidImageType(imageFile)) {
       throw new InvalidFileTypeException();
     }
 
-    String originalUrl = imageUtil.uploadImageToS3(imageFile);
-    String extension = imageUtil.getExtension(imageFile.getOriginalFilename());
-    String thumbnailUrl = imageUtil.createAndUploadThumbnail(imageFile, originalUrl, extension);
+    String originalUrl = s3DietImageProvider.uploadImageToS3(imageFile);
+    String extension = MediaUtil.getExtension(MediaUtil.checkFileNameExist(imageFile));
+    String thumbnailUrl = s3DietImageProvider.uploadThumbnailToS3(imageFile, originalUrl, extension);
 
     DietEntity diet = new DietEntity();
     diet.setTrainee(trainee);
@@ -105,7 +107,7 @@ public class DietService {
 
     return dietPage.map(diet -> DietImageResponseDto.builder()
         .dietId(diet.getId())
-        .thumbnailUrl(diet.getThumbnailUrl())
+        .thumbnailUrl(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getThumbnailUrl()))
         .build());
   }
 
@@ -127,7 +129,7 @@ public class DietService {
 
     return dietPage.map(diet -> DietImageResponseDto.builder()
         .dietId(diet.getId())
-        .thumbnailUrl(diet.getThumbnailUrl())
+        .thumbnailUrl(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getThumbnailUrl()))
         .build());
   }
 
@@ -196,8 +198,8 @@ public class DietService {
     DietEntity diet = dietRepository.findByTraineeIdAndId(trainee.getId(), id)
         .orElseThrow(DietNotExistException::new);
 
-    imageUtil.deleteFileFromS3(diet.getOriginalUrl());
-    imageUtil.deleteFileFromS3(diet.getThumbnailUrl());
+    s3DietImageProvider.deleteFileFromS3 (diet.getOriginalUrl());
+    s3DietImageProvider.deleteFileFromS3(diet.getThumbnailUrl());
 
     dietRepository.delete(diet);
   }
