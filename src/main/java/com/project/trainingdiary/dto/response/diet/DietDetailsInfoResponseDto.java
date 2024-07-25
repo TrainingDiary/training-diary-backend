@@ -3,6 +3,7 @@ package com.project.trainingdiary.dto.response.diet;
 import com.project.trainingdiary.dto.response.comment.CommentDto;
 import com.project.trainingdiary.entity.CommentEntity;
 import com.project.trainingdiary.entity.DietEntity;
+import com.project.trainingdiary.util.ConvertCloudFrontUrlUtil;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
@@ -28,7 +29,7 @@ public class DietDetailsInfoResponseDto {
 
     return DietDetailsInfoResponseDto.builder()
         .id(diet.getId())
-        .imageUrl(diet.getOriginalUrl())
+        .imageUrl(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getOriginalUrl()))
         .content(diet.getContent())
         .comments(commentDto)
         .createdDate(diet.getCreatedAt().toLocalDate())
