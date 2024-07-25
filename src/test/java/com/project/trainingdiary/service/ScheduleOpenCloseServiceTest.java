@@ -422,7 +422,8 @@ class ScheduleOpenCloseServiceTest {
     ArgumentCaptor<List<ScheduleEntity>> captorSchedule = ArgumentCaptor.forClass(List.class);
     ArgumentCaptor<PtContractEntity> captorPtContract = ArgumentCaptor.forClass(
         PtContractEntity.class);
-    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(NotificationEntity.class);
+    ArgumentCaptor<NotificationEntity> captorNotification = ArgumentCaptor.forClass(
+        NotificationEntity.class);
 
     //then
     RegisterScheduleResponseDto response = scheduleOpenCloseService.registerSchedule(dto);
