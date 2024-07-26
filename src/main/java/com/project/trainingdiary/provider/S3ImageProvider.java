@@ -25,7 +25,7 @@ public class S3ImageProvider {
 
   private final S3Operations s3Operations;
 
-  public String uploadImage(MultipartFile file, String key, String extension, int width)
+  public String uploadImage(MultipartFile file, String key, String extension, int targetSize)
       throws IOException {
     if (!MediaUtil.isValidImageType(file)) {
       throw new InvalidFileTypeException();
@@ -34,7 +34,7 @@ public class S3ImageProvider {
     BufferedImage originalImage = ImageIO.read(file.getInputStream());
 
     // 이미지 리사이즈
-    BufferedImage resizedImage = MediaUtil.resizeImageToWidth(originalImage, width);
+    BufferedImage resizedImage = MediaUtil.resizeImageToWidth(originalImage, targetSize);
 
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
       ImageIO.write(resizedImage, extension, byteArrayOutputStream);
