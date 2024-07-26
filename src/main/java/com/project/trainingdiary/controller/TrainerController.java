@@ -7,6 +7,7 @@ import com.project.trainingdiary.dto.response.trainer.EditTraineeInfoResponseDto
 import com.project.trainingdiary.dto.response.trainer.TraineeInfoResponseDto;
 import com.project.trainingdiary.service.TrainerService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,12 +33,13 @@ public class TrainerController {
 
   @Operation(
       summary = "트레이니 정보 조회",
-      description = "트레이너가 트레이니 정보를 조회합니다."
+      description = "트레이너 및 트레이니가 트레이니 정보를 조회합니다."
   )
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "성공")
+      @ApiResponse(responseCode = "200", description = "성공"),
+      @ApiResponse(responseCode = "400", description = "다른 트레이니의 정보를 볼 없습니다.", content = @Content)
   })
-  @PreAuthorize("hasRole('TRAINER')")
+  @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
   @GetMapping("/trainees/{id}")
   public ResponseEntity<TraineeInfoResponseDto> getTraineeInfo(
       @PathVariable Long id
