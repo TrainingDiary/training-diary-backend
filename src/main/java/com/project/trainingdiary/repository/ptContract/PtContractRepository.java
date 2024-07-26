@@ -2,7 +2,6 @@ package com.project.trainingdiary.repository.ptContract;
 
 import com.project.trainingdiary.entity.PtContractEntity;
 import java.util.Optional;
-import org.springframework.boot.context.properties.bind.BindResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -49,5 +48,12 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       "LEFT JOIN FETCH t.inBodyRecords ir " +
       "LEFT JOIN FETCH ptc.trainer tr " +
       "WHERE t.id = :traineeId AND tr.id = :trainerId AND ptc.isTerminated = false")
-  Optional<PtContractEntity> findWithTraineeAndTrainer(@Param("traineeId") Long traineeId, @Param("trainerId") Long trainerId);
+  Optional<PtContractEntity> findWithTraineeAndTrainer(@Param("traineeId") Long traineeId,
+      @Param("trainerId") Long trainerId);
+
+  @Query("SELECT ptc FROM pt_contract ptc " +
+      "LEFT JOIN FETCH ptc.trainee t " +
+      "LEFT JOIN FETCH t.inBodyRecords ir " +
+      "WHERE t.id = :traineeId AND ptc.isTerminated = false")
+  Optional<PtContractEntity> findByTraineeIdWithInBodyRecords(@Param("traineeId") Long traineeId);
 }
