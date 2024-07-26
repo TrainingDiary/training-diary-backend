@@ -58,19 +58,22 @@ public class TraineeInfoResponseDto {
     return birthDate != null ? Period.between(birthDate, LocalDate.now()).getYears() : 0;
   }
 
-  private static List<WeightHistoryDto> mapToWeightHistory(List<InBodyRecordHistoryEntity> inBodyRecords) {
+  private static List<WeightHistoryDto> mapToWeightHistory(
+      List<InBodyRecordHistoryEntity> inBodyRecords) {
     return inBodyRecords.stream()
         .map(WeightHistoryDto::fromEntity)
         .collect(Collectors.toList());
   }
 
-  private static List<BodyFatHistoryDto> mapToBodyFatHistory(List<InBodyRecordHistoryEntity> inBodyRecords) {
+  private static List<BodyFatHistoryDto> mapToBodyFatHistory(
+      List<InBodyRecordHistoryEntity> inBodyRecords) {
     return inBodyRecords.stream()
         .map(BodyFatHistoryDto::fromEntity)
         .collect(Collectors.toList());
   }
 
-  private static List<MuscleMassHistoryDto> mapToMuscleMassHistory(List<InBodyRecordHistoryEntity> inBodyRecords) {
+  private static List<MuscleMassHistoryDto> mapToMuscleMassHistory(
+      List<InBodyRecordHistoryEntity> inBodyRecords) {
     return inBodyRecords.stream()
         .map(MuscleMassHistoryDto::fromEntity)
         .collect(Collectors.toList());

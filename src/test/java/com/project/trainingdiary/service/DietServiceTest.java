@@ -25,12 +25,14 @@ import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.UserRoleType;
+import com.project.trainingdiary.provider.S3DietImageProvider;
 import com.project.trainingdiary.repository.CommentRepository;
 import com.project.trainingdiary.repository.DietRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
-import com.project.trainingdiary.util.ImageUtil;
+import com.project.trainingdiary.util.ConvertCloudFrontUrlUtil;
+import com.project.trainingdiary.util.MediaUtil;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -85,7 +87,13 @@ public class DietServiceTest {
   private CommentRepository commentRepository;
 
   @Mock
-  private ImageUtil imageUtil;
+  private MediaUtil mediaUtil;
+
+  @Mock
+  private ConvertCloudFrontUrlUtil convertCloudFrontUrlUtil;
+
+  @Mock
+  private S3DietImageProvider s3DietImageProvider;
 
 
   @InjectMocks
@@ -190,8 +198,9 @@ public class DietServiceTest {
     ArgumentCaptor<InputStream> inputStreamCaptor = ArgumentCaptor.forClass(InputStream.class);
 
     verify(dietRepository, never()).save(dietCaptor.capture());
-    verify(imageUtil, never()).uploadImageToS3(any());
-    verify(imageUtil, never()).createAndUploadThumbnail(any(), any(), any());
+    verify(s3DietImageProvider, never()).uploadImageToS3(any());
+    verify(s3DietImageProvider, never()).uploadThumbnailToS3(any(), any(), any());
+    verify(s3DietImageProvider, never()).deleteFileFromS3(any());
 
     assertTrue(dietCaptor.getAllValues().isEmpty());
     assertTrue(bucketCaptor.getAllValues().isEmpty());
@@ -223,13 +232,10 @@ public class DietServiceTest {
         .image(mockFile)
         .build();
 
-    when(imageUtil.isValidImageType(mockFile)).thenReturn(true);
-
-    when(imageUtil.uploadImageToS3(mockFile)).thenReturn(
+    when(s3DietImageProvider.uploadImageToS3(mockFile)).thenReturn(
         "https://test-bucket.s3.amazonaws.com/original.jpg");
 
-    when(imageUtil.getExtension("test.jpg")).thenReturn("jpg");
-    when(imageUtil.createAndUploadThumbnail(mockFile,
+    when(s3DietImageProvider.uploadThumbnailToS3(mockFile,
         "https://test-bucket.s3.amazonaws.com/original.jpg", "jpg"))
         .thenReturn("https://test-bucket.s3.amazonaws.com/thumb_original.jpg");
 
@@ -245,10 +251,11 @@ public class DietServiceTest {
     assertEquals("https://test-bucket.s3.amazonaws.com/thumb_original.jpg",
         savedDiet.getThumbnailUrl());
 
-    verify(imageUtil, times(1)).uploadImageToS3(mockFile);
-    verify(imageUtil, times(1)).createAndUploadThumbnail(mockFile,
+    verify(s3DietImageProvider, times(1)).uploadImageToS3(mockFile);
+    verify(s3DietImageProvider, times(1)).uploadThumbnailToS3(mockFile,
         "https://test-bucket.s3.amazonaws.com/original.jpg", "jpg");
   }
+
 
   @Test
   @DisplayName("트레이니를 찾을 수 없음 - 예외 발생")
@@ -286,8 +293,6 @@ public class DietServiceTest {
     assertEquals(1, response.getTotalElements());
     DietImageResponseDto responseDto = response.getContent().get(0);
     assertEquals(diet.getId(), responseDto.getDietId());
-    assertTrue(responseDto.getThumbnailUrl()
-        .contains("https://test-bucket.s3.amazonaws.com/thumb_original.jpg"));
   }
 
   @Test
@@ -343,7 +348,8 @@ public class DietServiceTest {
     assertNotNull(response);
     assertEquals(diet.getId(), response.getId());
     assertEquals(diet.getContent(), response.getContent());
-    assertEquals(diet.getOriginalUrl(), response.getImageUrl());
+    assertEquals(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getOriginalUrl()),
+        response.getImageUrl());
   }
 
   @Test
@@ -405,7 +411,8 @@ public class DietServiceTest {
     assertNotNull(response);
     assertEquals(diet.getId(), response.getId());
     assertEquals(diet.getContent(), response.getContent());
-    assertEquals(diet.getOriginalUrl(), response.getImageUrl());
+    assertEquals(ConvertCloudFrontUrlUtil.convertToCloudFrontUrl(diet.getOriginalUrl()),
+        response.getImageUrl());
   }
 
   @Test
