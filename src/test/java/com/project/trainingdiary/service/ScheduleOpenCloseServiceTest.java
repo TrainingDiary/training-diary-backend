@@ -308,6 +308,7 @@ class ScheduleOpenCloseServiceTest {
         .build();
 
     when(scheduleRepository.findScheduleDatesByDates(
+        eq(1L),
         eq(LocalDateTime.of(2024, 1, 1, 10, 0)),
         eq(LocalDateTime.of(2024, 2, 28, 22, 0))
     ))
@@ -414,6 +415,7 @@ class ScheduleOpenCloseServiceTest {
         ));
 
     when(scheduleRepository.findScheduleDatesByDates(
+        1L,
         LocalDateTime.of(2024, 1, 2, 20, 0),
         LocalDateTime.of(2024, 1, 8, 22, 0)
     ))
@@ -461,6 +463,7 @@ class ScheduleOpenCloseServiceTest {
         ));
 
     when(scheduleRepository.findScheduleDatesByDates(
+        1L,
         LocalDateTime.of(2024, 1, 2, 20, 0),
         LocalDateTime.of(2024, 1, 8, 22, 0)
     ))
@@ -469,6 +472,7 @@ class ScheduleOpenCloseServiceTest {
         ));
 
     when(scheduleRepository.findByDates(
+        1L,
         LocalDateTime.of(2024, 1, 2, 20, 0),
         LocalDateTime.of(2024, 1, 2, 20, 0)
     ))
@@ -521,6 +525,7 @@ class ScheduleOpenCloseServiceTest {
         ));
 
     when(scheduleRepository.findScheduleDatesByDates(
+        1L,
         LocalDateTime.of(2024, 1, 2, 20, 0),
         LocalDateTime.of(2024, 1, 8, 22, 0)
     ))
@@ -529,6 +534,7 @@ class ScheduleOpenCloseServiceTest {
         ));
 
     when(scheduleRepository.findByDates(
+        1L,
         LocalDateTime.of(2024, 1, 2, 20, 0),
         LocalDateTime.of(2024, 1, 2, 20, 0)
     ))
@@ -591,6 +597,7 @@ class ScheduleOpenCloseServiceTest {
         ));
 
     when(scheduleRepository.findScheduleDatesByDates(
+        1L,
         LocalDateTime.of(2024, 1, 2, 20, 0),
         LocalDateTime.of(2024, 1, 8, 22, 0)
     ))

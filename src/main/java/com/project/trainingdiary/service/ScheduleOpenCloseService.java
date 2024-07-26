@@ -56,6 +56,7 @@ public class ScheduleOpenCloseService {
 
     List<LocalDateTime> requestedStartTimes = getRequestedTimes(dto.getDateTimes());
     Set<LocalDateTime> existings = scheduleRepository.findScheduleDatesByDates(
+        trainer.getId(),
         getEarliest(requestedStartTimes),
         getLatest(requestedStartTimes)
     );
@@ -106,6 +107,7 @@ public class ScheduleOpenCloseService {
 
     List<LocalDateTime> requestedStartTimes = getRequestedTimes(dto.getDateTimes());
     Set<LocalDateTime> existingStartTimes = scheduleRepository.findScheduleDatesByDates(
+        trainer.getId(),
         getEarliest(requestedStartTimes),
         getLatest(requestedStartTimes)
     );
@@ -123,7 +125,7 @@ public class ScheduleOpenCloseService {
 
     // 이미 존재하는 일정은 기존 일정을 사용해서 업데이트
     List<ScheduleEntity> existingSchedules = updateExistingSchedules(
-        existingStartTimes, ptContract
+        trainer.getId(), existingStartTimes, ptContract
     );
 
     // 일정 등록
@@ -168,11 +170,12 @@ public class ScheduleOpenCloseService {
   }
 
   private List<ScheduleEntity> updateExistingSchedules(
+      long trainerId,
       Set<LocalDateTime> existingsStartTimes,
       PtContractEntity ptContract
   ) {
     return existingsStartTimes.stream()
-        .map(time -> scheduleRepository.findByDates(time, time).stream()
+        .map(time -> scheduleRepository.findByDates(trainerId, time, time).stream()
             .findFirst()
             .orElseThrow(ScheduleNotFoundException::new)
         )
