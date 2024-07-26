@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.Collections;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Getter
+@Setter
 @AllArgsConstructor
 public class UserPrincipal implements UserDetails {
 
@@ -20,7 +22,6 @@ public class UserPrincipal implements UserDetails {
   private final String password;
   private final String name;
   private final UserRoleType role;
-  private final boolean unreadNotification;
   private final Collection<? extends GrantedAuthority> authorities;
   private final boolean isTrainer;
   private final TrainerEntity trainer;
@@ -33,7 +34,6 @@ public class UserPrincipal implements UserDetails {
         trainee.getPassword(),
         trainee.getName(),
         UserRoleType.TRAINEE,
-        trainee.isUnreadNotification(),
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINEE")),
         false,
         null,
@@ -48,7 +48,6 @@ public class UserPrincipal implements UserDetails {
         trainer.getPassword(),
         trainer.getName(),
         UserRoleType.TRAINER,
-        trainer.isUnreadNotification(),
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")),
         true,
         trainer,
