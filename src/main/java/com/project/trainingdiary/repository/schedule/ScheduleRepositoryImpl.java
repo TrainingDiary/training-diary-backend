@@ -6,6 +6,7 @@ import static com.querydsl.core.types.dsl.Expressions.dateTemplate;
 import com.project.trainingdiary.dto.response.schedule.ScheduleResponseDto;
 import com.project.trainingdiary.model.ScheduleResponseDetail;
 import com.project.trainingdiary.model.type.ScheduleStatusType;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ConstantImpl;
 import com.querydsl.core.types.dsl.DateExpression;
@@ -35,29 +36,35 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
       LocalDateTime startDateTime,
       LocalDateTime endDateTime
   ) {
-    return getScheduleList(trainerId, startDateTime, endDateTime, null);
+    List<Tuple> list = getScheduleList(trainerId, null, startDateTime, endDateTime);
+    return convertToScheduleResponseDto(getDateSortedMap(list), null);
   }
 
   /**
    * 트레이니가 조회할 때는 연결된 트레이너의 모든 일정을 보여주는 것은 같지만, traineeId를 검사해서 조회를 요청한 트레이니의 일정이 아닌 것은 이름을 가려야 함
+   * currentTrainerId가 없는 경우에는 null이 들어올 수 있음
    */
   @Override
   public List<ScheduleResponseDto> getScheduleListByTrainee(
-      long trainerId,
+      Long currentTrainerId,
       long traineeId,
       LocalDateTime startDateTime,
       LocalDateTime endDateTime
   ) {
-    return getScheduleList(trainerId, startDateTime, endDateTime, traineeId);
+    List<Tuple> list = getScheduleList(currentTrainerId, traineeId, startDateTime, endDateTime);
+    return convertToScheduleResponseDto(getDateSortedMap(list), traineeId);
   }
 
-  private List<ScheduleResponseDto> getScheduleList(
-      long trainerId,
+  /**
+   * 트레이너와 트레이니의 모든 일정을 조회
+   */
+  private List<Tuple> getScheduleList(
+      Long trainerId,
+      Long traineeId,
       LocalDateTime startDateTime,
-      LocalDateTime endDateTime,
-      Long includeOnlyThisTraineeId
+      LocalDateTime endDateTime
   ) {
-    List<Tuple> results = queryFactory
+    return queryFactory
         .select(
             scheduleEntity,
             scheduleEntity.id,
@@ -75,13 +82,17 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
         .leftJoin(scheduleEntity.ptContract).fetchJoin()
         .leftJoin(scheduleEntity.ptContract.trainee).fetchJoin()
         .where(
-            scheduleEntity.trainer.id.eq(trainerId),
+            getTrainerOrTrainee(trainerId, traineeId),
             scheduleEntity.startAt.between(startDateTime, endDateTime)
         )
         .orderBy(scheduleEntity.startAt.asc())
         .fetch();
+  }
 
-    // 날짜별로 결과를 묶기(날짜로 정렬)
+  /**
+   * 날짜별로 결과를 묶기(날짜로 정렬)
+   */
+  private SortedMap<String, List<Tuple>> getDateSortedMap(List<Tuple> results) {
     SortedMap<String, List<Tuple>> groupedByDate = new TreeMap<>();
     for (Tuple tuple : results) {
       String date = tuple.get(startDate());
@@ -89,8 +100,16 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
       timeList.add(tuple);
       groupedByDate.put(date, timeList);
     }
+    return groupedByDate;
+  }
 
-    // 묶은 결과를 DTO에 맞게 변형
+  /**
+   * 날짜별로 묶인 결과를 DTO에 맞게 변형
+   */
+  private List<ScheduleResponseDto> convertToScheduleResponseDto(
+      SortedMap<String, List<Tuple>> groupedByDate,
+      Long includeOnlyThisTraineeId
+  ) {
     return groupedByDate.entrySet().stream()
         .map(entry -> {
           List<Tuple> tuples = entry.getValue();
@@ -125,18 +144,29 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
         .collect(Collectors.toList());
   }
 
-  private static Long getTraineeId(Tuple tuple, Long includeOnlyThisTraineeId) {
+  private Long getTraineeId(Tuple tuple, Long includeOnlyThisTraineeId) {
     Long traineeId = tuple.get(scheduleEntity.ptContract.trainee.id);
     return includeOnlyThisTraineeId == null || includeOnlyThisTraineeId.equals(traineeId)
         ? traineeId
         : null;
   }
 
-  private static String getTraineeName(Tuple tuple, Long includeOnlyThisTraineeId) {
+  private String getTraineeName(Tuple tuple, Long includeOnlyThisTraineeId) {
     Long traineeId = tuple.get(scheduleEntity.ptContract.trainee.id);
     return includeOnlyThisTraineeId == null || includeOnlyThisTraineeId.equals(traineeId)
         ? tuple.get(scheduleEntity.ptContract.trainee.name)
         : null;
+  }
+
+  private BooleanBuilder getTrainerOrTrainee(Long trainerId, Long traineeId) {
+    BooleanBuilder builder = new BooleanBuilder();
+    if (trainerId != null) {
+      builder.or(scheduleEntity.trainer.id.eq(trainerId));
+    }
+    if (traineeId != null) {
+      builder.or(scheduleEntity.ptContract.trainee.id.eq(traineeId));
+    }
+    return builder;
   }
 
   // date_format 함수는 MariaDB에서 동작함(H2에서 동작하지 않는 게 확인됨)

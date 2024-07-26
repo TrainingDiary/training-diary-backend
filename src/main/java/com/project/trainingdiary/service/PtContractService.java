@@ -8,6 +8,7 @@ import com.project.trainingdiary.dto.response.ptcontract.CreatePtContractRespons
 import com.project.trainingdiary.dto.response.ptcontract.PtContractResponseDto;
 import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
+import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
@@ -24,13 +25,16 @@ import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
+import com.project.trainingdiary.repository.schedule.ScheduleRepository;
 import com.project.trainingdiary.util.NotificationMessageGeneratorUtil;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -41,6 +45,7 @@ public class PtContractService {
   private final TraineeRepository traineeRepository;
   private final NotificationRepository notificationRepository;
   private final FcmPushNotification fcmPushNotification;
+  private final ScheduleRepository scheduleRepository;
 
   /**
    * PT 계약 생성
@@ -105,11 +110,21 @@ public class PtContractService {
   /**
    * PT 계약을 종료함
    */
-  public void terminatePtContract(TerminatePtContractRequestDto dto) {
+  @Transactional
+  public void terminatePtContract(TerminatePtContractRequestDto dto, LocalDateTime now) {
     PtContractEntity ptContract = ptContractRepository.findByIdAndIsTerminatedFalse(
             dto.getPtContractId())
         .orElseThrow(PtContractNotExistException::new);
 
+    // 남아있던 미래의 일정을 모두 취소(OPEN으로 변경)
+    scheduleRepository.findByTraineeIdAndDateAfter(
+            ptContract.getTrainer().getId(),
+            ptContract.getTrainee().getId(),
+            now
+        )
+        .forEach(ScheduleEntity::cancel);
+
+    // PT 계약을 종료
     ptContract.terminate();
     ptContractRepository.save(ptContract);
   }

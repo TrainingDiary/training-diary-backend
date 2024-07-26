@@ -150,11 +150,14 @@ public class ScheduleTraineeService {
   }
 
   /**
-   * 트레이너의 일정 목록 조회
+   * 트레이니의 일정 목록 조회
    */
   public List<ScheduleResponseDto> getScheduleList(LocalDate startDate, LocalDate endDate) {
     TraineeEntity trainee = getTrainee();
-    PtContractEntity ptContract = getPtContract(trainee.getId());
+    Long currentTrainerId = ptContractRepository.findByTraineeId(trainee.getId())
+        .map(PtContractEntity::getTrainer)
+        .map(TrainerEntity::getId)
+        .orElse(null);
 
     LocalDateTime startDateTime = LocalDateTime.of(startDate, START_TIME);
     LocalDateTime endDateTime = LocalDateTime.of(endDate, END_TIME);
@@ -164,7 +167,7 @@ public class ScheduleTraineeService {
     }
 
     return scheduleRepository.getScheduleListByTrainee(
-        ptContract.getTrainer().getId(),
+        currentTrainerId,
         trainee.getId(),
         startDateTime,
         endDateTime

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -80,7 +81,7 @@ public class PtContractController {
   public ResponseEntity<Void> terminatePtContract(
       @RequestBody @Valid TerminatePtContractRequestDto dto
   ) {
-    ptContractService.terminatePtContract(dto);
+    ptContractService.terminatePtContract(dto, LocalDateTime.now());
     return ResponseEntity.ok().build();
   }
 }

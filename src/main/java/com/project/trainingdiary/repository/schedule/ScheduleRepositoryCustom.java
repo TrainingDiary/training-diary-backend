@@ -13,7 +13,7 @@ public interface ScheduleRepositoryCustom {
   );
 
   List<ScheduleResponseDto> getScheduleListByTrainee(
-      long trainerId,
+      Long trainerId,
       long traineeId,
       LocalDateTime startDateTime,
       LocalDateTime endDateTime

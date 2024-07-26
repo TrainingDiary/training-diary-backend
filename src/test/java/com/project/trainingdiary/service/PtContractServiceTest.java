@@ -15,6 +15,7 @@ import com.project.trainingdiary.dto.request.ptcontract.CreatePtContractRequestD
 import com.project.trainingdiary.dto.request.ptcontract.TerminatePtContractRequestDto;
 import com.project.trainingdiary.entity.NotificationEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
+import com.project.trainingdiary.entity.ScheduleEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
@@ -24,11 +25,13 @@ import com.project.trainingdiary.exception.ptcontract.PtContractTrainerEmailNotE
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.NotificationType;
+import com.project.trainingdiary.model.type.ScheduleStatusType;
 import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.NotificationRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
+import com.project.trainingdiary.repository.schedule.ScheduleRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,6 +68,9 @@ class PtContractServiceTest {
 
   @Mock
   private TraineeRepository traineeRepository;
+
+  @Mock
+  private ScheduleRepository scheduleRepository;
 
   @Mock
   private NotificationRepository notificationRepository;
@@ -341,6 +347,7 @@ class PtContractServiceTest {
     setupTrainerAuth();
     TerminatePtContractRequestDto dto = new TerminatePtContractRequestDto();
     dto.setPtContractId(100L);
+    LocalDateTime now = LocalDateTime.of(2024, 7, 1, 0, 0, 0);
 
     //when
     when(ptContractRepository.findByIdAndIsTerminatedFalse(100L))
@@ -353,9 +360,18 @@ class PtContractServiceTest {
                 .totalSessionUpdatedAt(LocalDateTime.now())
                 .build()
         ));
+    when(scheduleRepository.findByTraineeIdAndDateAfter(1L, 10L, now))
+        .thenReturn(List.of(
+            ScheduleEntity.builder()
+                .id(1L)
+                .scheduleStatusType(ScheduleStatusType.RESERVED)
+                .startAt(LocalDateTime.of(2024, 7, 2, 16, 0, 0))
+                .trainer(trainer)
+                .build()
+        ));
 
     //then
-    ptContractService.terminatePtContract(dto);
+    ptContractService.terminatePtContract(dto, now);
   }
 
   @Test
@@ -365,6 +381,7 @@ class PtContractServiceTest {
     setupTrainerAuth();
     TerminatePtContractRequestDto dto = new TerminatePtContractRequestDto();
     dto.setPtContractId(100L);
+    LocalDateTime now = LocalDateTime.now();
 
     //when
     when(ptContractRepository.findByIdAndIsTerminatedFalse(100L))
@@ -373,7 +390,7 @@ class PtContractServiceTest {
     //then
     assertThrows(
         PtContractNotExistException.class,
-        () -> ptContractService.terminatePtContract(dto)
+        () -> ptContractService.terminatePtContract(dto, now)
     );
   }
 }
