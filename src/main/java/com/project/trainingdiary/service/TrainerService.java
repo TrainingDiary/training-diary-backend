@@ -55,10 +55,11 @@ public class TrainerService {
     TrainerEntity trainer = getAuthenticatedTrainer();
     TraineeEntity trainee = getTraineeById(dto.getTraineeId());
 
-    checkContract(trainer, trainee);
+    validateContractExists(trainer, trainee);
 
     InBodyRecordHistoryEntity inBodyRecord = AddInBodyInfoRequestDto.toEntity(dto, trainee);
     inBodyRecordHistoryRepository.save(inBodyRecord);
+
     return AddInBodyInfoResponseDto.fromEntity(inBodyRecord);
   }
 
@@ -75,8 +76,7 @@ public class TrainerService {
     PtContractEntity ptContract = getPtContract(trainer, trainee);
 
     updateTraineeInfo(trainee, dto);
-
-    updateRemainingSession(ptContract, dto);
+    updateRemainingSession(ptContract, dto.getRemainingSession());
 
     return EditTraineeInfoResponseDto.fromEntity(trainee, ptContract);
   }
@@ -85,7 +85,7 @@ public class TrainerService {
    * 트레이니 ID로 트레이니를 조회합니다.
    *
    * @param id 트레이니의 ID
-   * @return TraineeEntity 트레이니 엔티티
+   * @return 트레이니 엔티티 (존재할 경우)
    * @throws TraineeNotFoundException 트레이니가 존재하지 않을 경우 예외 발생
    */
   private TraineeEntity getTraineeById(Long id) {
@@ -96,7 +96,7 @@ public class TrainerService {
   /**
    * 인증된 트레이너를 조회합니다.
    *
-   * @return TrainerEntity 트레이너 엔티티
+   * @return 트레이너 엔티티
    * @throws TrainerNotFoundException 트레이너가 존재하지 않을 경우 예외 발생
    */
   private TrainerEntity getAuthenticatedTrainer() {
@@ -104,24 +104,31 @@ public class TrainerService {
     if (authentication == null || authentication.getName() == null) {
       throw new TrainerNotFoundException();
     }
-    String email = authentication.getName();
-    return trainerRepository.findByEmail(email)
+    return trainerRepository.findByEmail(authentication.getName())
         .orElseThrow(TrainerNotFoundException::new);
   }
 
+  /**
+   * 트레이너와 트레이니 간의 PT 계약을 조회합니다.
+   *
+   * @param trainer 트레이너 엔티티
+   * @param trainee 트레이니 엔티티
+   * @return PT 계약 엔티티
+   * @throws PtContractNotExistException 계약이 존재하지 않을 경우 예외 발생
+   */
   private PtContractEntity getPtContract(TrainerEntity trainer, TraineeEntity trainee) {
     return ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId())
         .orElseThrow(PtContractNotExistException::new);
   }
 
   /**
-   * 트레이너와 트레이니 간의 계약을 확인합니다.
+   * 트레이너와 트레이니 간의 계약 존재 여부를 확인합니다.
    *
    * @param trainer 트레이너 엔티티
    * @param trainee 트레이니 엔티티
    * @throws PtContractNotExistException 계약이 존재하지 않을 경우 예외 발생
    */
-  private void checkContract(TrainerEntity trainer, TraineeEntity trainee) {
+  private void validateContractExists(TrainerEntity trainer, TraineeEntity trainee) {
     if (!ptContractRepository.existsByTrainerIdAndTraineeId(trainer.getId(), trainee.getId())) {
       throw new PtContractNotExistException();
     }
@@ -142,8 +149,13 @@ public class TrainerService {
     trainee.setTargetReward(dto.getTargetReward());
   }
 
-  private void updateRemainingSession(PtContractEntity ptContract, EditTraineeInfoRequestDto dto) {
-    int remainingSession = dto.getRemainingSession();
+  /**
+   * 남은 세션 수를 업데이트합니다.
+   *
+   * @param ptContract       PT 계약 엔티티
+   * @param remainingSession 업데이트할 남은 세션 수
+   */
+  private void updateRemainingSession(PtContractEntity ptContract, int remainingSession) {
     int addition = remainingSession - ptContract.getRemainingSession();
     ptContract.addSession(addition);
   }

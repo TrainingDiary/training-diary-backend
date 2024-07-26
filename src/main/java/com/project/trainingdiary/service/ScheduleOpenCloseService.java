@@ -247,7 +247,7 @@ public class ScheduleOpenCloseService {
       default -> throw new UnsupportedNotificationTypeException();
     };
     NotificationEntity notification = NotificationEntity.of(
-        notificationType, true, false,
+        notificationType, false, true,
         trainer, trainee, message.getBody(), message.getTitle(),
         startAt.toLocalDate()
     );
