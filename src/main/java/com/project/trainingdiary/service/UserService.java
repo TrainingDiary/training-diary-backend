@@ -13,6 +13,8 @@ import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.entity.VerificationEntity;
 import com.project.trainingdiary.exception.user.AuthenticationUserNotFoundException;
 import com.project.trainingdiary.exception.user.PasswordMismatchedException;
+import com.project.trainingdiary.exception.user.TraineeNotFoundException;
+import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.exception.user.UserEmailDuplicateException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.user.VerificationCodeExpiredException;
@@ -137,22 +139,31 @@ public class UserService implements UserDetailsService {
    */
   public SignInResponseDto signIn(SignInRequestDto dto, HttpServletRequest request,
       HttpServletResponse response) {
-    UserPrincipal userPrincipal;
+    UserDetails userDetails;
 
     try {
-      userPrincipal = (UserPrincipal) loadUserByUsername(dto.getEmail());
+      userDetails = loadUserByUsername(dto.getEmail());
     } catch (UsernameNotFoundException e) {
       throw new AuthenticationUserNotFoundException();
     }
 
-    validatePassword(dto.getPassword(), userPrincipal.getPassword());
+    validatePassword(dto.getPassword(), userDetails.getPassword());
 
-    generateTokensAndSetCookies(userPrincipal.getUsername(), request, response);
+    boolean isTrainer = userDetails.getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals("ROLE_TRAINER"));
 
-    if (userPrincipal.isTrainer()) {
-      return SignInResponseDto.fromEntity(userPrincipal.getTrainer());
+    generateTokensAndSetCookies(userDetails.getUsername(), request, response);
+
+    if (isTrainer) {
+      TrainerEntity trainer = trainerRepository.findByEmail(dto.getEmail())
+          .orElseThrow(TrainerNotFoundException::new);
+
+      return SignInResponseDto.fromEntity(trainer);
     } else {
-      return SignInResponseDto.fromEntity(userPrincipal.getTrainee());
+      TraineeEntity trainee = traineeRepository.findByEmail(dto.getEmail())
+          .orElseThrow(TraineeNotFoundException::new);
+
+      return SignInResponseDto.fromEntity(trainee);
     }
   }
 
@@ -433,14 +444,27 @@ public class UserService implements UserDetailsService {
       throw new UserNotFoundException();
     }
 
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    String role = authentication.getAuthorities().toString();
 
-    return MemberInfoResponseDto.builder()
-        .id(userPrincipal.getId())
-        .email(userPrincipal.getEmail())
-        .name(userPrincipal.getName())
-        .role(userPrincipal.getRole())
-        .unreadNotification(userPrincipal.isUnreadNotification())
-        .build();
+    if (role.contains("ROLE_TRAINER")) {
+      return trainerRepository.findByEmail(authentication.getName())
+          .map(trainer -> MemberInfoResponseDto.builder()
+              .id(trainer.getId())
+              .email(trainer.getEmail())
+              .name(trainer.getName())
+              .role(trainer.getRole())
+              .unreadNotification(trainer.isUnreadNotification())
+              .build())
+          .orElseThrow(TrainerNotFoundException::new);
+    }
+    return traineeRepository.findByEmail(authentication.getName())
+        .map(trainee -> MemberInfoResponseDto.builder()
+            .id(trainee.getId())
+            .email(trainee.getEmail())
+            .name(trainee.getName())
+            .role(trainee.getRole())
+            .unreadNotification(trainee.isUnreadNotification())
+            .build())
+        .orElseThrow(TraineeNotFoundException::new);
   }
 }
