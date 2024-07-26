@@ -6,10 +6,10 @@ import java.io.InputStreamReader;
 
 public class VideoUtil {
 
-  private static final String VIDEO_QUALITY_LANDSCAPE = "1280:-1";
-  private static final String VIDEO_QUALITY_PORTRAIT = "-1:1280";
-  private static final String VIDEO_THUMBNAIL_LANDSCAPE = "360:-1";
-  private static final String VIDEO_THUMBNAIL_PORTRAIT = "-1:360";
+  private static final String VIDEO_QUALITY_WIDTH = "1280:-1";
+  private static final String VIDEO_QUALITY_HEIGHT = "-1:1280";
+  private static final String VIDEO_THUMBNAIL_WIDTH = "360:-1";
+  private static final String VIDEO_THUMBNAIL_HEIGHT = "-1:360";
 
   public static boolean isVerticalVideo(String inputUrl) throws IOException, InterruptedException {
     ProcessBuilder processBuilder = new ProcessBuilder(
@@ -45,16 +45,16 @@ public class VideoUtil {
       processBuilder = new ProcessBuilder(
           "ffmpeg",
           "-i", inputUrl,
-          "-vf", "scale=" + VIDEO_QUALITY_PORTRAIT,
-          "-preset", "ultrafast",
+          "-vf", "scale=" + VIDEO_QUALITY_HEIGHT,
+          "-preset", "medium",
           outputUrl
       );
     } else {
       processBuilder = new ProcessBuilder(
           "ffmpeg",
           "-i", inputUrl,
-          "-vf", "scale=" + VIDEO_QUALITY_LANDSCAPE,
-          "-preset", "ultrafast",
+          "-vf", "scale=" + VIDEO_QUALITY_WIDTH,
+          "-preset", "medium",
           outputUrl
       );
     }
@@ -76,7 +76,7 @@ public class VideoUtil {
           "-i", inputUrl,
           "-ss", "00:00:01.000",
           "-vframes", "1",
-          "-vf", "scale=" + VIDEO_THUMBNAIL_PORTRAIT,
+          "-vf", "scale=" + VIDEO_THUMBNAIL_WIDTH,
           "-threads", "4",
           outputUrl
       );
@@ -86,7 +86,7 @@ public class VideoUtil {
           "-i", inputUrl,
           "-ss", "00:00:01.000",
           "-vframes", "1",
-          "-vf", "scale=" + VIDEO_THUMBNAIL_LANDSCAPE,
+          "-vf", "scale=" + VIDEO_THUMBNAIL_HEIGHT,
           "-threads", "4",
           outputUrl
       );
