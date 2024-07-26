@@ -6,28 +6,42 @@ import java.util.List;
 import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ScheduleRepository extends JpaRepository<ScheduleEntity, Long>,
     ScheduleRepositoryCustom {
 
   @Query("select s.startAt "
       + "from schedule s "
-      + "where s.startAt >= ?1 "
-      + "and s.startAt <= ?2")
-  Set<LocalDateTime> findScheduleDatesByDates(LocalDateTime startAt1, LocalDateTime startAt2);
+      + "where s.trainer.id = :id "
+      + "and s.startAt >= :startAt1 "
+      + "and s.startAt <= :startAt2")
+  Set<LocalDateTime> findScheduleDatesByDates(
+      @Param("id") long id,
+      @Param("startAt1") LocalDateTime startAt1,
+      @Param("startAt2") LocalDateTime startAt2
+  );
 
   @Query("select s "
       + "from schedule s "
-      + "where s.startAt >= ?1 "
-      + "and s.startAt <= ?2")
-  List<ScheduleEntity> findByDates(LocalDateTime startAt1, LocalDateTime startAt2);
+      + "where s.trainer.id = :id "
+      + "and s.startAt >= :startAt1 "
+      + "and s.startAt <= :startAt2")
+  List<ScheduleEntity> findByDates(
+      @Param("id") long id,
+      @Param("startAt1") LocalDateTime startAt1,
+      @Param("startAt2") LocalDateTime startAt2
+  );
 
   @Query("select s "
       + "from schedule s "
       + "left join fetch s.trainer "
       + "left join fetch s.ptContract "
       + "left join fetch s.ptContract.trainee "
-      + "where s.startAt >= ?1 "
-      + "and s.startAt <= ?2")
-  List<ScheduleEntity> findByDatesWithDetails(LocalDateTime startAt1, LocalDateTime startAt2);
+      + "where s.startAt >= :startAt1 "
+      + "and s.startAt <= :startAt2")
+  List<ScheduleEntity> findByDatesWithDetails(
+      @Param("startAt1") LocalDateTime startAt1,
+      @Param("startAt2") LocalDateTime startAt2
+  );
 }
