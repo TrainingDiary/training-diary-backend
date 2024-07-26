@@ -1,5 +1,6 @@
 package com.project.trainingdiary.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.project.trainingdiary.dto.request.trainer.AddInBodyInfoRequestDto;
 import com.project.trainingdiary.dto.request.trainer.EditTraineeInfoRequestDto;
 import com.project.trainingdiary.dto.response.trainer.AddInBodyInfoResponseDto;
@@ -9,17 +10,20 @@ import com.project.trainingdiary.entity.InBodyRecordHistoryEntity;
 import com.project.trainingdiary.entity.PtContractEntity;
 import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
-import com.project.trainingdiary.exception.diet.DietNotExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
 import com.project.trainingdiary.exception.user.UnauthorizedTraineeException;
+import com.project.trainingdiary.exception.user.UserNotFoundException;
+import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.repository.InBodyRecordHistoryRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,10 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TrainerService {
 
+  private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
   private final InBodyRecordHistoryRepository inBodyRecordHistoryRepository;
   private final PtContractRepository ptContractRepository;
+
+  private final Cache<String, UserPrincipal> userCache;
 
   /**
    * 트레이니 정보를 조회합니다.
@@ -49,10 +56,11 @@ public class TrainerService {
     }
   }
 
-  private TraineeInfoResponseDto trainerGetTraineeInfo(Long id) {
+  public TraineeInfoResponseDto trainerGetTraineeInfo(Long id) {
     TrainerEntity trainer = getAuthenticatedTrainer();
 
-    PtContractEntity ptContract = ptContractRepository.findWithTraineeAndTrainer(id, trainer.getId())
+    PtContractEntity ptContract = ptContractRepository.findWithTraineeAndTrainer(id,
+            trainer.getId())
         .orElseThrow(PtContractNotExistException::new);
 
     TraineeEntity trainee = ptContract.getTrainee();
@@ -60,15 +68,18 @@ public class TrainerService {
     return TraineeInfoResponseDto.fromEntity(trainee, ptContract.getRemainingSession());
   }
 
-  private TraineeInfoResponseDto traineeGetTraineeInfo(Long id) {
+  public TraineeInfoResponseDto traineeGetTraineeInfo(Long id) {
     TraineeEntity trainee = getAuthenticatedTrainee();
-    TrainerEntity trainer = getTrainerById(trainee.getId());
 
     if (!trainee.getId().equals(id)) {
       throw new UnauthorizedTraineeException();
     }
-    PtContractEntity ptContract = getPtContract(trainer, trainee);
-    return TraineeInfoResponseDto.fromEntity(trainee, ptContract.getRemainingSession());
+    PtContractEntity ptContract = ptContractRepository.findByTraineeIdWithInBodyRecords(id)
+        .orElseThrow(PtContractNotExistException::new);
+
+    TraineeEntity fetchedTrainee = ptContract.getTrainee();
+
+    return TraineeInfoResponseDto.fromEntity(fetchedTrainee, ptContract.getRemainingSession());
   }
 
   /**
@@ -120,18 +131,6 @@ public class TrainerService {
   }
 
   /**
-   * 트레이니 ID로 트레이니를 조회합니다.
-   *
-   * @param id 트레이니의 ID
-   * @return 트레이니 엔티티 (존재할 경우)
-   * @throws TrainerNotFoundException 트레이니가 존재하지 않을 경우 예외 발생
-   */
-  private TrainerEntity getTrainerById(Long id) {
-    return trainerRepository.findById(id)
-        .orElseThrow(TrainerNotFoundException::new);
-  }
-
-  /**
    * 인증된 트레이너를 조회합니다.
    *
    * @return 트레이너 엔티티
@@ -139,25 +138,39 @@ public class TrainerService {
    */
   private TrainerEntity getAuthenticatedTrainer() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || authentication.getName() == null) {
+    if (authentication == null
+        || !(authentication.getPrincipal() instanceof UserPrincipal userPrincipal)) {
       throw new TrainerNotFoundException();
     }
-    return trainerRepository.findByEmail(authentication.getName())
+
+    UserPrincipal cachedUser = userCache.getIfPresent(userPrincipal.getEmail());
+    if (cachedUser != null && cachedUser.getTrainer() != null) {
+      return cachedUser.getTrainer();
+    }
+
+    return trainerRepository.findByEmail(userPrincipal.getEmail())
         .orElseThrow(TrainerNotFoundException::new);
   }
 
   /**
-   * 인증된 트레이너를 조회합니다.
+   * 인증된 트레이니를 조회합니다.
    *
-   * @return 트레이너 엔티티
-   * @throws TraineeNotFoundException 트레이너가 존재하지 않을 경우 예외 발생
+   * @return 트레이니 엔티티
+   * @throws TraineeNotFoundException 트레이니가 존재하지 않을 경우 예외 발생
    */
   private TraineeEntity getAuthenticatedTrainee() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || authentication.getName() == null) {
+    if (authentication == null
+        || !(authentication.getPrincipal() instanceof UserPrincipal userPrincipal)) {
       throw new TraineeNotFoundException();
     }
-    return traineeRepository.findByEmail(authentication.getName())
+
+    UserPrincipal cachedUser = userCache.getIfPresent(userPrincipal.getEmail());
+    if (cachedUser != null && cachedUser.getTrainee() != null) {
+      return cachedUser.getTrainee();
+    }
+
+    return traineeRepository.findByEmail(userPrincipal.getEmail())
         .orElseThrow(TraineeNotFoundException::new);
   }
 
@@ -220,6 +233,9 @@ public class TrainerService {
    */
   private UserRoleType getMyRole() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth == null || auth.getAuthorities() == null) {
+      throw new UserNotFoundException();
+    }
     return auth.getAuthorities().stream()
         .anyMatch(a -> a.getAuthority().equals("ROLE_TRAINER")) ? UserRoleType.TRAINER
         : UserRoleType.TRAINEE;
