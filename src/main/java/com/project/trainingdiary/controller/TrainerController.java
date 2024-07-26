@@ -37,7 +37,8 @@ public class TrainerController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "400", description = "다른 트레이니의 정보를 볼 없습니다.", content = @Content)
+      @ApiResponse(responseCode = "400", description = "다른 트레이니의 정보를 볼 없습니다.", content = @Content),
+      @ApiResponse(responseCode = "404", description = "계약이 없습니다.", content = @Content)
   })
   @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
   @GetMapping("/trainees/{id}")
