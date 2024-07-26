@@ -20,6 +20,7 @@ import com.project.trainingdiary.entity.TraineeEntity;
 import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.ptcontract.PtContractTraineeCanHaveOnlyOneException;
 import com.project.trainingdiary.exception.ptcontract.PtContractTrainerEmailNotExistException;
 import com.project.trainingdiary.model.PtContractSort;
 import com.project.trainingdiary.model.UserPrincipal;
@@ -197,7 +198,7 @@ class PtContractServiceTest {
   }
 
   @Test
-  @DisplayName("PT 계약 생성 - 실패(이미 계약이 존재하는 경우)")
+  @DisplayName("PT 계약 생성 - 실패(트레이너와 트레이니 사이에 이미 계약이 존재하는 경우)")
   void createPtContractFail_PtContractAlreadyExist() {
     //given
     setupTrainerAuth();
@@ -213,6 +214,29 @@ class PtContractServiceTest {
     //then
     assertThrows(
         PtContractAlreadyExistException.class,
+        () -> ptContractService.createPtContract(dto)
+    );
+  }
+
+  @Test
+  @DisplayName("PT 계약 생성 - 실패(트레이니가 다른 트레이너와 이미 계약이 존재하는 경우)")
+  void createPtContractFail_PtContractTraineeHaveOnlyOne() {
+    //given
+    setupTrainerAuth();
+    CreatePtContractRequestDto dto = new CreatePtContractRequestDto();
+    dto.setTraineeEmail(trainee.getEmail());
+
+    //when
+    when(traineeRepository.findByEmail(trainee.getEmail()))
+        .thenReturn(Optional.of(trainee));
+    when(ptContractRepository.existsByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
+        .thenReturn(false);
+    when(ptContractRepository.existsByTraineeId(trainee.getId()))
+        .thenReturn(true);
+
+    //then
+    assertThrows(
+        PtContractTraineeCanHaveOnlyOneException.class,
         () -> ptContractService.createPtContract(dto)
     );
   }

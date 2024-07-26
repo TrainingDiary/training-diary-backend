@@ -14,6 +14,7 @@ import com.project.trainingdiary.entity.TrainerEntity;
 import com.project.trainingdiary.exception.notification.UnsupportedNotificationTypeException;
 import com.project.trainingdiary.exception.ptcontract.PtContractAlreadyExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
+import com.project.trainingdiary.exception.ptcontract.PtContractTraineeCanHaveOnlyOneException;
 import com.project.trainingdiary.exception.ptcontract.PtContractTrainerEmailNotExistException;
 import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.model.NotificationMessage;
@@ -58,6 +59,13 @@ public class PtContractService {
       throw new PtContractAlreadyExistException();
     }
 
+    // 트레이니가 다른 트레이너와 PT 계약이 있다면 새로운 PT 계약을 하지 못함. 기존의 PT 계약을 종료하고 해야함.
+    // 기획상 트레이니는 한개의 유효한 PT 계약만 갖도록 함
+    if (ptContractRepository.existsByTraineeId(trainee.getId())) {
+      throw new PtContractTraineeCanHaveOnlyOneException();
+    }
+
+    // 새로운 PT 계약을 생성
     PtContractEntity ptContract = PtContractEntity.of(trainer, trainee, 0);
     ptContractRepository.save(ptContract);
 
