@@ -1,6 +1,7 @@
 package com.project.trainingdiary.util;
 
 import static org.imgscalr.Scalr.Method.QUALITY;
+import static org.imgscalr.Scalr.Mode.FIT_TO_HEIGHT;
 import static org.imgscalr.Scalr.Mode.FIT_TO_WIDTH;
 
 import com.project.trainingdiary.exception.workout.FileNoNameException;
@@ -22,8 +23,15 @@ public class MediaUtil {
     return filename.substring(filename.lastIndexOf('.') + 1);
   }
 
-  public static BufferedImage resizeImageToWidth(BufferedImage originalImage, int width) {
-    return Scalr.resize(originalImage, QUALITY, FIT_TO_WIDTH, width);
+  public static BufferedImage resizeImageToWidth(BufferedImage originalImage, int targetSize) {
+    int originalWidth = originalImage.getWidth();
+    int originalHeight = originalImage.getHeight();
+
+    if (originalWidth <= originalHeight) {
+      return Scalr.resize(originalImage, QUALITY, FIT_TO_WIDTH, targetSize);
+    } else {
+      return Scalr.resize(originalImage, QUALITY, FIT_TO_HEIGHT, targetSize);
+    }
   }
 
   public static String checkFileNameExist(MultipartFile file) {
