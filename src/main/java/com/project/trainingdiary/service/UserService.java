@@ -1,5 +1,6 @@
 package com.project.trainingdiary.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.project.trainingdiary.dto.request.user.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.user.SignInRequestDto;
 import com.project.trainingdiary.dto.request.user.SignUpRequestDto;
@@ -62,6 +63,8 @@ public class UserService implements UserDetailsService {
 
   private final PasswordEncoder passwordEncoder;
 
+  private final Cache<String, UserPrincipal> userCache;
+
   private static final String REFRESH_TOKEN_COOKIE_NAME = "Refresh-Token";
   private static final String ACCESS_TOKEN_COOKIE_NAME = "Access-Token";
 
@@ -98,32 +101,30 @@ public class UserService implements UserDetailsService {
   @Transactional
   public SignUpResponseDto signUp(SignUpRequestDto dto, HttpServletRequest request,
       HttpServletResponse response) {
+    // 1단계: 회원가입 요청을 검증하고 처리합니다.
     VerificationEntity verificationEntity = getVerificationEntity(dto.getEmail());
     validateEmailNotExists(dto.getEmail());
     validatePasswordsMatch(dto.getPassword(), dto.getConfirmPassword());
     validateIfVerified(verificationEntity);
 
+    // 2단계: 비밀번호를 인코딩하고 사용자를 저장합니다.
     String encodedPassword = passwordEncoder.encode(dto.getPassword());
     saveUser(dto, encodedPassword);
 
-    UserDetails userDetails = loadUserByUsername(dto.getEmail());
-    boolean isTrainer = userDetails.getAuthorities().stream()
-        .anyMatch(authority -> authority.getAuthority().equals("ROLE_TRAINER"));
+    // 3단계: 데이터베이스에서 사용자 정보를 로드합니다.
+    UserPrincipal userPrincipal = (UserPrincipal) loadUserByUsername(dto.getEmail());
 
+    // 4단계: 더 이상 필요하지 않은 인증 엔티티를 삭제합니다.
     verificationRepository.deleteByEmail(dto.getEmail());
 
-    generateTokensAndSetCookies(userDetails.getUsername(), request, response);
+    // 5단계: 토큰을 생성하고 쿠키에 설정합니다.
+    generateTokensAndSetCookies(userPrincipal.getUsername(), request, response);
 
-    if (isTrainer) {
-      TrainerEntity trainer = trainerRepository.findByEmail(dto.getEmail())
-          .orElseThrow(TrainerNotFoundException::new);
-
-      return SignUpResponseDto.fromEntity(trainer);
+    // 6단계: 사용자 역할에 따라 적절한 SignUpResponseDto를 반환합니다.
+    if (userPrincipal.isTrainer()) {
+      return SignUpResponseDto.fromEntity(userPrincipal.getTrainer());
     } else {
-      TraineeEntity trainee = traineeRepository.findByEmail(dto.getEmail())
-          .orElseThrow(TraineeNotFoundException::new);
-
-      return SignUpResponseDto.fromEntity(trainee);
+      return SignUpResponseDto.fromEntity(userPrincipal.getTrainee());
     }
   }
 
@@ -388,7 +389,13 @@ public class UserService implements UserDetailsService {
     if (tokenCookie != null && tokenProvider.validateToken(tokenCookie.getValue())) {
       log.info("블랙리스트에 추가된 토큰: {}", tokenCookie.getValue());
       tokenProvider.blacklistToken(tokenCookie.getValue());
-      redisTokenRepository.deleteToken(tokenProvider.getUsernameFromToken(tokenCookie.getValue()));
+
+      String username = tokenProvider.getUsernameFromToken(tokenCookie.getValue());
+      String accessTokenKey = "accessToken:" + username;
+      String refreshTokenKey = "refreshToken:" + username;
+
+      redisTokenRepository.deleteToken(accessTokenKey);
+      redisTokenRepository.deleteToken(refreshTokenKey);
     }
   }
 
@@ -406,10 +413,21 @@ public class UserService implements UserDetailsService {
    */
   @Override
   public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    return traineeRepository.findByEmail(username)
+    UserPrincipal cachedUser = userCache.getIfPresent(username);
+    if (cachedUser != null) {
+      return cachedUser;
+    }
+
+    UserPrincipal userPrincipal = traineeRepository.findByEmail(username)
         .map(UserPrincipal::create)
-        .orElseGet(() -> UserPrincipal.create(trainerRepository.findByEmail(username)
-            .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 이메일 입니다."))));
+        .orElseGet(() -> {
+          TrainerEntity trainer = trainerRepository.findByEmail(username)
+              .orElseThrow(() -> new UsernameNotFoundException("존재하지 않는 이메일 입니다."));
+          return UserPrincipal.create(trainer);
+        });
+
+    userCache.put(username, userPrincipal);
+    return userPrincipal;
   }
 
   /**
@@ -425,6 +443,7 @@ public class UserService implements UserDetailsService {
     if (authentication == null || authentication.getName() == null) {
       throw new UserNotFoundException();
     }
+
     String role = authentication.getAuthorities().toString();
 
     if (role.contains("ROLE_TRAINER")) {
@@ -446,6 +465,6 @@ public class UserService implements UserDetailsService {
             .role(trainee.getRole())
             .unreadNotification(trainee.isUnreadNotification())
             .build())
-        .orElseThrow(TrainerNotFoundException::new);
+        .orElseThrow(TraineeNotFoundException::new);
   }
 }

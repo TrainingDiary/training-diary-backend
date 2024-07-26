@@ -31,7 +31,6 @@ public class EditTraineeInfoRequestDto {
   private double height;
 
   @Schema(example = "5")
-  @Positive(message = "remainingSession 값은 양수이어야 합니다.")
   private int remainingSession;
 
   @Schema(example = "TARGET_WEIGHT", allowableValues = {"TARGET_WEIGHT",

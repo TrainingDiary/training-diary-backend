@@ -13,6 +13,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.project.trainingdiary.dto.request.user.SendVerificationAndCheckDuplicateRequestDto;
 import com.project.trainingdiary.dto.request.user.SignInRequestDto;
 import com.project.trainingdiary.dto.request.user.SignUpRequestDto;
@@ -29,6 +30,7 @@ import com.project.trainingdiary.exception.user.VerificationCodeNotFoundExceptio
 import com.project.trainingdiary.exception.user.VerificationCodeNotMatchedException;
 import com.project.trainingdiary.exception.user.VerificationCodeNotYetVerifiedException;
 import com.project.trainingdiary.exception.user.WrongPasswordException;
+import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.provider.CookieProvider;
 import com.project.trainingdiary.provider.EmailProvider;
@@ -82,6 +84,9 @@ public class UserServiceTest {
 
   @Mock
   private PasswordEncoder passwordEncoder;
+
+  @Mock
+  private Cache<String, UserPrincipal> userCache;
 
   @InjectMocks
   private UserService userService;
