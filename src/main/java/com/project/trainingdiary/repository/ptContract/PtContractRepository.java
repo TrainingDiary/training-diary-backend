@@ -18,6 +18,15 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       + "and p.isTerminated = false")
   boolean existsByTrainerIdAndTraineeId(long trainerId, long traineeId);
 
+  @Query("select case when count(p) > 0 "
+      + "then true "
+      + "else false "
+      + "end "
+      + "from pt_contract p "
+      + "where p.trainee.id = ?1 "
+      + "and p.isTerminated = false")
+  boolean existsByTraineeId(long traineeId);
+
   Optional<PtContractEntity> findByIdAndIsTerminatedFalse(long ptContractId);
 
   @Query("select p "
