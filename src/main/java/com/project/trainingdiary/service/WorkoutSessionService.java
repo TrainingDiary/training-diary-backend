@@ -84,7 +84,7 @@ public class WorkoutSessionService {
 
     // 세션 넘버에 대한 일지가 이미 존재하는지 확인
     workoutSessionRepository
-        .findByPtContract_TrainerAndSessionNumber(trainer, dto.getSessionNumber())
+        .findByPtContract_IdAndSessionNumber(ptContract.getId(), dto.getSessionNumber())
         .ifPresent(exist -> {
           throw new WorkoutSessionAlreadyExistException(dto.getSessionNumber());
         });
