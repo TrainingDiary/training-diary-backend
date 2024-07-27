@@ -21,9 +21,8 @@ import com.project.trainingdiary.repository.InBodyRecordHistoryRepository;
 import com.project.trainingdiary.repository.TraineeRepository;
 import com.project.trainingdiary.repository.TrainerRepository;
 import com.project.trainingdiary.repository.ptContract.PtContractRepository;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TrainerService {
 
-  private static final Logger log = LoggerFactory.getLogger(TrainerService.class);
   private final TraineeRepository traineeRepository;
   private final TrainerRepository trainerRepository;
   private final InBodyRecordHistoryRepository inBodyRecordHistoryRepository;
@@ -74,12 +72,18 @@ public class TrainerService {
     if (!trainee.getId().equals(id)) {
       throw new UnauthorizedTraineeException();
     }
-    PtContractEntity ptContract = ptContractRepository.findByTraineeIdWithInBodyRecords(id)
-        .orElseThrow(PtContractNotExistException::new);
 
-    TraineeEntity fetchedTrainee = ptContract.getTrainee();
+    Optional<PtContractEntity> optionalPtContract = ptContractRepository.findByTraineeIdWithInBodyRecords(id);
 
-    return TraineeInfoResponseDto.fromEntity(fetchedTrainee, ptContract.getRemainingSession());
+    if (optionalPtContract.isPresent()) {
+      PtContractEntity ptContract = optionalPtContract.get();
+      TraineeEntity fetchedTrainee = ptContract.getTrainee();
+      return TraineeInfoResponseDto.fromEntity(fetchedTrainee, ptContract.getRemainingSession());
+    } else {
+      TraineeEntity fetchedTrainee = traineeRepository.findByIdWithInBodyRecords(id)
+          .orElseThrow(TraineeNotFoundException::new);
+      return TraineeInfoResponseDto.fromEntity(fetchedTrainee, 0);
+    }
   }
 
   /**
