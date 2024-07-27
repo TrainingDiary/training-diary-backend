@@ -196,7 +196,7 @@ class WorkoutSessionServiceTest {
 
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
-    when(workoutSessionRepository.findByPtContract_TrainerAndSessionNumber(trainer, 1))
+    when(workoutSessionRepository.findByPtContract_IdAndSessionNumber(ptContract.getId(), 1))
         .thenReturn(Optional.empty());
     when(workoutTypeRepository.findById(workoutType.getId()))
         .thenReturn(Optional.of(workoutType));
@@ -219,7 +219,7 @@ class WorkoutSessionServiceTest {
     verify(ptContractRepository, times(1))
         .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
     verify(workoutSessionRepository, times(1))
-        .findByPtContract_TrainerAndSessionNumber(trainer, 1);
+        .findByPtContract_IdAndSessionNumber(ptContract.getId(), 1);
     verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
     verify(workoutRepository, times(1)).save(workoutCaptor.capture());
     verify(workoutSessionRepository, times(1)).save(workoutSessionCaptor.capture());
@@ -258,7 +258,8 @@ class WorkoutSessionServiceTest {
     verify(ptContractRepository, times(1))
         .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
     verify(workoutSessionRepository, times(0))
-        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber());
+        .findByPtContract_IdAndSessionNumber(ptContract.getId(),
+            createRequestDto.getSessionNumber());
     verify(workoutTypeRepository, times(0)).findById(workoutType.getId());
 
     ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
@@ -284,7 +285,8 @@ class WorkoutSessionServiceTest {
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
     when(workoutSessionRepository
-        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber()))
+        .findByPtContract_IdAndSessionNumber(ptContract.getId(),
+            createRequestDto.getSessionNumber()))
         .thenReturn(Optional.of(workoutSession));
 
     assertThrows(WorkoutSessionAlreadyExistException.class,
@@ -293,7 +295,8 @@ class WorkoutSessionServiceTest {
     verify(ptContractRepository, times(1))
         .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
     verify(workoutSessionRepository, times(1))
-        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber());
+        .findByPtContract_IdAndSessionNumber(ptContract.getId(),
+            createRequestDto.getSessionNumber());
     verify(workoutTypeRepository, times(0)).findById(workoutType.getId());
 
     ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
@@ -320,7 +323,8 @@ class WorkoutSessionServiceTest {
     when(ptContractRepository.findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId()))
         .thenReturn(Optional.of(ptContract));
     when(workoutSessionRepository
-        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber()))
+        .findByPtContract_IdAndSessionNumber(ptContract.getId(),
+            createRequestDto.getSessionNumber()))
         .thenReturn(Optional.empty());
     when(workoutTypeRepository.findById(workoutType.getId()))
         .thenReturn(Optional.empty());
@@ -331,7 +335,8 @@ class WorkoutSessionServiceTest {
     verify(ptContractRepository, times(1))
         .findByTrainerIdAndTraineeId(trainer.getId(), trainee.getId());
     verify(workoutSessionRepository, times(1))
-        .findByPtContract_TrainerAndSessionNumber(trainer, createRequestDto.getSessionNumber());
+        .findByPtContract_IdAndSessionNumber(ptContract.getId(),
+            createRequestDto.getSessionNumber());
     verify(workoutTypeRepository, times(1)).findById(workoutType.getId());
 
     ArgumentCaptor<WorkoutEntity> workoutCaptor = ArgumentCaptor.forClass(WorkoutEntity.class);
