@@ -15,7 +15,7 @@ public interface WorkoutSessionRepository extends JpaRepository<WorkoutSessionEn
   Optional<WorkoutSessionEntity> findByPtContract_TrainerAndId
       (TrainerEntity trainer, Long sessionId);
 
-  Optional<WorkoutSessionEntity> findByPtContract_TrainerAndSessionNumber
-      (TrainerEntity trainer, int sessionNumber);
+  Optional<WorkoutSessionEntity> findByPtContract_IdAndSessionNumber
+      (Long ptContractId, int sessionNumber);
 
 }
