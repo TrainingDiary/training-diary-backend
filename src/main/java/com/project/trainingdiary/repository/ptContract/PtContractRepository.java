@@ -4,6 +4,7 @@ import com.project.trainingdiary.entity.PtContractEntity;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PtContractRepository extends JpaRepository<PtContractEntity, Long>,
     PtContractRepositoryCustom {
@@ -41,4 +42,18 @@ public interface PtContractRepository extends JpaRepository<PtContractEntity, Lo
       + "where p.trainee.id = ?1 "
       + "and p.isTerminated = false")
   Optional<PtContractEntity> findByTraineeId(long traineeId);
+
+  @Query("SELECT ptc FROM pt_contract ptc " +
+      "LEFT JOIN FETCH ptc.trainee t " +
+      "LEFT JOIN FETCH t.inBodyRecords ir " +
+      "LEFT JOIN FETCH ptc.trainer tr " +
+      "WHERE t.id = :traineeId AND tr.id = :trainerId AND ptc.isTerminated = false")
+  Optional<PtContractEntity> findWithTraineeAndTrainer(@Param("traineeId") Long traineeId,
+      @Param("trainerId") Long trainerId);
+
+  @Query("SELECT ptc FROM pt_contract ptc " +
+      "LEFT JOIN FETCH ptc.trainee t " +
+      "LEFT JOIN FETCH t.inBodyRecords ir " +
+      "WHERE t.id = :traineeId AND ptc.isTerminated = false")
+  Optional<PtContractEntity> findByTraineeIdWithInBodyRecords(@Param("traineeId") Long traineeId);
 }
