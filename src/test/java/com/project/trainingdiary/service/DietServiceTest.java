@@ -12,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.project.trainingdiary.dto.request.diet.CreateDietRequestDto;
 import com.project.trainingdiary.dto.response.diet.DietDetailsInfoResponseDto;
 import com.project.trainingdiary.dto.response.diet.DietImageResponseDto;
@@ -95,6 +96,8 @@ public class DietServiceTest {
   @Mock
   private S3DietImageProvider s3DietImageProvider;
 
+  @Mock
+  private Cache<String, UserPrincipal> userCache;
 
   @InjectMocks
   private DietService dietService;
@@ -256,7 +259,6 @@ public class DietServiceTest {
         "https://test-bucket.s3.amazonaws.com/original.jpg", "jpg");
   }
 
-
   @Test
   @DisplayName("트레이니를 찾을 수 없음 - 예외 발생")
   void testCreateDietTraineeNotFound() {
@@ -285,7 +287,8 @@ public class DietServiceTest {
     diet.setContent("Test content");
     diet.setThumbnailUrl("https://test-bucket.s3.amazonaws.com/thumb_original.jpg");
     Page<DietEntity> dietPage = new PageImpl<>(Collections.singletonList(diet), pageable, 1);
-    when(dietRepository.findByTraineeId(trainee.getId(), pageable)).thenReturn(dietPage);
+
+    when(dietRepository.findDietImagesByTraineeId(trainee.getId(), pageable)).thenReturn(dietPage);
 
     Page<DietImageResponseDto> response = dietService.getDiets(trainee.getId(), pageable);
 
@@ -293,6 +296,25 @@ public class DietServiceTest {
     assertEquals(1, response.getTotalElements());
     DietImageResponseDto responseDto = response.getContent().get(0);
     assertEquals(diet.getId(), responseDto.getDietId());
+  }
+
+  @Test
+  @DisplayName("트레이니가 다른 트레이니의 식단을 조회할 수 없음")
+  void testGetDietsForOtherTrainee() {
+    setupTraineeAuth();
+    TraineeEntity otherTrainee = TraineeEntity.builder()
+        .id(20L)
+        .email("othertrainee@example.com")
+        .name("다른 트레이니")
+        .role(UserRoleType.TRAINEE)
+        .build();
+
+    Pageable pageable = PageRequest.of(0, 10);
+    when(dietRepository.findDietImagesByTraineeId(otherTrainee.getId(), pageable)).thenReturn(
+        Page.empty());
+
+    assertThrows(DietNotExistException.class,
+        () -> dietService.getDiets(otherTrainee.getId(), pageable));
   }
 
   @Test
