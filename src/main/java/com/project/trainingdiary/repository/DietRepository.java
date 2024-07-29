@@ -10,8 +10,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface DietRepository extends JpaRepository<DietEntity, Long> {
 
-  Page<DietEntity> findByTraineeId(Long traineeId, Pageable pageable);
-
   Optional<DietEntity> findByTraineeIdAndId(Long id, Long id1);
 
   @Query("SELECT d FROM diet d " +
@@ -26,4 +24,7 @@ public interface DietRepository extends JpaRepository<DietEntity, Long> {
       "WHERE d.id = :id AND d.trainee.id = :traineeId")
   Optional<DietEntity> findByTraineeIdAndIdWithCommentsAndTrainer(
       @Param("traineeId") Long traineeId, @Param("id") Long id);
+
+  @Query("SELECT d FROM diet d WHERE d.trainee.id = :traineeId ORDER BY d.createdAt DESC")
+  Page<DietEntity> findDietImagesByTraineeId(@Param("traineeId") Long traineeId, Pageable pageable);
 }
