@@ -48,7 +48,7 @@ public class DietController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<Void> createDiet(
       @RequestPart("image") MultipartFile image,
-      @RequestParam("content") String content
+      @RequestPart("content") String content
   ) throws IOException {
     CreateDietRequestDto dto = CreateDietRequestDto.builder()
         .image(image)
