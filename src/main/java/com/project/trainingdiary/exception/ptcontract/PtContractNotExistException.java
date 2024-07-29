@@ -6,6 +6,6 @@ import org.springframework.http.HttpStatus;
 public class PtContractNotExistException extends GlobalException {
 
   public PtContractNotExistException() {
-    super(HttpStatus.FORBIDDEN, "계약이 없습니다.");
+    super(HttpStatus.NOT_FOUND, "계약이 없습니다.");
   }
 }
