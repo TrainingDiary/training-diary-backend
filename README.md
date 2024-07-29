@@ -12,10 +12,6 @@
 
 ![Infra](./docs/images/infra.png)
 
-## CI/CD 구성
-
-![CI/CD](./docs/images/cicd.png)
-
 # 전체 기능 목록
 
 ## API 명세 링크(swagger)
