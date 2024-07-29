@@ -37,7 +37,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
       LocalDateTime endDateTime
   ) {
     List<Tuple> list = getScheduleList(trainerId, null, startDateTime, endDateTime);
-    return convertToScheduleResponseDto(getDateSortedMap(list), null);
+    return convertToScheduleResponseDto(getDateSortedMap(list, null));
   }
 
   /**
@@ -52,7 +52,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
       LocalDateTime endDateTime
   ) {
     List<Tuple> list = getScheduleList(currentTrainerId, traineeId, startDateTime, endDateTime);
-    return convertToScheduleResponseDto(getDateSortedMap(list), traineeId);
+    return convertToScheduleResponseDto(getDateSortedMap(list, traineeId));
   }
 
   /**
@@ -92,13 +92,18 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
   /**
    * 날짜별로 결과를 묶기(날짜로 정렬)
    */
-  private SortedMap<String, List<Tuple>> getDateSortedMap(List<Tuple> results) {
+  private SortedMap<String, List<Tuple>> getDateSortedMap(
+      List<Tuple> results,
+      Long includeOnlyThisTraineeId
+  ) {
     SortedMap<String, List<Tuple>> groupedByDate = new TreeMap<>();
     for (Tuple tuple : results) {
       String date = tuple.get(startDate());
       List<Tuple> timeList = groupedByDate.getOrDefault(date, new ArrayList<>());
-      timeList.add(tuple);
-      groupedByDate.put(date, timeList);
+      if (scheduleIncluded(tuple, includeOnlyThisTraineeId)) {
+        timeList.add(tuple);
+        groupedByDate.put(date, timeList);
+      }
     }
     return groupedByDate;
   }
@@ -107,8 +112,7 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
    * 날짜별로 묶인 결과를 DTO에 맞게 변형
    */
   private List<ScheduleResponseDto> convertToScheduleResponseDto(
-      SortedMap<String, List<Tuple>> groupedByDate,
-      Long includeOnlyThisTraineeId
+      SortedMap<String, List<Tuple>> groupedByDate
   ) {
     return groupedByDate.entrySet().stream()
         .map(entry -> {
@@ -123,8 +127,8 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
                   .scheduleId(tuple.get(scheduleEntity.id))
                   .trainerId(tuple.get(scheduleEntity.trainer.id))
                   .trainerName(tuple.get(scheduleEntity.trainer.name))
-                  .traineeId(getTraineeId(tuple, includeOnlyThisTraineeId))
-                  .traineeName(getTraineeName(tuple, includeOnlyThisTraineeId))
+                  .traineeId(tuple.get(scheduleEntity.ptContract.trainee.id))
+                  .traineeName(tuple.get(scheduleEntity.ptContract.trainee.name))
                   .startTime(LocalTime.parse(Objects.requireNonNull(tuple.get(startTime()))))
                   .scheduleStatus(tuple.get(scheduleEntity.scheduleStatusType))
                   .build()
@@ -144,18 +148,19 @@ public class ScheduleRepositoryImpl implements ScheduleRepositoryCustom {
         .collect(Collectors.toList());
   }
 
-  private Long getTraineeId(Tuple tuple, Long includeOnlyThisTraineeId) {
+  /**
+   * 일정이 최종 출력에 포함되어야 하는지 결정
+   */
+  private boolean scheduleIncluded(Tuple tuple, Long includeOnlyThisTraineeId) {
+    if (includeOnlyThisTraineeId == null) {
+      return true;
+    }
     Long traineeId = tuple.get(scheduleEntity.ptContract.trainee.id);
-    return includeOnlyThisTraineeId == null || includeOnlyThisTraineeId.equals(traineeId)
-        ? traineeId
-        : null;
-  }
-
-  private String getTraineeName(Tuple tuple, Long includeOnlyThisTraineeId) {
-    Long traineeId = tuple.get(scheduleEntity.ptContract.trainee.id);
-    return includeOnlyThisTraineeId == null || includeOnlyThisTraineeId.equals(traineeId)
-        ? tuple.get(scheduleEntity.ptContract.trainee.name)
-        : null;
+    if (traineeId != null) { // 특정 트레이니와 예약이 된 일정인 경우
+      return traineeId.equals(includeOnlyThisTraineeId);
+    } else { // 특정 트레이니와 예약되지 않은 경우(= 일정 상태가 OPEN 인 경우)
+      return true;
+    }
   }
 
   private BooleanBuilder getTrainerOrTrainee(Long trainerId, Long traineeId) {
