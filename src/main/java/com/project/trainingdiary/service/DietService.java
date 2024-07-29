@@ -1,5 +1,6 @@
 package com.project.trainingdiary.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.project.trainingdiary.dto.request.diet.CreateDietRequestDto;
 import com.project.trainingdiary.dto.response.diet.DietDetailsInfoResponseDto;
 import com.project.trainingdiary.dto.response.diet.DietImageResponseDto;
@@ -10,8 +11,8 @@ import com.project.trainingdiary.exception.diet.DietNotExistException;
 import com.project.trainingdiary.exception.ptcontract.PtContractNotExistException;
 import com.project.trainingdiary.exception.user.TraineeNotFoundException;
 import com.project.trainingdiary.exception.user.TrainerNotFoundException;
-import com.project.trainingdiary.exception.user.UserNotFoundException;
 import com.project.trainingdiary.exception.workout.InvalidFileTypeException;
+import com.project.trainingdiary.model.UserPrincipal;
 import com.project.trainingdiary.model.type.UserRoleType;
 import com.project.trainingdiary.provider.S3DietImageProvider;
 import com.project.trainingdiary.repository.DietRepository;
@@ -43,6 +44,8 @@ public class DietService {
 
   private final S3DietImageProvider s3DietImageProvider;
 
+  private final Cache<String, UserPrincipal> userCache;
+
   /**
    * 새로운 식단을 생성합니다.
    *
@@ -54,7 +57,6 @@ public class DietService {
   public void createDiet(CreateDietRequestDto dto) throws IOException {
     TraineeEntity trainee = getAuthenticatedTrainee();
     MultipartFile imageFile = dto.getImage();
-
     validateImageFileType(imageFile);
 
     String originalUrl = s3DietImageProvider.uploadImageToS3(imageFile);
@@ -77,8 +79,6 @@ public class DietService {
    * @param id       조회할 트레이니의 ID
    * @param pageable 페이지 요청 정보
    * @return 트레이니의 식단 페이지
-   * @throws PtContractNotExistException 트레이너와 트레이니 사이에 계약이 없을 경우 예외 발생
-   * @throws UserNotFoundException       인증된 사용자가 트레이니 또는 트레이너가 아닐 경우 예외 발생
    */
   public Page<DietImageResponseDto> getDiets(Long id, Pageable pageable) {
     UserRoleType role = getMyRole();
@@ -102,7 +102,8 @@ public class DietService {
     TraineeEntity trainee = getTraineeById(id);
     validateContractWithTrainee(trainer, trainee);
 
-    return mapToDietImageResponseDtos(dietRepository.findByTraineeId(id, pageable));
+    Page<DietEntity> page = dietRepository.findDietImagesByTraineeId(id, pageable);
+    return mapToDietImageResponseDtos(page);
   }
 
   /**
@@ -119,7 +120,8 @@ public class DietService {
       throw new DietNotExistException();
     }
 
-    return mapToDietImageResponseDtos(dietRepository.findByTraineeId(id, pageable));
+    Page<DietEntity> page = dietRepository.findDietImagesByTraineeId(id, pageable);
+    return mapToDietImageResponseDtos(page);
   }
 
   /**
@@ -127,7 +129,6 @@ public class DietService {
    *
    * @param id 식단 ID
    * @return 식단 상세 정보 DTO
-   * @throws DietNotExistException 식단이 존재하지 않을 경우 예외 발생
    */
   public DietDetailsInfoResponseDto getDietDetails(Long id) {
     UserRoleType role = getMyRole();
@@ -177,7 +178,7 @@ public class DietService {
    * 트레이니의 식단을 삭제합니다.
    *
    * @param id 식단 ID
-   * @throws DietNotExistException 식단이 존재하지 않을 위해 예외 발생
+   * @throws DietNotExistException 식단이 존재하지 않을 경우 예외 발생
    */
   @Transactional
   public void deleteDiet(Long id) {
@@ -210,9 +211,18 @@ public class DietService {
    * @throws TraineeNotFoundException 인증된 트레이니가 존재하지 않을 경우 예외 발생
    */
   private TraineeEntity getAuthenticatedTrainee() {
-    Authentication authentication = getAuthentication();
-    String email = authentication.getName();
-    return traineeRepository.findByEmail(email)
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null
+        || !(authentication.getPrincipal() instanceof UserPrincipal userPrincipal)) {
+      throw new TraineeNotFoundException();
+    }
+
+    UserPrincipal cachedUser = userCache.getIfPresent(userPrincipal.getEmail());
+    if (cachedUser != null && cachedUser.getTrainee() != null) {
+      return cachedUser.getTrainee();
+    }
+
+    return traineeRepository.findByEmail(userPrincipal.getEmail())
         .orElseThrow(TraineeNotFoundException::new);
   }
 
@@ -223,12 +233,20 @@ public class DietService {
    * @throws TrainerNotFoundException 인증된 트레이너가 존재하지 않을 경우 예외 발생
    */
   private TrainerEntity getAuthenticatedTrainer() {
-    Authentication authentication = getAuthentication();
-    String email = authentication.getName();
-    return trainerRepository.findByEmail(email)
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null
+        || !(authentication.getPrincipal() instanceof UserPrincipal userPrincipal)) {
+      throw new TrainerNotFoundException();
+    }
+
+    UserPrincipal cachedUser = userCache.getIfPresent(userPrincipal.getEmail());
+    if (cachedUser != null && cachedUser.getTrainer() != null) {
+      return cachedUser.getTrainer();
+    }
+
+    return trainerRepository.findByEmail(userPrincipal.getEmail())
         .orElseThrow(TrainerNotFoundException::new);
   }
-
 
   /**
    * 트레이니 ID로 트레이니를 조회합니다.
@@ -274,20 +292,6 @@ public class DietService {
   private void deleteDietImages(DietEntity diet) {
     s3DietImageProvider.deleteFileFromS3(diet.getOriginalUrl());
     s3DietImageProvider.deleteFileFromS3(diet.getThumbnailUrl());
-  }
-
-  /**
-   * Authentication 객체를 반환합니다.
-   *
-   * @return 인증된 Authentication 객체
-   * @throws TraineeNotFoundException 인증된 트레이니가 존재하지 않을 경우 예외 발생
-   */
-  private Authentication getAuthentication() {
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication == null || authentication.getName() == null) {
-      throw new TraineeNotFoundException();
-    }
-    return authentication;
   }
 
   /**

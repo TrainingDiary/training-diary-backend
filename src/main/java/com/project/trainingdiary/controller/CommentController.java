@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "8 - Comment API", description = "트레이너의 식단 댓글 관리 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/comments/")
+@RequestMapping("api/comments")
 public class CommentController {
 
   private final CommentService commentService;
@@ -67,7 +67,7 @@ public class CommentController {
       @ApiResponse(responseCode = "200", description = "성공"),
   })
   @PreAuthorize("hasRole('TRAINER')")
-  @DeleteMapping("{id}")
+  @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteTrainerComment(
       @PathVariable Long id
   ) {
