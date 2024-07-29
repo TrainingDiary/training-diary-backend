@@ -22,7 +22,6 @@ public class DietDetailsInfoResponseDto {
   public static DietDetailsInfoResponseDto of(DietEntity diet, List<CommentEntity> comments) {
 
     List<CommentDto> commentDtoList = comments.stream()
-        .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt())) // 최신 댓글이 위로 오도록 정렬
         .map(CommentDto::fromEntity) // CommentEntity를 CommentDto로 변환
         .toList();
 
