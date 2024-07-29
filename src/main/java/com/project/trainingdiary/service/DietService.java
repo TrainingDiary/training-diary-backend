@@ -294,6 +294,12 @@ public class DietService {
     s3DietImageProvider.deleteFileFromS3(diet.getThumbnailUrl());
   }
 
+  /**
+   * 다이어트 엔티티 페이지를 다이어트 이미지 응답 DTO 페이지로 변환합니다.
+   *
+   * @param dietPage 다이어트 엔티티 페이지
+   * @return 다이어트 이미지 응답 DTO 페이지
+   */
   private Page<DietImageResponseDto> mapToDietImageResponseDtos(Page<DietEntity> dietPage) {
     return dietPage.map(diet -> DietImageResponseDto.builder()
         .dietId(diet.getId())
