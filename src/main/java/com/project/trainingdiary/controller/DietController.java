@@ -30,7 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "7 - Diet API", description = "트레이니의 식단 관련 API")
 @RestController
-@RequestMapping("api/diets/")
+@RequestMapping("api/diets")
 @RequiredArgsConstructor
 public class DietController {
 
@@ -48,7 +48,7 @@ public class DietController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<Void> createDiet(
       @RequestPart("image") MultipartFile image,
-      @RequestPart("content") String content
+      @RequestParam("content") String content
   ) throws IOException {
     CreateDietRequestDto dto = CreateDietRequestDto.builder()
         .image(image)
@@ -63,10 +63,9 @@ public class DietController {
       summary = "식단 목록 조회",
       description = "트레이니의 식단 목록을 페이징하여 조회합니다."
   )
-  @GetMapping("{id}")
+  @GetMapping("/{id}")
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "403", description = "트레이너랑 트레이니 사이의 계약이 없습니다.")
   })
   @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
   public ResponseEntity<Page<DietImageResponseDto>> getTraineeDiets(
@@ -86,10 +85,9 @@ public class DietController {
   )
   @ApiResponses(value = {
       @ApiResponse(responseCode = "200", description = "성공"),
-      @ApiResponse(responseCode = "403", description = "트레이너랑 트레이니 사이의 계약이 없습니다.")
   })
   @PreAuthorize("hasRole('TRAINER') or hasRole('TRAINEE')")
-  @GetMapping("{id}/details")
+  @GetMapping("/{id}/details")
   public ResponseEntity<DietDetailsInfoResponseDto> getDietDetails(
       @PathVariable Long id
   ) {
@@ -104,7 +102,7 @@ public class DietController {
       @ApiResponse(responseCode = "200", description = "성공"),
   })
   @PreAuthorize("hasRole('TRAINEE')")
-  @DeleteMapping("{id}")
+  @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteDiet(@PathVariable Long id) {
     dietService.deleteDiet(id);
     return ResponseEntity.ok().build();
