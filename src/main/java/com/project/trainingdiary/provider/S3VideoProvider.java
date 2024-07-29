@@ -64,14 +64,16 @@ public class S3VideoProvider {
     String thumbPath = VideoUtil.generateThumbnail(encodedVideoUrl, tmpPath);
 
     S3Resource thumbS3Resource;
+    File tempFile = new File(thumbPath);
 
-    try (InputStream inputStream = new FileInputStream(thumbPath)) {
+    try (InputStream inputStream = new FileInputStream(tempFile)) {
       thumbS3Resource = s3Operations.upload(bucket, thumbnailKey, inputStream,
           ObjectMetadata.builder().contentType("image/png").build());
+    } finally {
+      if (tempFile.exists()) {
+        tempFile.delete();
+      }
     }
-
-    // 임시 파일 삭제
-    new File(tmpPath).delete();
 
     return thumbS3Resource.getURL().toExternalForm();
   }
@@ -83,22 +85,30 @@ public class S3VideoProvider {
       String extension
   ) throws IOException, InterruptedException {
     // 임시 파일 경로 설정
-    String tmpPath = "/tmp/original_" + originalKey;
+    String tmpPath = "/tmp/" + originalKey;
 
+    File tempFile = null;
     S3Resource videoS3Resource;
-    if ("mov".equalsIgnoreCase(extension)) {
-      String encodedVideoPath = VideoUtil.encodeVideo(tempVideoUrl, tmpPath);
-      try (InputStream inputStream = new FileInputStream(encodedVideoPath)) {
-        videoS3Resource = s3Operations.upload(bucket, originalKey, inputStream,
-            ObjectMetadata.builder().contentType(contentType).build());
+    try {
+      if ("mov".equalsIgnoreCase(extension)) {
+        String encodedVideoPath = VideoUtil.encodeVideo(tempVideoUrl, tmpPath);
+        tempFile = new File(encodedVideoPath);
+        try (InputStream inputStream = new FileInputStream(tempFile)) {
+          videoS3Resource = s3Operations.upload(bucket, originalKey, inputStream,
+              ObjectMetadata.builder().contentType(contentType).build());
+        }
+      } else {
+        // MOV가 아닌 경우 원본을 그대로 사용
+        try (InputStream inputStream = new URL(tempVideoUrl).openStream()) {
+          videoS3Resource = s3Operations.upload(bucket, originalKey, inputStream,
+              ObjectMetadata.builder().contentType(contentType).build());
+        }
       }
-      // 임시 파일 삭제
-      new File(tmpPath).delete();
-    } else {
-      // MOV가 아닌 경우 원본을 그대로 사용
-      try (InputStream inputStream = new URL(tempVideoUrl).openStream()) {
-        videoS3Resource = s3Operations.upload(bucket, originalKey, inputStream,
-            ObjectMetadata.builder().contentType(contentType).build());
+    } finally {
+      if (tempFile != null && tempFile.exists()) {
+        tempFile.delete();
+      } else {
+        new File(tmpPath).delete();
       }
     }
 
