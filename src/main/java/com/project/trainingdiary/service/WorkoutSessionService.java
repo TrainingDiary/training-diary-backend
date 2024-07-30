@@ -271,7 +271,7 @@ public class WorkoutSessionService {
 
     String uuid = UUID.randomUUID().toString();
     String originalUrl = s3VideoProvider.uploadVideo(video, uuid);
-    String thumbnailUrl = s3VideoProvider.uploadThumbnail(originalUrl, uuid);
+    String thumbnailUrl = s3VideoProvider.uploadThumbnail(video, uuid);
 
     WorkoutMediaEntity workoutMedia = WorkoutMediaEntity.builder()
         .originalUrl(originalUrl).thumbnailUrl(thumbnailUrl).mediaType(VIDEO).build();

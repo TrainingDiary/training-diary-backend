@@ -771,8 +771,6 @@ class WorkoutSessionServiceTest {
     );
 
     List<MultipartFile> capturedFiles = fileCaptor.getAllValues();
-    List<String> capturedKeys = keyCaptor.getAllValues();
-    List<String> capturedExtensions = extensionCaptor.getAllValues();
     List<Integer> capturedWidths = widthCaptor.getAllValues();
 
     assertEquals("test.jpg", capturedFiles.get(0).getOriginalFilename());
@@ -904,8 +902,7 @@ class WorkoutSessionServiceTest {
 
   @Test
   @DisplayName("동영상 업로드 성공")
-  public void testUploadWorkoutVideoSuccess()
-      throws IOException, InterruptedException {
+  public void testUploadWorkoutVideoSuccess() throws IOException, InterruptedException {
     Authentication authentication = new TestingAuthenticationToken("trainer@gmail.com", null,
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_TRAINER")));
     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -923,10 +920,8 @@ class WorkoutSessionServiceTest {
         .video(video).build();
 
     String originalUrl = "https://test-bucket.s3.amazonaws.com/original";
-    String thumbnailUrl = "https://test-bucket.s3.amazonaws.com/thumb";
 
     when(s3VideoProvider.uploadVideo(eq(video), anyString())).thenReturn(originalUrl);
-    when(s3VideoProvider.uploadThumbnail(eq(originalUrl), anyString())).thenReturn(thumbnailUrl);
 
     WorkoutVideoResponseDto response = workoutSessionService.uploadWorkoutVideo(videoRequestDto);
 
@@ -937,7 +932,6 @@ class WorkoutSessionServiceTest {
     assertEquals("VIDEO", savedMedia.getMediaType().name());
 
     verify(s3VideoProvider, times(1)).uploadVideo(eq(video), anyString());
-    verify(s3VideoProvider, times(1)).uploadThumbnail(eq(originalUrl), anyString());
 
     ArgumentCaptor<WorkoutSessionEntity> sessionCaptor = ArgumentCaptor
         .forClass(WorkoutSessionEntity.class);
