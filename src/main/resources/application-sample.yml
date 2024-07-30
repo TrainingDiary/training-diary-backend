@@ -34,7 +34,6 @@ spring:
         static:
       s3:
         bucket:
-        temp-bucket:
       stack:
         auto: false
 
