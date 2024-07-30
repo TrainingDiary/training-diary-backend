@@ -12,10 +12,6 @@ import io.swagger.v3.oas.annotations.servers.Server;
     ),
     servers = {
         @Server(
-            url = "http://ec2-3-36-95-58.ap-northeast-2.compute.amazonaws.com:8080",
-            description = "Video Test Server"
-        ),
-        @Server(
             url = "https://api.training-diary.co.kr",
             description = "Stage Server"
         ),
