@@ -93,7 +93,8 @@ public class WorkoutSessionService {
     List<WorkoutEntity> workouts = dto.getWorkouts().stream().map(workoutDto -> {
       WorkoutTypeEntity workoutType = workoutTypeRepository.findById(workoutDto.getWorkoutTypeId())
           .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutDto.getWorkoutTypeId()));
-      WorkoutEntity workout = WorkoutEntity.toEntity(workoutDto, workoutType);
+      WorkoutEntity workout = WorkoutEntity.toEntity(workoutDto, workoutType.getName(),
+          workoutType.getTargetMuscle(), workoutType.getRemarks());
       workoutRepository.save(workout);
       return workout;
     }).toList();
@@ -122,7 +123,8 @@ public class WorkoutSessionService {
           .orElseThrow(() -> new WorkoutTypeNotFoundException(workoutDto.getWorkoutTypeId()));
       WorkoutEntity workout = workoutRepository.findById(workoutDto.getWorkoutId())
           .orElseThrow(() -> new WorkoutNotFoundException(workoutDto.getWorkoutId()));
-      WorkoutEntity updateWorkout = WorkoutEntity.updateEntity(workoutDto, workoutType, workout);
+      WorkoutEntity updateWorkout = WorkoutEntity.updateEntity(workoutDto, workoutType.getName(),
+          workoutType.getTargetMuscle(), workoutType.getRemarks(), workout);
       workoutRepository.save(updateWorkout);
       return updateWorkout;
     }).toList();
