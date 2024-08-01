@@ -73,7 +73,8 @@ public class TrainerService {
       throw new UnauthorizedTraineeException();
     }
 
-    Optional<PtContractEntity> optionalPtContract = ptContractRepository.findByTraineeIdWithInBodyRecords(id);
+    Optional<PtContractEntity> optionalPtContract = ptContractRepository.findByTraineeIdWithInBodyRecords(
+        id);
 
     if (optionalPtContract.isPresent()) {
       PtContractEntity ptContract = optionalPtContract.get();
