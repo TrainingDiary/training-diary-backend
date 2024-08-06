@@ -28,7 +28,7 @@
 
 ## 시연영상
 
-![시연영상](https://drive.google.com/file/d/1FpTVgH2Nzrai5yAH8Gw2pyKBsWkQbHmQ/view?usp=sharing)
+<iframe src="https://drive.google.com/file/d/1FpTVgH2Nzrai5yAH8Gw2pyKBsWkQbHmQ/preview" width="640" height="480" allow="autoplay"></iframe>
 
 ## 주요기능
 
