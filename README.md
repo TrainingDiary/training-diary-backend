@@ -28,7 +28,7 @@
 
 ## 시연영상
 
-<iframe src="https://drive.google.com/file/d/1FpTVgH2Nzrai5yAH8Gw2pyKBsWkQbHmQ/preview" width="640" height="480" allow="autoplay"></iframe>
+- [시연 영상 보러가기](https://www.notion.so/marcel-manual/Training-Diary-9a4729c1df6c4150a189540024803657?pvs=4#928d5ed35f05450aaf050dde4443f318)
 
 ## 주요기능
 
